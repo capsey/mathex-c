@@ -1,0 +1,6 @@
+# IDE specific
+.vscode/
+
+# Output
+obj/
+bin/
