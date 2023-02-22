@@ -30,12 +30,12 @@ static bool check_identifier(char character)
     return isalpha(character) || isdigit(character) || character == '_';
 }
 
-size_t tokenize(const char *input, const size_t input_len, span_t *tokens, const size_t tokens_len)
+size_t tokenize(const char *input, const size_t n_input, span_t *tokens, const size_t n_tokens)
 {
     size_t token_count = 0;
     span_t current_token = EMPTY_TOKEN;
 
-    for (size_t i = 0; i < input_len; i++)
+    for (size_t i = 0; i < n_input; i++)
     {
         char current_char = input[i];
 
@@ -93,4 +93,56 @@ size_t tokenize(const char *input, const size_t input_len, span_t *tokens, const
     }
 
     return token_count;
+}
+
+static token_t classify_span(span_t span, const char **operators, size_t n_operators, const char **variables, size_t n_variables, const char **functions, size_t n_functions)
+{
+    if (span.length == 1) {
+        if (span.start[0] == '(') {
+            return L_PARENTHESIS;
+        } else if (span.start[0] == ')') {
+            return R_PARENTHESIS;
+        }
+    }
+
+    for (size_t i = 0; i < n_operators; i++) {
+        if (strncmp(span.start, operators[i], span.length) == 0) {
+            return OPERATOR_TOKEN;
+        }
+    }
+
+    for (size_t i = 0; i < n_variables; i++) {
+        if (strncmp(span.start, variables[i], span.length) == 0) {
+            return VARIABLE_TOKEN;
+        }
+    }
+
+    for (size_t i = 0; i < n_functions; i++) {
+        if (strncmp(span.start, functions[i], span.length) == 0) {
+            return FUNCTION_TOKEN;
+        }
+    }
+
+    for (size_t i = 0; i < span.length; i++) {
+        if (!isdigit(*(span.start + i))) {
+            return INVALID_TOKEN;
+        }
+    }
+
+    return NUMBER_TOKEN;
+}
+
+bool classify_tokens(span_t spans[], size_t n_spans, token_t results[], const char *operators[], size_t n_operators, const char *variables[], size_t n_variables, const char *functions[], size_t n_functions)
+{
+    for (size_t i = 0; i < n_spans; i++) {
+        token_t type = classify_span(spans[i], operators, n_operators, variables, n_variables, functions, n_functions);
+        
+        if (type == INVALID_TOKEN) {
+            return false;
+        }
+
+        results[i] = type;
+    }
+
+    return true;
 }

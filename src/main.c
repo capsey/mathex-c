@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
     if (token_count <= 0)
     {
         // Check if expression is valid
-        printf("Error: invalid input\n");
+        printf("error: invalid input\n");
         exit(1);
     }
 
@@ -35,6 +35,36 @@ int main(int argc, char *argv[])
     for (size_t i = 0; i < token_count; i++)
     {
         printf("\"%.*s\"", (int)tokens[i].length, tokens[i].start);
+        if (i != token_count - 1) printf(", ");
+    }
+
+    printf("\n");
+
+    // Setup operators, variables and functions
+    const char *operators[] = {"+", "-", "*", "/"};
+    const char *variables[] = {"x", "y", "z"};
+    const char *functions[] = {"sin", "cos", "tan"};
+
+    // Classify token strings into token types
+    const char *token_type_names[] = {"operator", "function", "variable", "number", "l_paren", "r_paren"};
+
+    token_t token_types[token_count];
+    bool succeeded = classify_tokens(tokens, token_count, token_types, operators, 4, variables, 3, functions, 3);
+
+    if (!succeeded)
+    {
+        // Check if expression is valid
+        printf("error: invalid input\n");
+        exit(1);
+    }
+
+    // Print token types
+    printf("types:  ");
+
+    for (size_t i = 0; i < token_count; i++)
+    {
+        token_t token_type = token_types[i];
+        printf("%s", token_type_names[token_type]);
         if (i != token_count - 1) printf(", ");
     }
 
