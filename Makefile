@@ -8,7 +8,7 @@ BINDIR := bin
 SRCS := $(wildcard $(SRCDIR)/*.c)
 OBJS := $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRCS))
 
-EXE := $(BINDIR)/main.exe
+EXE := $(BINDIR)/main
 
 all: $(EXE)
 
@@ -19,5 +19,4 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	$(COMPILER) $(FLAGS) -c $< -o $@
 
 clean:
-	del $(BINDIR)/**
-	del $(OBJDIR)/**
+	rm $(BINDIR)/* $(OBJDIR)/*
