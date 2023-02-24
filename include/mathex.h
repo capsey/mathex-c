@@ -19,7 +19,7 @@ typedef struct {
     size_t length;
 } span_t;
 
-size_t tokenize(const char *input, const size_t n_input, span_t *tokens, const size_t n_tokens);
-bool classify_tokens(span_t spans[], size_t n_spans, token_t results[], const char *operators[], size_t n_operators, const char *variables[], size_t n_variables, const char *functions[], size_t n_functions);
+bool mathex_tokenize(const char *input, const size_t n_input, span_t *tokens, const size_t n_tokens, size_t *token_count);
+bool mathex_classify(span_t spans[], size_t n_spans, token_t results[], const char *operators[], size_t n_operators, const char *variables[], size_t n_variables, const char *functions[], size_t n_functions);
 
 #endif /* __MATHEX__ */

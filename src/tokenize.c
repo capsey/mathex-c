@@ -10,34 +10,34 @@ static bool check_parentheses(char character);
 static bool check_operator(char character);
 static bool check_identifier(char character);
 
-size_t tokenize(const char *input, const size_t n_input, span_t *tokens, const size_t n_tokens) {
-    size_t token_count = 0;
+bool mathex_tokenize(const char *input, const size_t n_input, span_t *tokens, const size_t n_tokens, size_t *token_count) {
+    size_t n = 0;
     span_t current_token = EMPTY_TOKEN;
 
-    for (size_t i = 0; i < n_input; i++) {
+    for (size_t i = 0; i < n_input && n < n_tokens; i++) {
         char current_char = input[i];
 
         if (check_space(current_char)) {
             if (current_token.start != NULL) {
                 // If we are currently processing a token, stop and store it
-                tokens[token_count] = current_token;
+                tokens[n] = current_token;
                 current_token = EMPTY_TOKEN;
-                token_count++;
+                n++;
             }
 
             continue;
         } else if (check_parentheses(current_char) || check_operator(current_char)) {
             if (current_token.start != NULL) {
                 // If we are currently processing a token, stop and store it
-                tokens[token_count] = current_token;
+                tokens[n] = current_token;
                 current_token = EMPTY_TOKEN;
-                token_count++;
+                n++;
             }
 
             // Add parenteses into the tokens array
-            tokens[token_count].start = &input[i];
-            tokens[token_count].length = 1;
-            token_count++;
+            tokens[n].start = &input[i];
+            tokens[n].length = 1;
+            n++;
         } else if (check_identifier(current_char)) {
             if (current_token.start == NULL) {
                 // If we are not currently processing a token, initialize
@@ -49,19 +49,18 @@ size_t tokenize(const char *input, const size_t n_input, span_t *tokens, const s
             current_token.length++;
         } else {
             // Invalid character in the input string
-            return 0;
+            return false;
         }
-
-        if (token_count >= n_tokens) break;
     }
 
-    if (current_token.start != NULL && token_count < n_tokens) {
+    if (current_token.start != NULL && n < n_tokens) {
         // If we were processing a token, stop and store it
-        tokens[token_count] = current_token;
-        token_count++;
+        tokens[n] = current_token;
+        n++;
     }
 
-    return token_count;
+    *token_count = n;
+    return true;
 }
 
 static bool check_space(char character) {
