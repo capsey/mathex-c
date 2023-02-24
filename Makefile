@@ -1,22 +1,24 @@
-COMPILER := gcc
-FLAGS := -Wall -g
+CC = gcc
+CFLAGS = -g -std=c18 -Wall -Wextra -Wpedantic
+AR = ar rcs
+INCLUDES = -Iinclude
 
-SRCDIR := src
-OBJDIR := obj
-BINDIR := bin
+SRCDIR = src
+BINDIR = bin
+OBJDIR = $(BINDIR)/obj
+LIBDIR = $(BINDIR)/lib
 
-SRCS := $(wildcard $(SRCDIR)/*.c)
-OBJS := $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRCS))
+SOURCES = $(wildcard $(SRCDIR)/*.c)
+OBJECTS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SOURCES))
+LIBRARY = $(LIBDIR)/mathex.a
 
-EXE := $(BINDIR)/main
+all: $(LIBRARY)
 
-all: $(EXE)
-
-$(EXE): $(OBJS)
-	$(COMPILER) $(FLAGS) $^ -o $@
+$(LIBRARY): $(OBJECTS)
+	$(AR) $(LIBRARY) $(OBJECTS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
-	$(COMPILER) $(FLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
-	rm $(BINDIR)/* $(OBJDIR)/*
+	rm -f $(OBJECTS) $(LIBRARY)
