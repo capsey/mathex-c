@@ -25,7 +25,7 @@ $(LIBRARY): $(OBJECTS)
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-$(TESTBIN): $(TEST) $(OBJECTS)
+$(TESTBIN): $(TESTDIR)/*.c $(OBJECTS)
 	$(CC) $(CFLAGS) $(INCLUDES) $< $(OBJECTS) -o $@
 
 test: $(LIBRARY) $(TESTBIN)

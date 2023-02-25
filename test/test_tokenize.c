@@ -1,56 +1,78 @@
+#include "main.h"
 #include "mathex.h"
 #include "minunit.h"
 #include <string.h>
 
-#define TEST_VALID_INPUT(method_name, input, ...)                                   \
-    MU_TEST(method_name) {                                                          \
-        char *expected[] = {__VA_ARGS__};                                           \
-        _test_valid_input(input, expected, sizeof(expected) / sizeof(expected[0])); \
-    }
+static size_t line_number;
 
-#define TEST_INVALID_INPUT(method_name, input) \
-    MU_TEST(method_name) { _test_invalid_input(input); }
+static char *input;
+static size_t n_input;
 
-static void _test_valid_input(char *input, char *expected[], size_t n_expected) {
-    size_t n_input = strlen(input);
+static char *expected[MAX_LINE_LEN];
+static size_t n_expected;
 
+MU_TEST(test_tokenize_valid_input) {
     span_t spans[n_input];
     size_t token_count;
     bool succeeded = mathex_tokenize(input, n_input, spans, n_input, &token_count);
 
-    mu_assert(succeeded, "Valid input tokenization failed!");
-    mu_assert(token_count == n_expected, "Incorrect number of tokens identified");
+    FORMAT("Test case #%lld: valid input tokenization failed", line_number);
+    mu_assert(succeeded, format_buffer);
+
+    FORMAT("Test case #%lld: expected %lld tokens got %lld", line_number, n_expected, token_count);
+    mu_assert(token_count == n_expected, format_buffer);
 
     for (size_t i = 0; i < n_expected; i++) {
         span_t span = spans[i];
         char *actual = expected[i];
 
-        mu_assert(strncmp(actual, span.start, span.length) == 0, "Incorrect token string");
+        FORMAT("Test case #%lld: %lldth token expected \"%s\" got \"%.*s\"", line_number, i + 1, actual, (int)span.length, span.start);
+        mu_assert(strncmp(actual, span.start, span.length) == 0, format_buffer);
     }
 }
 
-static void _test_invalid_input(char *input) {
+MU_TEST(test_tokenize_invalid_input) {
     size_t n_input = strlen(input);
 
     span_t spans[n_input];
     size_t token_count;
     bool succeeded = mathex_tokenize(input, n_input, spans, n_input, &token_count);
 
-    mu_assert(!succeeded, "Invalid input tokenization succeeded!");
+    FORMAT("Test case #%lld: invalid input tokenization succeeded", line_number);
+    mu_assert(!succeeded, format_buffer);
 }
 
-TEST_VALID_INPUT(test_tokenize_valid_simple_arithmetic, "5 + 5", "5", "+", "5")
-TEST_VALID_INPUT(test_tokenize_valid_simple_function, "sin(x * 2)", "sin", "(", "x", "*", "2", ")")
-
-TEST_INVALID_INPUT(test_tokenize_invalid_empty, "")
-TEST_INVALID_INPUT(test_tokenize_invalid_space, " ")
-TEST_INVALID_INPUT(test_tokenize_invalid_newline, "\n")
-
 MU_TEST_SUITE(test_tokenize_suite) {
-    MU_RUN_TEST(test_tokenize_valid_simple_arithmetic);
-    MU_RUN_TEST(test_tokenize_valid_simple_function);
+    // Running test cases from CSV file
+    const char *separator = ",";
+    char buffer[MAX_LINE_LEN];
 
-    MU_RUN_TEST(test_tokenize_invalid_empty);
-    MU_RUN_TEST(test_tokenize_invalid_space);
-    MU_RUN_TEST(test_tokenize_invalid_newline);
+    for (line_number = 1; fgets(buffer, MAX_LINE_LEN, test_tokenize_valid_cases); line_number++) {
+        buffer[strcspn(buffer, "\n")] = 0;
+
+        if (line_number % 2 == 1) {
+            // Odd lines are for input strings
+            if (input != NULL) free(input);
+
+            n_input = strlen(buffer);
+            input = malloc(sizeof(char) * n_input);
+            strncpy(input, buffer, n_input);
+        } else {
+            // Even lines are for expected values
+            char *token = strtok(buffer, separator);
+            size_t j = 0;
+
+            while (token) {
+                expected[j++] = token;
+                token = strtok(NULL, separator);
+            }
+
+            n_expected = j;
+
+            // Run test
+            MU_RUN_TEST(test_tokenize_valid_input);
+        }
+    }
+
+    if (input != NULL) free(input);
 }
