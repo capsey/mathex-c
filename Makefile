@@ -28,6 +28,12 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c
 $(TESTBIN): $(TESTDIR)/*.c $(OBJECTS)
 	$(CC) $(CFLAGS) $(INCLUDES) $< $(OBJECTS) -o $@
 
+mkdir:
+	mkdir $(BINDIR)
+	mkdir $(OBJDIR)
+	mkdir $(LIBDIR)
+	mkdir $(TESTBINDIR)
+
 test: $(LIBRARY) $(TESTBIN)
 	$(TESTBIN)
 

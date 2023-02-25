@@ -16,17 +16,17 @@ MU_TEST(test_tokenize_valid_input) {
     size_t token_count;
     bool succeeded = mathex_tokenize(input, n_input, spans, n_input, &token_count);
 
-    FORMAT("Test case #%lld: valid input tokenization failed", line_number);
+    FORMAT("Test case #%zd: valid input tokenization failed", line_number);
     mu_assert(succeeded, format_buffer);
 
-    FORMAT("Test case #%lld: expected %lld tokens got %lld", line_number, n_expected, token_count);
+    FORMAT("Test case #%zd: expected %zd tokens got %zd", line_number, n_expected, token_count);
     mu_assert(token_count == n_expected, format_buffer);
 
     for (size_t i = 0; i < n_expected; i++) {
         span_t span = spans[i];
         char *actual = expected[i];
 
-        FORMAT("Test case #%lld: %lldth token expected \"%s\" got \"%.*s\"", line_number, i + 1, actual, (int)span.length, span.start);
+        FORMAT("Test case #%zd: %zdth token expected \"%s\" got \"%.*s\"", line_number, i + 1, actual, (int)span.length, span.start);
         mu_assert(strncmp(actual, span.start, span.length) == 0, format_buffer);
     }
 }
@@ -38,7 +38,7 @@ MU_TEST(test_tokenize_invalid_input) {
     size_t token_count;
     bool succeeded = mathex_tokenize(input, n_input, spans, n_input, &token_count);
 
-    FORMAT("Test case #%lld: invalid input tokenization succeeded", line_number);
+    FORMAT("Test case #%zd: invalid input tokenization succeeded", line_number);
     mu_assert(!succeeded, format_buffer);
 }
 

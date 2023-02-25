@@ -19,13 +19,13 @@ static token_t results[MAX_LINE_LEN];
 static size_t n_results;
 
 MU_TEST(test_classify_valid_spans) {
-    FORMAT("Test case #%lld: number of tokens expected %lld got %lld", line_number, n_results, n_spans);
+    FORMAT("Test case #%zd: number of tokens expected %zd got %zd", line_number, n_results, n_spans);
     mu_assert(n_spans == n_results, format_buffer);
 
     token_t tokens[n_spans];
     bool succeeded = mathex_classify(spans, n_spans, operators, n_operators, variables, n_variables, functions, n_functions, tokens);
 
-    FORMAT("Test case #%lld: valid input classification failed", line_number);
+    FORMAT("Test case #%zd: valid input classification failed", line_number);
     mu_assert(succeeded, format_buffer);
 
     for (size_t i = 0; i < 3; i++) {
@@ -73,7 +73,7 @@ MU_TEST_SUITE(test_classify_suite) {
                 }
 
                 if (!found) {
-                    printf("\nInvalid value in #%lld: found \"%s\"\n", line_number, token);
+                    printf("\nInvalid value in #%zd: found \"%s\"\n", line_number, token);
                     exit(1);
                 }
 
