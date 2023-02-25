@@ -10,14 +10,17 @@ static bool check_parentheses(char character);
 static bool check_operator(char character);
 static bool check_identifier(char character);
 
-bool mathex_tokenize(const char *input, const size_t n_input, span_t *tokens, const size_t n_tokens, size_t *token_count) {
+bool mathex_tokenize(const char *input, size_t n_input, span_t tokens[], size_t n_tokens, size_t *token_count) {
     size_t n = 0;
     span_t current_token = EMPTY_TOKEN;
 
     for (size_t i = 0; i < n_input && n < n_tokens; i++) {
         char current_char = input[i];
 
-        if (check_space(current_char)) {
+        if (!isascii(current_char)) {
+            // Non-ASCI characters are not allowed
+            return false;
+        } else if (check_space(current_char)) {
             if (current_token.start != NULL) {
                 // If we are currently processing a token, stop and store it
                 tokens[n] = current_token;
@@ -57,6 +60,11 @@ bool mathex_tokenize(const char *input, const size_t n_input, span_t *tokens, co
         // If we were processing a token, stop and store it
         tokens[n] = current_token;
         n++;
+    }
+
+    if (n <= 0) {
+        // Fail if string is empty
+        return false;
     }
 
     *token_count = n;

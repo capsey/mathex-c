@@ -9,7 +9,7 @@ static bool check_right_paren(span_t span);
 static bool check_contains(span_t span, const char **array, size_t n_array);
 static bool check_number_literal(span_t span);
 
-bool mathex_classify(span_t spans[], size_t n_spans, token_t results[], const char *operators[], size_t n_operators, const char *variables[], size_t n_variables, const char *functions[], size_t n_functions) {
+bool mathex_classify(const span_t spans[], size_t n_spans, const char *operators[], size_t n_operators, const char *variables[], size_t n_variables, const char *functions[], size_t n_functions, token_t results[]) {
     for (size_t i = 0; i < n_spans; i++) {
         span_t span = spans[i];
         token_t type;

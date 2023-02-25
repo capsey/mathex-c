@@ -12,6 +12,11 @@ SOURCES = $(wildcard $(SRCDIR)/*.c)
 OBJECTS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SOURCES))
 LIBRARY = $(LIBDIR)/mathex.a
 
+TESTDIR = test
+TESTBINDIR = $(TESTDIR)/bin
+TEST = $(TESTDIR)/main.c
+TESTBIN = $(TESTBINDIR)/main
+
 all: $(LIBRARY)
 
 $(LIBRARY): $(OBJECTS)
@@ -20,5 +25,11 @@ $(LIBRARY): $(OBJECTS)
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
+$(TESTBIN): $(TEST) $(OBJECTS)
+	$(CC) $(CFLAGS) $(INCLUDES) $< $(OBJECTS) -o $@
+
+test: $(LIBRARY) $(TESTBIN)
+	$(TESTBIN)
+
 clean:
-	rm -f $(OBJECTS) $(LIBRARY)
+	rm -f $(OBJECTS) $(LIBRARY) $(TESTBIN)

@@ -4,3 +4,6 @@
 # Output
 obj/
 bin/
+
+# Dependencies
+test/minunit.h
