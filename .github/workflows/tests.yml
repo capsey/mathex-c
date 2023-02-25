@@ -1,0 +1,33 @@
+name: Run tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}-${{ matrix.arch }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        arch: [x64, x86]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
+    - name: Set up MSYS2 and Mingw
+      if: matrix.os == 'windows-latest'
+      uses: msys2/setup-msys2@v2
+      with:
+        arch: ${{ matrix.arch }}
+        update: true
+
+    - name: Set up dependencies
+      run: sh install_test_dependencies.sh
+      
+    - name: Build and test
+      run: make test
