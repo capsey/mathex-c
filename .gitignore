@@ -6,4 +6,4 @@ obj/
 bin/
 
 # Dependencies
-test/minunit.h
+test/sput.h

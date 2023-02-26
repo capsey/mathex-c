@@ -4,17 +4,16 @@ AR = ar rcs
 INCLUDES = -Iinclude
 
 SRCDIR = src
-BINDIR = bin
-OBJDIR = $(BINDIR)/obj
-LIBDIR = $(BINDIR)/lib
+OBJDIR = bin/obj
+LIBDIR = bin/lib
 
 SOURCES = $(wildcard $(SRCDIR)/*.c)
 OBJECTS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SOURCES))
 LIBRARY = $(LIBDIR)/mathex.a
 
 TESTDIR = test
-TESTBINDIR = $(TESTDIR)/bin
 TEST = $(TESTDIR)/main.c
+TESTBINDIR = $(TESTDIR)/bin
 TESTBIN = $(TESTBINDIR)/main
 
 all: $(LIBRARY)
@@ -23,16 +22,15 @@ $(LIBRARY): $(OBJECTS)
 	$(AR) $(LIBRARY) $(OBJECTS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) -c $^ -o $@
 
-$(TESTBIN): $(TESTDIR)/*.c $(OBJECTS)
-	$(CC) $(CFLAGS) $(INCLUDES) $< $(OBJECTS) -o $@
+$(TESTBIN): $(TEST) $(OBJECTS)
+	$(CC) $(CFLAGS) $(INCLUDES) $^ -o $@
 
 mkdir:
-	mkdir $(BINDIR)
-	mkdir $(OBJDIR)
-	mkdir $(LIBDIR)
-	mkdir $(TESTBINDIR)
+	mkdir -p $(OBJDIR)
+	mkdir -p $(LIBDIR)
+	mkdir -p $(TESTBINDIR)
 
 test: $(LIBRARY) $(TESTBIN)
 	$(TESTBIN)

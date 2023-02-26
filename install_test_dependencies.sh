@@ -1,7 +1,18 @@
-#!/bin/sh
+#!/bin/bash
 
-# create the test directory if it doesn't exist
-mkdir -p test
+VERSION=1.4.0
 
-# download the minunit.h file from the repository
-curl -L -o test/minunit.h https://raw.githubusercontent.com/siu/minunit/master/minunit.h
+# Download the archive file
+curl -O https://www.use-strict.de/sput-unit-testing/sput-$VERSION.tar.gz
+
+# Extract the sput.h file from the archive
+tar -zxvf sput-$VERSION.tar.gz sput-$VERSION/sput.h
+
+# Delete the archive file
+rm sput-$VERSION.tar.gz
+
+# Move the sput.h to correct directory
+mv sput-$VERSION/sput.h test/sput.h
+
+# Delete extracted directory
+rmdir sput-$VERSION
