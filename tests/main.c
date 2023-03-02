@@ -28,6 +28,7 @@ static void test_eval_valid() {
     // Rational
     check_valid_literal(3.54);
     check_valid_literal(.8);
+    check_valid_literal(1.);
     check_valid("5 / 2", 2.5);
     check_valid("1 / 3", 1.0 / 3);
 
@@ -42,8 +43,14 @@ static void test_eval_corner_valid() {
     mx_config *config = mx_init_simple();
     double result;
 
+    // Precedence/Order of operations/PEMDAS
+    check_valid("2 * 4 + 2", 10);
+    check_valid("5 + 3 / 2", 6.5);
+
     // Implicit parentheses
     check_valid("5 + 4) *2", 18);
+    check_valid("5 * (2 + 1", 15);
+    check_valid("5 + 4) * (2 + 1", 27);
 
     mx_free(config);
 }
@@ -52,10 +59,25 @@ static void test_eval_invalid() {
     mx_config *config = mx_init_simple();
     double result;
 
-    // Incomplete operators
+    // Illegal characters
+    check_invalid("\"", MX_SYNTAX_ERROR);
+    check_invalid("\r", MX_SYNTAX_ERROR);
+    check_invalid("\7", MX_SYNTAX_ERROR);
+
+    // Incomplete operations
     check_invalid("1 +", MX_SYNTAX_ERROR);
     check_invalid("* 1", MX_SYNTAX_ERROR);
     check_invalid("* 1", MX_SYNTAX_ERROR);
+
+    // Multiple operations
+    check_invalid("1 + + 1", MX_SYNTAX_ERROR);
+
+    // Number format
+    check_invalid("1.1.5", MX_SYNTAX_ERROR);
+    check_invalid("1..5", MX_SYNTAX_ERROR);
+    check_invalid("..5", MX_SYNTAX_ERROR);
+    check_invalid("5..", MX_SYNTAX_ERROR);
+    check_invalid(".", MX_SYNTAX_ERROR);
 
     // Double values
     check_invalid("10 5", MX_SYNTAX_ERROR);
@@ -69,6 +91,7 @@ static void test_eval_invalid() {
     check_invalid("(", MX_SYNTAX_ERROR);
     check_invalid("()", MX_SYNTAX_ERROR);
     check_invalid("", MX_SYNTAX_ERROR);
+    check_invalid("5 + ()", MX_SYNTAX_ERROR);
 
     mx_free(config);
 }

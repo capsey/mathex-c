@@ -9,6 +9,7 @@
  */
 typedef enum mx_error {
     MX_SUCCESS,       // Parsed successfully.
+    MX_INVALID_NAME,  // Name of operator/variable/function is invalid.
     MX_OUT_OF_MEMORY, // No memory left.
     MX_SYNTAX_ERROR,  // Expression syntax is invalid.
     MX_UNDEFINED,     // Identifier name not found.

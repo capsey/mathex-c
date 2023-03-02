@@ -29,7 +29,7 @@ static size_t hash(char *key, size_t length) {
 mx_config *mx_init() {
     mx_config *config = malloc(sizeof(mx_config));
 
-    const size_t START_CAPACITY = 4;
+    const size_t START_CAPACITY = 6;
     config->buckets = calloc(START_CAPACITY, sizeof(mx_config_item *));
     config->n_buckets = START_CAPACITY;
     config->n_items = 0;
@@ -80,9 +80,15 @@ mx_config *mx_init_simple() {
 mx_error mx_insert_operator(mx_config *config, char *name, double (*op_function)(double, double), unsigned int precedence) {
     mx_token token;
 
+    for (char *check = name; *check != '\0'; check++) {
+        if (!mx_check_operator(config, *check, check == name)) {
+            return MX_INVALID_NAME;
+        }
+    }
+
     token.type = MX_OPERATOR;
-    token.op_function = op_function;
-    token.precedence = precedence;
+    token.operator.pointer = op_function;
+    token.operator.precedence = precedence;
 
     return hashmap_insert(config, name, token);
 }
@@ -90,15 +96,27 @@ mx_error mx_insert_operator(mx_config *config, char *name, double (*op_function)
 mx_error mx_insert_function(mx_config *config, char *name, double (*fn_function)(double *), unsigned int n_args) {
     mx_token token;
 
+    for (char *check = name; *check != '\0'; check++) {
+        if (!mx_check_identifier(config, *check, check == name)) {
+            return MX_INVALID_NAME;
+        }
+    }
+
     token.type = MX_FUNCTION;
-    token.fn_function = fn_function;
-    token.n_args = n_args;
+    token.function.pointer = fn_function;
+    token.function.n_args = n_args;
 
     return hashmap_insert(config, name, token);
 }
 
 mx_error mx_insert_variable(mx_config *config, char *name, double value) {
     mx_token token;
+
+    for (char *check = name; *check != '\0'; check++) {
+        if (!mx_check_identifier(config, *check, check == name)) {
+            return MX_INVALID_NAME;
+        }
+    }
 
     token.type = MX_VARIABLE;
     token.value = value;

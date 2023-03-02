@@ -168,38 +168,26 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
     for (size_t i = 0; i < length; i++) {
         char character = expression[i];
 
-        if (isdigit(character) || character == '.') {
-            size_t j = 1;
-            bool decimal_fount = false;
+        if (mx_check_number(config, character, true)) {
+            size_t len = mx_token_length(config, &expression[i], mx_check_number);
 
-            while (j < length - i) {
-                char end_character = expression[i + j];
-                if (end_character == '.') {
-                    if (decimal_fount) break;
-                    decimal_fount = true;
-                } else if (!isdigit(end_character)) {
-                    break;
-                }
-                j++;
+            if (!mx_check_number_format(config, &expression[i], len)) {
+                error_code = MX_SYNTAX_ERROR;
+                goto dealloc;
             }
 
-            mx_token token = {.type = MX_NUMBER, .value = convert(&expression[i], j)};
+            mx_token token = {.type = MX_NUMBER, .value = convert(&expression[i], len)};
+
             enqueue(&res_queue, token);
 
-            i += j - 1;
+            i += len - 1;
             continue;
         }
 
-        if (isalpha(character) || character == '_') {
-            size_t j = 1;
+        if (mx_check_identifier(config, character, true)) {
+            size_t len = mx_token_length(config, &expression[i], mx_check_identifier);
+            mx_token *token = mx_lookup(config, &expression[i], len);
 
-            while (j < length - i) {
-                char end_character = expression[i + j];
-                if (!isalnum(end_character) && end_character != '_') break;
-                j++;
-            }
-
-            mx_token *token = mx_lookup(config, &expression[i], j);
             if (token == NULL) {
                 error_code = MX_UNDEFINED;
                 goto dealloc;
@@ -207,25 +195,26 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
 
             // Assume it is variable
             // TODO: Handle if it is a function
-            push(&ops_stack, *token);
+            enqueue(&res_queue, *token);
 
-            i += j - 1;
+            i += len - 1;
             continue;
         }
 
-        if (character == '(') {
+        if (mx_check_paren(config, character, true)) {
             mx_token token = {.type = MX_LEFT_PAREN};
             push(&ops_stack, token);
 
             continue;
         }
 
-        if (character == ')') {
+        if (mx_check_paren(config, character, false)) {
             if (ops_stack.top != NULL) {
                 mx_token token = pop(&ops_stack);
 
-                while (token.type != MX_LEFT_PAREN && ops_stack.top != NULL) {
+                while (token.type != MX_LEFT_PAREN) {
                     enqueue(&res_queue, token);
+                    if (ops_stack.top == NULL) break;
                     token = pop(&ops_stack);
                 }
             }
@@ -233,29 +222,28 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             continue;
         }
 
-        if (ispunct(character)) {
-            size_t j = 1;
+        if (mx_check_operator(config, character, true)) {
+            size_t len = mx_token_length(config, &expression[i], mx_check_operator);
+            mx_token *token = mx_lookup(config, &expression[i], len);
 
-            while (j < length - i) {
-                char end_character = expression[i + j];
-                if (!ispunct(end_character)) break;
-                j++;
-            }
-
-            mx_token *token = mx_lookup(config, &expression[i], j);
             if (token == NULL) {
                 error_code = MX_UNDEFINED;
                 goto dealloc;
             }
 
-            while (ops_stack.top != NULL && ops_stack.top->value.type == MX_OPERATOR && ops_stack.top->value.precedence >= token->precedence) {
+            while (ops_stack.top != NULL && ops_stack.top->value.type == MX_OPERATOR && ops_stack.top->value.operator.precedence >= token->operator.precedence) {
                 enqueue(&res_queue, pop(&ops_stack));
             }
 
             push(&ops_stack, *token);
 
-            i += j - 1;
+            i += len - 1;
             continue;
+        }
+
+        if (character != ' ') {
+            error_code = MX_SYNTAX_ERROR;
+            goto dealloc;
         }
     }
 
@@ -273,7 +261,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             if (val_stack.top == NULL) return MX_SYNTAX_ERROR;
             double a = pop_double(&val_stack);
 
-            push_double(&val_stack, token.op_function(a, b));
+            push_double(&val_stack, token.operator.pointer(a, b));
         }
     }
 

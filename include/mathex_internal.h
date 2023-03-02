@@ -18,15 +18,23 @@ typedef struct mx_token {
     union {
         double value;
         struct {
-            double (*op_function)(double, double);
+            double (*pointer)(double, double);
             unsigned int precedence;
-        };
+        } operator;
         struct {
-            double (*fn_function)(double[]);
+            double (*pointer)(double[]);
             unsigned int n_args;
-        };
+        } function;
     };
 } mx_token;
+
+bool mx_check_paren(mx_config *config, char character, bool left);
+bool mx_check_number(mx_config *config, char character, bool begin);
+bool mx_check_identifier(mx_config *config, char character, bool begin);
+bool mx_check_operator(mx_config *config, char character, bool begin);
+
+size_t mx_token_length(mx_config *config, char *start, bool (*condition)(mx_config *, char, bool));
+bool mx_check_number_format(mx_config *config, char *start, size_t lenght);
 
 mx_token *mx_lookup(mx_config *config, char *key, size_t length);
 
