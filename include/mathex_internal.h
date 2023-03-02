@@ -2,41 +2,32 @@
 #define __MATHEX_INTERNAL__
 
 #include "mathex.h"
+#include <stdbool.h>
 
-/**
- * @brief Node of a trie of `mx_config` containing operators, functions and variables. (mathex_internal)
- */
-typedef struct mx_trie_node {
-    char letter;            // The character associated with the node.
-    bool is_end;            // Indicates whether the node represents the end of a word.
-    struct TrieNode *next;  // Pointer to the next node in the linked list. (NULL if end)
-    struct TrieNode *child; // Pointer to the first child node. (NULL if none)
-} mx_trie_node_t;
+typedef enum mx_token_type {
+    MX_LEFT_PAREN,
+    MX_RIGHT_PAREN,
+    MX_NUMBER,
+    MX_VARIABLE,
+    MX_OPERATOR,
+    MX_FUNCTION,
+} mx_token_type;
 
-struct mx_config {
-    mx_trie_node_t operators; // Available operators.
-    mx_trie_node_t functions; // Available functions.
-    mx_trie_node_t variables; // Available variables.
-};
+typedef struct mx_token {
+    mx_token_type type;
+    union {
+        float value;
+        struct {
+            float (*op_function)(float, float);
+            unsigned int precedence;
+        };
+        struct {
+            float (*fn_function)(float[]);
+            unsigned int n_args;
+        };
+    };
+} mx_token;
 
-/**
- * @brief Inserts a word into the trie. (mathex_internal)
- *
- * @param node Root of the trie
- * @param string Null-terminated string to insert
- *
- * @return Returns MX_SUCCESS (0) if insertion succeeded and error code if not.
- */
-mx_error_t mx_trie_insert(mx_trie_node_t *node, char *string);
-
-/**
- * @brief Searches given character among node's children and returns it or NULL. (mathex_internal)
- *
- * @param c Character to search.
- * @param node Node to search among childer of.
- *
- * @return Pointer to next node of given character, or NULL if no such.
- */
-mx_trie_node_t *mx_trie_next(mx_trie_node_t *node, char c);
+mx_token *mx_lookup(mx_config *config, char *key, size_t length);
 
 #endif /* __MATHEX_INTERNAL__ */

@@ -11,7 +11,7 @@ SOURCES = $(wildcard $(SRCDIR)/*.c)
 OBJECTS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SOURCES))
 LIBRARY = $(LIBDIR)/mathex.a
 
-TESTDIR = test
+TESTDIR = tests
 TEST = $(TESTDIR)/main.c
 TESTBINDIR = $(TESTDIR)/bin
 TESTBIN = $(TESTBINDIR)/main
