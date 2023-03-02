@@ -47,8 +47,14 @@ static void test_eval_invalid() {
     config = mx_init_simple();
 
     sput_fail_unless(mx_eval(config, "1 +", &result) == MX_SYNTAX_ERROR, "Evaluation succeeded");
-    sput_fail_unless(mx_eval(config, "2fefe", &result) == MX_SYNTAX_ERROR, "Evaluation succeeded");
+    sput_fail_unless(mx_eval(config, "* 1", &result) == MX_SYNTAX_ERROR, "Evaluation succeeded");
+    sput_fail_unless(mx_eval(config, "* 1", &result) == MX_SYNTAX_ERROR, "Evaluation succeeded");
+    sput_fail_unless(mx_eval(config, "5 5", &result) == MX_SYNTAX_ERROR, "Evaluation succeeded");
     sput_fail_unless(mx_eval(config, "x", &result) == MX_UNDEFINED, "Evaluation succeeded");
+    sput_fail_unless(mx_eval(config, ")", &result) == MX_SYNTAX_ERROR, "Evaluation succeeded");
+    sput_fail_unless(mx_eval(config, "(", &result) == MX_SYNTAX_ERROR, "Evaluation succeeded");
+    sput_fail_unless(mx_eval(config, "()", &result) == MX_SYNTAX_ERROR, "Evaluation succeeded");
+    sput_fail_unless(mx_eval(config, "", &result) == MX_SYNTAX_ERROR, "Evaluation succeeded");
 
     mx_free(config);
 }

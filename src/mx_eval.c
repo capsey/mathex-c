@@ -221,11 +221,13 @@ mx_error mx_eval(mx_config *config, char *expression, float *result) {
         }
 
         if (character == ')') {
-            mx_token token = pop(&ops_stack);
+            if (ops_stack.top != NULL) {
+                mx_token token = pop(&ops_stack);
 
-            while (token.type != MX_LEFT_PAREN) {
-                enqueue(&res_queue, token);
-                token = pop(&ops_stack);
+                while (token.type != MX_LEFT_PAREN && ops_stack.top != NULL) {
+                    enqueue(&res_queue, token);
+                    token = pop(&ops_stack);
+                }
             }
 
             continue;
@@ -266,11 +268,17 @@ mx_error mx_eval(mx_config *config, char *expression, float *result) {
         if (token.type == MX_NUMBER || token.type == MX_VARIABLE) {
             push_float(&val_stack, token.value);
         } else if (token.type == MX_OPERATOR) {
+            if (val_stack.top == NULL) return MX_SYNTAX_ERROR;
             float b = pop_float(&val_stack);
+            if (val_stack.top == NULL) return MX_SYNTAX_ERROR;
             float a = pop_float(&val_stack);
 
             push_float(&val_stack, token.op_function(a, b));
         }
+    }
+
+    if (val_stack.top == NULL || val_stack.top->next != NULL) {
+        return MX_SYNTAX_ERROR;
     }
 
     *result = pop_float(&val_stack);
