@@ -12,7 +12,7 @@ tar -zxvf sput-$VERSION.tar.gz sput-$VERSION/sput.h
 rm sput-$VERSION.tar.gz
 
 # Move the sput.h to correct directory
-mv sput-$VERSION/sput.h test/sput.h
+mv sput-$VERSION/sput.h tests/sput.h
 
 # Delete extracted directory
 rmdir sput-$VERSION
