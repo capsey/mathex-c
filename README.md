@@ -1,6 +1,6 @@
 # Mathematical Expressions for C
 
-![tests status](https://github.com/capsey/mathex-c/actions/workflows/tests.yml/badge.svg)
+[![tests status](https://github.com/capsey/mathex-c/actions/workflows/tests.yml/badge.svg)](https://github.com/capsey/mathex-c/actions/workflows/tests.yml)
 
 ## What is Mathex?
 
