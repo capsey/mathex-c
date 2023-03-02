@@ -5,17 +5,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct node_float {
-    float value;
-    struct node_float *next;
+struct node_double {
+    double value;
+    struct node_double *next;
 };
 
-struct stack_float {
-    struct node_float *top;
+struct stack_double {
+    struct node_double *top;
 };
 
-static void push_float(struct stack_float *stack, float value) {
-    struct node_float *new_node = malloc(sizeof(struct node_float));
+static void push_double(struct stack_double *stack, double value) {
+    struct node_double *new_node = malloc(sizeof(struct node_double));
 
     new_node->value = value;
     new_node->next = stack->top;
@@ -23,22 +23,22 @@ static void push_float(struct stack_float *stack, float value) {
     stack->top = new_node;
 }
 
-static float pop_float(struct stack_float *stack) {
+static double pop_double(struct stack_double *stack) {
     if (stack->top == NULL) {
         /* ... */
     }
 
-    float value = stack->top->value;
-    struct node_float *temp = stack->top;
+    double value = stack->top->value;
+    struct node_double *temp = stack->top;
     stack->top = stack->top->next;
 
     free(temp);
     return value;
 }
 
-static void free_stack_float(struct stack_float *stack) {
+static void free_stack_double(struct stack_double *stack) {
     while (stack->top != NULL) {
-        struct node_float *temp = stack->top;
+        struct node_double *temp = stack->top;
         stack->top = stack->top->next;
 
         free(temp);
@@ -131,9 +131,9 @@ static void free_queue(struct queue *queue) {
     queue->rear = NULL;
 }
 
-static float convert(char *input, size_t length) {
-    float result = 0;
-    float decimal_place = 10;
+static double convert(char *input, size_t length) {
+    double result = 0;
+    double decimal_place = 10;
     int decimal_found = false;
 
     for (size_t i = 0; i < length; i++) {
@@ -144,9 +144,9 @@ static float convert(char *input, size_t length) {
 
             if (!decimal_found) {
                 result *= 10;
-                result += (float)digit;
+                result += (double)digit;
             } else {
-                result += (float)digit / decimal_place;
+                result += (double)digit / decimal_place;
                 decimal_place *= 10;
             }
         } else if (character == '.') {
@@ -157,13 +157,13 @@ static float convert(char *input, size_t length) {
     return result;
 }
 
-mx_error mx_eval(mx_config *config, char *expression, float *result) {
+mx_error mx_eval(mx_config *config, char *expression, double *result) {
     size_t length = strlen(expression);
     mx_error error_code = MX_SUCCESS;
 
     struct stack ops_stack = {NULL};
     struct queue res_queue = {NULL, NULL};
-    struct stack_float val_stack = {NULL};
+    struct stack_double val_stack = {NULL};
 
     for (size_t i = 0; i < length; i++) {
         char character = expression[i];
@@ -266,14 +266,14 @@ mx_error mx_eval(mx_config *config, char *expression, float *result) {
     while (res_queue.front != NULL) {
         mx_token token = dequeue(&res_queue);
         if (token.type == MX_NUMBER || token.type == MX_VARIABLE) {
-            push_float(&val_stack, token.value);
+            push_double(&val_stack, token.value);
         } else if (token.type == MX_OPERATOR) {
             if (val_stack.top == NULL) return MX_SYNTAX_ERROR;
-            float b = pop_float(&val_stack);
+            double b = pop_double(&val_stack);
             if (val_stack.top == NULL) return MX_SYNTAX_ERROR;
-            float a = pop_float(&val_stack);
+            double a = pop_double(&val_stack);
 
-            push_float(&val_stack, token.op_function(a, b));
+            push_double(&val_stack, token.op_function(a, b));
         }
     }
 
@@ -281,11 +281,11 @@ mx_error mx_eval(mx_config *config, char *expression, float *result) {
         return MX_SYNTAX_ERROR;
     }
 
-    *result = pop_float(&val_stack);
+    *result = pop_double(&val_stack);
 
 dealloc:
     free_stack(&ops_stack);
     free_queue(&res_queue);
-    free_stack_float(&val_stack);
+    free_stack_double(&val_stack);
     return error_code;
 }

@@ -43,7 +43,7 @@ mx_config *mx_init_simple();
  *
  * @return Returns MX_SUCCESS (0) if insertion succeeded and error code if not.
  */
-mx_error mx_insert_operator(mx_config *config, char *name, float (*op_function)(float, float), unsigned int precedence);
+mx_error mx_insert_operator(mx_config *config, char *name, double (*op_function)(double, double), unsigned int precedence);
 
 /**
  * @brief Inserts an function to the configuration struct to be available for parsing. (mathex)
@@ -55,7 +55,7 @@ mx_error mx_insert_operator(mx_config *config, char *name, float (*op_function)(
  *
  * @return Returns MX_SUCCESS (0) if insertion succeeded and error code if not.
  */
-mx_error mx_insert_function(mx_config *config, char *name, float (*fn_function)(float *), unsigned int n_args);
+mx_error mx_insert_function(mx_config *config, char *name, double (*fn_function)(double *), unsigned int n_args);
 
 /**
  * @brief Inserts an variable to the configuration struct to be available for parsing. (mathex)
@@ -66,7 +66,7 @@ mx_error mx_insert_function(mx_config *config, char *name, float (*fn_function)(
  *
  * @return Returns MX_SUCCESS (0) if insertion succeeded and error code if not.
  */
-mx_error mx_insert_variable(mx_config *config, char *name, float value);
+mx_error mx_insert_variable(mx_config *config, char *name, double value);
 
 /**
  * @brief Frees configuration struct from memory. Does not perform checks, so passing invalid pointer is undefined. (mathex)
@@ -84,6 +84,6 @@ void mx_free(mx_config *config);
  *
  * @return Returns MX_SUCCESS (0) if evaluation succeeded and error code if not.
  */
-mx_error mx_eval(mx_config *config, char *expression, float *result);
+mx_error mx_eval(mx_config *config, char *expression, double *result);
 
 #endif /* __MATHEX__ */

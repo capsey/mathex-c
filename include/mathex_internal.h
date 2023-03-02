@@ -16,13 +16,13 @@ typedef enum mx_token_type {
 typedef struct mx_token {
     mx_token_type type;
     union {
-        float value;
+        double value;
         struct {
-            float (*op_function)(float, float);
+            double (*op_function)(double, double);
             unsigned int precedence;
         };
         struct {
-            float (*fn_function)(float[]);
+            double (*fn_function)(double[]);
             unsigned int n_args;
         };
     };

@@ -61,10 +61,10 @@ static mx_error hashmap_insert(mx_config *config, char *key, mx_token value) {
     return MX_SUCCESS;
 }
 
-float addition(float a, float b) { return a + b; }
-float substract(float a, float b) { return a - b; }
-float multiply(float a, float b) { return a * b; }
-float divide(float a, float b) { return a / b; }
+double addition(double a, double b) { return a + b; }
+double substract(double a, double b) { return a - b; }
+double multiply(double a, double b) { return a * b; }
+double divide(double a, double b) { return a / b; }
 
 mx_config *mx_init_simple() {
     mx_config *config = mx_init();
@@ -77,7 +77,7 @@ mx_config *mx_init_simple() {
     return config;
 }
 
-mx_error mx_insert_operator(mx_config *config, char *name, float (*op_function)(float, float), unsigned int precedence) {
+mx_error mx_insert_operator(mx_config *config, char *name, double (*op_function)(double, double), unsigned int precedence) {
     mx_token token;
 
     token.type = MX_OPERATOR;
@@ -87,7 +87,7 @@ mx_error mx_insert_operator(mx_config *config, char *name, float (*op_function)(
     return hashmap_insert(config, name, token);
 }
 
-mx_error mx_insert_function(mx_config *config, char *name, float (*fn_function)(float *), unsigned int n_args) {
+mx_error mx_insert_function(mx_config *config, char *name, double (*fn_function)(double *), unsigned int n_args) {
     mx_token token;
 
     token.type = MX_FUNCTION;
@@ -97,7 +97,7 @@ mx_error mx_insert_function(mx_config *config, char *name, float (*fn_function)(
     return hashmap_insert(config, name, token);
 }
 
-mx_error mx_insert_variable(mx_config *config, char *name, float value) {
+mx_error mx_insert_variable(mx_config *config, char *name, double value) {
     mx_token token;
 
     token.type = MX_VARIABLE;
