@@ -3,15 +3,15 @@
 #include <ctype.h>
 #include <stdbool.h>
 
-bool _check_number(char character, bool begin) {
+bool is_valid_num_char(char character, bool begin) {
     return isdigit(character) || character == '.';
 }
 
-bool _check_identifier(char character, bool begin) {
+bool is_valid_id_char(char character, bool begin) {
     return isalpha(character) || character == '_' || (!begin && isdigit(character));
 }
 
-bool _check_operator(char character, bool begin) {
+bool is_valid_op_char(char character, bool begin) {
     switch (character) {
     case '#':
     case '!':
@@ -28,7 +28,6 @@ bool _check_operator(char character, bool begin) {
     case '?':
     case '@':
     case '^':
-    case '`':
     case '|':
     case '~':
         return true;
@@ -37,7 +36,7 @@ bool _check_operator(char character, bool begin) {
     }
 }
 
-size_t _token_length(char *start, bool (*condition)(char, bool)) {
+size_t get_token_length(char *start, bool (*condition)(char, bool)) {
     size_t length = 1;
     char *character = start + 1;
 
@@ -49,12 +48,12 @@ size_t _token_length(char *start, bool (*condition)(char, bool)) {
     return length;
 }
 
-bool _check_number_format(mx_config *config, char *start, size_t length) {
+bool check_num_format(mx_config *config, char *start, size_t length) {
     bool decimal_found = false;
 
-    // '.1' == 0.1
-    // '1.' == 1.0
-    //  '.' != 0.0
+    // .1 == 0.1
+    // 1. == 1.0
+    // .  != 0.0
     if (length == 1 && start[0] == '.') return false;
 
     for (size_t i = 0; i < length; i++) {

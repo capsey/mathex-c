@@ -4,17 +4,17 @@
 #include "mathex.h"
 #include <stdbool.h>
 
-typedef enum _token_type {
+typedef enum mx_token_type {
     MX_LEFT_PAREN,
     MX_RIGHT_PAREN,
     MX_NUMBER,
     MX_VARIABLE,
     MX_OPERATOR,
     MX_FUNCTION,
-} _token_type;
+} mx_token_type;
 
-typedef struct _token {
-    _token_type type;
+typedef struct mx_token {
+    mx_token_type type;
     union {
         double value;
         struct {
@@ -27,20 +27,20 @@ typedef struct _token {
             unsigned int n_args;
         };
     };
-} _token;
+} mx_token;
 
-extern const _token _add_token;
-extern const _token _sub_token;
-extern const _token _mul_token;
-extern const _token _div_token;
+extern const mx_token mx_add_token;
+extern const mx_token mx_sub_token;
+extern const mx_token mx_mul_token;
+extern const mx_token mx_div_token;
 
-bool _check_number(char character, bool begin);
-bool _check_identifier(char character, bool begin);
-bool _check_operator(char character, bool begin);
+bool is_valid_num_char(char character, bool begin);
+bool is_valid_id_char(char character, bool begin);
+bool is_valid_op_char(char character, bool begin);
 
-size_t _token_length(char *start, bool (*condition)(char, bool));
-bool _check_number_format(mx_config *config, char *start, size_t lenght);
+size_t get_token_length(char *start, bool (*condition)(char, bool));
+bool check_num_format(mx_config *config, char *start, size_t lenght);
 
-_token *_lookup(mx_config *config, char *key, size_t length);
+mx_token *mx_lookup_name(mx_config *config, char *name, size_t length);
 
 #endif /* __MATHEX_INTERNAL__ */
