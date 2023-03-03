@@ -309,6 +309,24 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             continue;
         }
 
+        if (character == ',') {
+            if (ops_stack.top == NULL) {
+                // Mismatched parenthesis (ignore by default for implicit parentheses)
+                continue;
+            }
+
+            while (ops_stack.top->value.type != MX_LEFT_PAREN) {
+                enqueue(&out_queue, pop(&ops_stack));
+
+                if (ops_stack.top == NULL) {
+                    // Mismatched parenthesis (ignore by default for implicit parentheses)
+                    break;
+                }
+            }
+
+            continue;
+        }
+
         if (character != ' ') {
             error_code = MX_SYNTAX_ERROR;
             goto cleanup;
@@ -347,12 +365,15 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
         case MX_FUNCTION:
             if (token.n_args == 0) {
                 pushf(&res_stack, token.function(NULL));
-            } else if (token.n_args == 1) {
-                if (res_stack.top == NULL) return MX_SYNTAX_ERROR;
-                double args[1] = {popf(&res_stack)};
-                pushf(&res_stack, token.function(args));
             } else {
-                // Multiargument function
+                double args[token.n_args];
+
+                for (size_t i = 0; i < token.n_args; i++) {
+                    if (res_stack.top == NULL) return MX_SYNTAX_ERROR;
+                    args[token.n_args - i - 1] = popf(&res_stack);
+                }
+
+                pushf(&res_stack, token.function(args));
             }
             break;
 

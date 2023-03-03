@@ -13,6 +13,7 @@ typedef enum mx_error {
     MX_OUT_OF_MEMORY, // No memory left.
     MX_SYNTAX_ERROR,  // Expression syntax is invalid.
     MX_UNDEFINED,     // Identifier name not found.
+    MX_ARGS_NUM,      // Incorrect number of arguments.
 } mx_error;
 
 /**

@@ -3,6 +3,7 @@
 #include "sput.h"
 
 #include "test_eval_default.c"
+#include "test_eval_func.c"
 #include "test_eval_trig.c"
 
 int main() {
@@ -19,8 +20,15 @@ int main() {
     sput_enter_suite("mx_eval(...): Valid input with trigonometric functions");
     sput_run_test(test_eval_trig_valid);
 
-    sput_enter_suite("mx_eval(...): Invalid input with trig functions");
+    sput_enter_suite("mx_eval(...): Invalid input with trigonometric functions");
     sput_run_test(test_eval_trig_invalid);
+
+    // mx_eval(...) with multiargument functions
+    sput_enter_suite("mx_eval(...): Valid input with multiargument functions");
+    sput_run_test(test_eval_func_valid);
+
+    sput_enter_suite("mx_eval(...): Invalid input with multiargument functions");
+    sput_run_test(test_eval_func_invalid);
 
     sput_finish_testing();
     return sput_get_return_value();
