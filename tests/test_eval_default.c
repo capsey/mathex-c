@@ -2,8 +2,8 @@
 #include "mathex.h"
 #include "sput.h"
 
-static void test_eval_simple_valid() {
-    mx_config *config = mx_init_simple();
+static void test_eval_default_valid() {
+    mx_config *config = mx_init();
     double result;
 
     // Integers
@@ -35,8 +35,8 @@ static void test_eval_simple_valid() {
     mx_free(config);
 }
 
-static void test_eval_simple_invalid() {
-    mx_config *config = mx_init_simple();
+static void test_eval_default_invalid() {
+    mx_config *config = mx_init();
     double result;
 
     // Illegal characters

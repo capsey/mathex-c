@@ -3,19 +3,15 @@
 #include <ctype.h>
 #include <stdbool.h>
 
-bool mx_check_paren(mx_config *config, char character, bool left) {
-    return left ? character == '(' : character == ')';
-}
-
-bool mx_check_number(mx_config *config, char character, bool begin) {
+bool _check_number(char character, bool begin) {
     return isdigit(character) || character == '.';
 }
 
-bool mx_check_identifier(mx_config *config, char character, bool begin) {
+bool _check_identifier(char character, bool begin) {
     return isalpha(character) || character == '_' || (!begin && isdigit(character));
 }
 
-bool mx_check_operator(mx_config *config, char character, bool begin) {
+bool _check_operator(char character, bool begin) {
     switch (character) {
     case '#':
     case '!':
@@ -41,11 +37,11 @@ bool mx_check_operator(mx_config *config, char character, bool begin) {
     }
 }
 
-size_t mx_token_length(mx_config *config, char *start, bool (*condition)(mx_config *, char, bool)) {
+size_t _token_length(char *start, bool (*condition)(char, bool)) {
     size_t length = 1;
     char *character = start + 1;
 
-    while (*character != '\0' && condition(config, *character, false)) {
+    while (*character != '\0' && condition(*character, false)) {
         character++;
         length++;
     }
@@ -53,7 +49,7 @@ size_t mx_token_length(mx_config *config, char *start, bool (*condition)(mx_conf
     return length;
 }
 
-bool mx_check_number_format(mx_config *config, char *start, size_t length) {
+bool _check_number_format(mx_config *config, char *start, size_t length) {
     bool decimal_found = false;
 
     // '.1' == 0.1

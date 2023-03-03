@@ -28,13 +28,6 @@ typedef struct mx_config mx_config;
 mx_config *mx_init();
 
 /**
- * @brief Creates configuration struct with given parsing rules and simple operators (+, -, *, /). This function allocates memory, so it is mandatory to call `mx_free` to prevent memory leak. (mathex)
- *
- * @return Pointer to configuration struct. NULL if failed to allocate.
- */
-mx_config *mx_init_simple();
-
-/**
  * @brief Inserts an operator to the configuration struct to be available for parsing. (mathex)
  *
  * @param config Configuration struct to insert to.

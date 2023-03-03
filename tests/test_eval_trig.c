@@ -14,7 +14,7 @@ static double _sinh(double *args) { return sinh(args[0]); }
 static double _cosh(double *args) { return cosh(args[0]); }
 
 static mx_config *init_trig() {
-    mx_config *config = mx_init_simple();
+    mx_config *config = mx_init();
 
     mx_insert_function(config, "sin", _sin, 1);
     mx_insert_function(config, "cos", _cos, 1);

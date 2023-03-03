@@ -5,17 +5,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct node_double {
+struct _nodef {
     double value;
-    struct node_double *next;
+    struct _nodef *next;
 };
 
-struct stack_double {
-    struct node_double *top;
+struct _stackf {
+    struct _nodef *top;
 };
 
-static void push_double(struct stack_double *stack, double value) {
-    struct node_double *new_node = malloc(sizeof(struct node_double));
+static void _pushf(struct _stackf *stack, double value) {
+    struct _nodef *new_node = malloc(sizeof(struct _nodef));
 
     new_node->value = value;
     new_node->next = stack->top;
@@ -23,39 +23,39 @@ static void push_double(struct stack_double *stack, double value) {
     stack->top = new_node;
 }
 
-static double pop_double(struct stack_double *stack) {
+static double _popf(struct _stackf *stack) {
     if (stack->top == NULL) {
         /* ... */
     }
 
     double value = stack->top->value;
-    struct node_double *temp = stack->top;
+    struct _nodef *temp = stack->top;
     stack->top = stack->top->next;
 
     free(temp);
     return value;
 }
 
-static void free_stack_double(struct stack_double *stack) {
+static void _free_stackf(struct _stackf *stack) {
     while (stack->top != NULL) {
-        struct node_double *temp = stack->top;
+        struct _nodef *temp = stack->top;
         stack->top = stack->top->next;
 
         free(temp);
     }
 }
 
-struct node {
-    mx_token value;
-    struct node *next;
+struct _node {
+    _token value;
+    struct _node *next;
 };
 
-struct stack {
-    struct node *top;
+struct _stack {
+    struct _node *top;
 };
 
-static void push(struct stack *stack, mx_token value) {
-    struct node *new_node = malloc(sizeof(struct node));
+static void _push(struct _stack *stack, _token value) {
+    struct _node *new_node = malloc(sizeof(struct _node));
 
     new_node->value = value;
     new_node->next = stack->top;
@@ -63,35 +63,35 @@ static void push(struct stack *stack, mx_token value) {
     stack->top = new_node;
 }
 
-static mx_token pop(struct stack *stack) {
+static _token _pop(struct _stack *stack) {
     if (stack->top == NULL) {
         /* ... */
     }
 
-    mx_token value = stack->top->value;
-    struct node *temp = stack->top;
+    _token value = stack->top->value;
+    struct _node *temp = stack->top;
     stack->top = stack->top->next;
 
     free(temp);
     return value;
 }
 
-static void free_stack(struct stack *stack) {
+static void _free_stack(struct _stack *stack) {
     while (stack->top != NULL) {
-        struct node *temp = stack->top;
+        struct _node *temp = stack->top;
         stack->top = stack->top->next;
 
         free(temp);
     }
 }
 
-struct queue {
-    struct node *front;
-    struct node *rear;
+struct _queue {
+    struct _node *front;
+    struct _node *rear;
 };
 
-static void enqueue(struct queue *queue, mx_token value) {
-    struct node *new_node = malloc(sizeof(struct node));
+static void _enqueue(struct _queue *queue, _token value) {
+    struct _node *new_node = malloc(sizeof(struct _node));
 
     new_node->value = value;
     new_node->next = NULL;
@@ -105,13 +105,13 @@ static void enqueue(struct queue *queue, mx_token value) {
     queue->rear = new_node;
 }
 
-static mx_token dequeue(struct queue *queue) {
+static _token _dequeue(struct _queue *queue) {
     if (queue->front == NULL) {
         /* ... */
     }
 
-    mx_token value = queue->front->value;
-    struct node *temp = queue->front;
+    _token value = queue->front->value;
+    struct _node *temp = queue->front;
     queue->front = queue->front->next;
 
     if (queue->front == NULL) queue->rear = NULL;
@@ -120,9 +120,9 @@ static mx_token dequeue(struct queue *queue) {
     return value;
 }
 
-static void free_queue(struct queue *queue) {
+static void _free_queue(struct _queue *queue) {
     while (queue->front != NULL) {
-        struct node *temp = queue->front;
+        struct _node *temp = queue->front;
         queue->front = queue->front->next;
 
         free(temp);
@@ -131,7 +131,7 @@ static void free_queue(struct queue *queue) {
     queue->rear = NULL;
 }
 
-static double convert(char *input, size_t length) {
+static double _convert(char *input, size_t length) {
     double result = 0;
     double decimal_place = 10;
     int decimal_found = false;
@@ -163,32 +163,32 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
     size_t length = strlen(expression);
     mx_error error_code = MX_SUCCESS;
 
-    struct stack ops_stack = {NULL};
-    struct queue out_queue = {NULL, NULL};
-    struct stack_double res_stack = {NULL};
+    struct _stack ops_stack = {NULL};
+    struct _queue out_queue = {NULL, NULL};
+    struct _stackf res_stack = {NULL};
 
     for (size_t i = 0; i < length; i++) {
         char character = expression[i];
 
-        if (mx_check_number(config, character, true)) {
-            size_t len = mx_token_length(config, &expression[i], mx_check_number);
+        if (_check_number(character, true)) {
+            size_t len = _token_length(&expression[i], _check_number);
 
-            if (!mx_check_number_format(config, &expression[i], len)) {
+            if (!_check_number_format(config, &expression[i], len)) {
                 error_code = MX_SYNTAX_ERROR;
                 goto cleanup;
             }
 
-            mx_token token = {.type = MX_NUMBER, .value = convert(&expression[i], len)};
+            _token token = {.type = MX_NUMBER, .value = _convert(&expression[i], len)};
 
-            enqueue(&out_queue, token);
+            _enqueue(&out_queue, token);
 
             i += len - 1;
             continue;
         }
 
-        if (mx_check_identifier(config, character, true)) {
-            size_t len = mx_token_length(config, &expression[i], mx_check_identifier);
-            mx_token *token = mx_lookup(config, &expression[i], len);
+        if (_check_identifier(character, true)) {
+            size_t len = _token_length(&expression[i], _check_identifier);
+            _token *token = _lookup(config, &expression[i], len);
 
             if (token == NULL) {
                 error_code = MX_UNDEFINED;
@@ -197,11 +197,11 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
 
             switch (token->type) {
             case MX_FUNCTION:
-                push(&ops_stack, *token);
+                _push(&ops_stack, *token);
                 break;
 
             case MX_VARIABLE:
-                enqueue(&out_queue, *token);
+                _enqueue(&out_queue, *token);
                 break;
 
             default:
@@ -213,9 +213,53 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             continue;
         }
 
-        if (mx_check_operator(config, character, true)) {
-            size_t len = mx_token_length(config, &expression[i], mx_check_operator);
-            mx_token *token = mx_lookup(config, &expression[i], len);
+        if (character == '+') {
+            _token token = _add_token;
+
+            while (ops_stack.top != NULL && ops_stack.top->value.type == MX_OPERATOR && (ops_stack.top->value.precedence > token.precedence || (ops_stack.top->value.precedence == token.precedence && token.left_associative))) {
+                _enqueue(&out_queue, _pop(&ops_stack));
+            }
+
+            _push(&ops_stack, token);
+            continue;
+        }
+
+        if (character == '-') {
+            _token token = _sub_token;
+
+            while (ops_stack.top != NULL && ops_stack.top->value.type == MX_OPERATOR && (ops_stack.top->value.precedence > token.precedence || (ops_stack.top->value.precedence == token.precedence && token.left_associative))) {
+                _enqueue(&out_queue, _pop(&ops_stack));
+            }
+
+            _push(&ops_stack, token);
+            continue;
+        }
+
+        if (character == '*') {
+            _token token = _mul_token;
+
+            while (ops_stack.top != NULL && ops_stack.top->value.type == MX_OPERATOR && (ops_stack.top->value.precedence > token.precedence || (ops_stack.top->value.precedence == token.precedence && token.left_associative))) {
+                _enqueue(&out_queue, _pop(&ops_stack));
+            }
+
+            _push(&ops_stack, token);
+            continue;
+        }
+
+        if (character == '/') {
+            _token token = _div_token;
+
+            while (ops_stack.top != NULL && ops_stack.top->value.type == MX_OPERATOR && (ops_stack.top->value.precedence > token.precedence || (ops_stack.top->value.precedence == token.precedence && token.left_associative))) {
+                _enqueue(&out_queue, _pop(&ops_stack));
+            }
+
+            _push(&ops_stack, token);
+            continue;
+        }
+
+        if (_check_operator(character, true)) {
+            size_t len = _token_length(&expression[i], _check_operator);
+            _token *token = _lookup(config, &expression[i], len);
 
             if (token == NULL) {
                 error_code = MX_UNDEFINED;
@@ -223,30 +267,30 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             }
 
             while (ops_stack.top != NULL && ops_stack.top->value.type == MX_OPERATOR && (ops_stack.top->value.precedence > token->precedence || (ops_stack.top->value.precedence == token->precedence && token->left_associative))) {
-                enqueue(&out_queue, pop(&ops_stack));
+                _enqueue(&out_queue, _pop(&ops_stack));
             }
 
-            push(&ops_stack, *token);
+            _push(&ops_stack, *token);
 
             i += len - 1;
             continue;
         }
 
-        if (mx_check_paren(config, character, true)) {
-            mx_token token = {.type = MX_LEFT_PAREN};
-            push(&ops_stack, token);
+        if (character == '(') {
+            _token token = {.type = MX_LEFT_PAREN};
+            _push(&ops_stack, token);
 
             continue;
         }
 
-        if (mx_check_paren(config, character, false)) {
+        if (character == ')') {
             if (ops_stack.top == NULL) {
                 // Mismatched parenthesis (ignore by default for implicit parentheses)
                 continue;
             }
 
             while (ops_stack.top->value.type != MX_LEFT_PAREN) {
-                enqueue(&out_queue, pop(&ops_stack));
+                _enqueue(&out_queue, _pop(&ops_stack));
 
                 if (ops_stack.top == NULL) {
                     // Mismatched parenthesis (ignore by default for implicit parentheses)
@@ -255,10 +299,10 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             }
 
             if (ops_stack.top != NULL) {
-                pop(&ops_stack); // Discard left parenthesis
+                _pop(&ops_stack); // Discard left parenthesis
 
                 if (ops_stack.top != NULL && ops_stack.top->value.type == MX_FUNCTION) {
-                    enqueue(&out_queue, pop(&ops_stack));
+                    _enqueue(&out_queue, _pop(&ops_stack));
                 }
             }
 
@@ -272,49 +316,44 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
     }
 
     while (ops_stack.top != NULL) {
-        mx_token token = pop(&ops_stack);
+        _token token = _pop(&ops_stack);
 
         if (token.type == MX_LEFT_PAREN) {
             // Mismatched parenthesis (ignore by default for implicit parentheses)
             continue;
         }
 
-        enqueue(&out_queue, token);
+        _enqueue(&out_queue, token);
     }
 
     while (out_queue.front != NULL) {
-        mx_token token = dequeue(&out_queue);
+        _token token = _dequeue(&out_queue);
 
         switch (token.type) {
         case MX_NUMBER:
         case MX_VARIABLE:
-            push_double(&res_stack, token.value);
+            _pushf(&res_stack, token.value);
             break;
 
         case MX_OPERATOR:
             if (res_stack.top == NULL) return MX_SYNTAX_ERROR;
-            double b = pop_double(&res_stack);
+            double b = _popf(&res_stack);
             if (res_stack.top == NULL) return MX_SYNTAX_ERROR;
-            double a = pop_double(&res_stack);
+            double a = _popf(&res_stack);
 
-            push_double(&res_stack, token.operation(a, b));
+            _pushf(&res_stack, token.operation(a, b));
             break;
 
         case MX_FUNCTION:
-            double value;
-
             if (token.n_args == 0) {
-                value = token.function(NULL);
+                _pushf(&res_stack, token.function(NULL));
             } else if (token.n_args == 1) {
                 if (res_stack.top == NULL) return MX_SYNTAX_ERROR;
-                double args[1] = {pop_double(&res_stack)};
-
-                value = token.function(args);
+                double args[1] = {_popf(&res_stack)};
+                _pushf(&res_stack, token.function(args));
             } else {
                 // Multiargument function
             }
-
-            push_double(&res_stack, value);
             break;
 
         default:
@@ -327,11 +366,11 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
         return MX_SYNTAX_ERROR;
     }
 
-    *result = pop_double(&res_stack);
+    *result = _popf(&res_stack);
 
 cleanup:
-    free_stack(&ops_stack);
-    free_queue(&out_queue);
-    free_stack_double(&res_stack);
+    _free_stack(&ops_stack);
+    _free_queue(&out_queue);
+    _free_stackf(&res_stack);
     return error_code;
 }
