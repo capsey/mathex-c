@@ -43,9 +43,16 @@ static mx_error insert(mx_config *config, char *key, mx_token value) {
 
         for (size_t i = 0; i < length; i++) {
             if (temp[i] != NULL) {
-                insert(config, temp[i]->key, temp[i]->value);
+                struct item *curr = temp[i];
+
+                while (curr != NULL) {
+                    insert(config, curr->key, curr->value);
+                    curr = curr->next;
+                }
             }
         }
+
+        free(temp);
     }
 
     size_t length = strlen(key);
@@ -57,17 +64,19 @@ static mx_error insert(mx_config *config, char *key, mx_token value) {
     }
 
     if (*item == NULL) {
-        struct item *new = malloc(sizeof(item));
+        struct item *new = malloc(sizeof(struct item));
         if (new == NULL) return MX_OUT_OF_MEMORY;
 
         new->key = key;
         new->next = NULL;
+        new->value = value;
 
         *item = new;
         config->n_items++;
+    } else {
+        (*item)->value = value;
     }
 
-    (*item)->value = value;
     return MX_SUCCESS;
 }
 
