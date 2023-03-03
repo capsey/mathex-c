@@ -17,6 +17,7 @@ typedef struct mx_config {
 
 static size_t hash(char *key, size_t length) {
     // https://stackoverflow.com/a/2351171/15250154
+
     size_t hash = 0;
 
     for (size_t i = 0; i < length; i++) {
@@ -61,23 +62,23 @@ static mx_error hashmap_insert(mx_config *config, char *key, mx_token value) {
     return MX_SUCCESS;
 }
 
-double addition(double a, double b) { return a + b; }
-double substract(double a, double b) { return a - b; }
-double multiply(double a, double b) { return a * b; }
-double divide(double a, double b) { return a / b; }
+static double _add(double a, double b) { return a + b; }
+static double _sub(double a, double b) { return a - b; }
+static double _mul(double a, double b) { return a * b; }
+static double _div(double a, double b) { return a / b; }
 
 mx_config *mx_init_simple() {
     mx_config *config = mx_init();
 
-    mx_insert_operator(config, "+", addition, 1);
-    mx_insert_operator(config, "-", substract, 1);
-    mx_insert_operator(config, "*", multiply, 2);
-    mx_insert_operator(config, "/", divide, 2);
+    mx_insert_operator(config, "+", _add, 2, true);
+    mx_insert_operator(config, "-", _sub, 2, true);
+    mx_insert_operator(config, "*", _mul, 3, true);
+    mx_insert_operator(config, "/", _div, 3, true);
 
     return config;
 }
 
-mx_error mx_insert_operator(mx_config *config, char *name, double (*op_function)(double, double), unsigned int precedence) {
+mx_error mx_insert_operator(mx_config *config, char *name, double (*operation)(double, double), unsigned int precedence, bool left_associative) {
     mx_token token;
 
     for (char *check = name; *check != '\0'; check++) {
@@ -87,13 +88,14 @@ mx_error mx_insert_operator(mx_config *config, char *name, double (*op_function)
     }
 
     token.type = MX_OPERATOR;
-    token.operator.pointer = op_function;
-    token.operator.precedence = precedence;
+    token.operation = operation;
+    token.precedence = precedence;
+    token.left_associative = left_associative;
 
     return hashmap_insert(config, name, token);
 }
 
-mx_error mx_insert_function(mx_config *config, char *name, double (*fn_function)(double *), unsigned int n_args) {
+mx_error mx_insert_function(mx_config *config, char *name, double (*function)(double *), unsigned int n_args) {
     mx_token token;
 
     for (char *check = name; *check != '\0'; check++) {
@@ -103,8 +105,8 @@ mx_error mx_insert_function(mx_config *config, char *name, double (*fn_function)
     }
 
     token.type = MX_FUNCTION;
-    token.function.pointer = fn_function;
-    token.function.n_args = n_args;
+    token.function = function;
+    token.n_args = n_args;
 
     return hashmap_insert(config, name, token);
 }

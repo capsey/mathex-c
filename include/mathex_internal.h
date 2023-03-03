@@ -18,13 +18,14 @@ typedef struct mx_token {
     union {
         double value;
         struct {
-            double (*pointer)(double, double);
+            double (*operation)(double, double);
             unsigned int precedence;
-        } operator;
+            bool left_associative;
+        };
         struct {
-            double (*pointer)(double[]);
+            double (*function)(double[]);
             unsigned int n_args;
-        } function;
+        };
     };
 } mx_token;
 

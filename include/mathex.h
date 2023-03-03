@@ -39,24 +39,25 @@ mx_config *mx_init_simple();
  *
  * @param config Configuration struct to insert to.
  * @param name Null-terminated string representing an operator. (should only contain ASCII symbols)
- * @param op_function Function that takes left and right operands and returns the result.
- * @param precedence Precedence (priority) of an operator.
+ * @param operation Function that takes left and right operands and returns the result.
+ * @param precedence Precedence of an operator.
+ * @param left_associative Is an operator left-associative.
  *
  * @return Returns MX_SUCCESS (0) if insertion succeeded and error code if not.
  */
-mx_error mx_insert_operator(mx_config *config, char *name, double (*op_function)(double, double), unsigned int precedence);
+mx_error mx_insert_operator(mx_config *config, char *name, double (*operation)(double, double), unsigned int precedence, bool left_associative);
 
 /**
  * @brief Inserts an function to the configuration struct to be available for parsing. (mathex)
  *
  * @param config Configuration struct to insert to.
  * @param name Null-terminated string representing name of the function. (should only contain letters, digits or underscore and cannot start with a digit)
- * @param fn_function Function that takes arguments array and returns the result.
+ * @param function Function that takes arguments array and returns the result.
  * @param n_args Number of arguments the function takes. (can be zero)
  *
  * @return Returns MX_SUCCESS (0) if insertion succeeded and error code if not.
  */
-mx_error mx_insert_function(mx_config *config, char *name, double (*fn_function)(double *), unsigned int n_args);
+mx_error mx_insert_function(mx_config *config, char *name, double (*function)(double *), unsigned int n_args);
 
 /**
  * @brief Inserts an variable to the configuration struct to be available for parsing. (mathex)

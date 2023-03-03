@@ -158,12 +158,14 @@ static double convert(char *input, size_t length) {
 }
 
 mx_error mx_eval(mx_config *config, char *expression, double *result) {
+    // https://en.wikipedia.org/wiki/Shunting_yard_algorithm#The_algorithm_in_detail
+
     size_t length = strlen(expression);
     mx_error error_code = MX_SUCCESS;
 
     struct stack ops_stack = {NULL};
-    struct queue res_queue = {NULL, NULL};
-    struct stack_double val_stack = {NULL};
+    struct queue out_queue = {NULL, NULL};
+    struct stack_double res_stack = {NULL};
 
     for (size_t i = 0; i < length; i++) {
         char character = expression[i];
@@ -173,12 +175,12 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
 
             if (!mx_check_number_format(config, &expression[i], len)) {
                 error_code = MX_SYNTAX_ERROR;
-                goto dealloc;
+                goto cleanup;
             }
 
             mx_token token = {.type = MX_NUMBER, .value = convert(&expression[i], len)};
 
-            enqueue(&res_queue, token);
+            enqueue(&out_queue, token);
 
             i += len - 1;
             continue;
@@ -190,12 +192,41 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
 
             if (token == NULL) {
                 error_code = MX_UNDEFINED;
-                goto dealloc;
+                goto cleanup;
             }
 
-            // Assume it is variable
-            // TODO: Handle if it is a function
-            enqueue(&res_queue, *token);
+            switch (token->type) {
+            case MX_FUNCTION:
+                push(&ops_stack, *token);
+                break;
+
+            case MX_VARIABLE:
+                enqueue(&out_queue, *token);
+                break;
+
+            default:
+                error_code = MX_INVALID_NAME;
+                goto cleanup;
+            }
+
+            i += len - 1;
+            continue;
+        }
+
+        if (mx_check_operator(config, character, true)) {
+            size_t len = mx_token_length(config, &expression[i], mx_check_operator);
+            mx_token *token = mx_lookup(config, &expression[i], len);
+
+            if (token == NULL) {
+                error_code = MX_UNDEFINED;
+                goto cleanup;
+            }
+
+            while (ops_stack.top != NULL && ops_stack.top->value.type == MX_OPERATOR && (ops_stack.top->value.precedence > token->precedence || (ops_stack.top->value.precedence == token->precedence && token->left_associative))) {
+                enqueue(&out_queue, pop(&ops_stack));
+            }
+
+            push(&ops_stack, *token);
 
             i += len - 1;
             continue;
@@ -209,71 +240,98 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
         }
 
         if (mx_check_paren(config, character, false)) {
-            if (ops_stack.top != NULL) {
-                mx_token token = pop(&ops_stack);
+            if (ops_stack.top == NULL) {
+                // Mismatched parenthesis (ignore by default for implicit parentheses)
+                continue;
+            }
 
-                while (token.type != MX_LEFT_PAREN) {
-                    enqueue(&res_queue, token);
-                    if (ops_stack.top == NULL) break;
-                    token = pop(&ops_stack);
+            while (ops_stack.top->value.type != MX_LEFT_PAREN) {
+                enqueue(&out_queue, pop(&ops_stack));
+
+                if (ops_stack.top == NULL) {
+                    // Mismatched parenthesis (ignore by default for implicit parentheses)
+                    break;
+                }
+            }
+
+            if (ops_stack.top != NULL) {
+                pop(&ops_stack); // Discard left parenthesis
+
+                if (ops_stack.top != NULL && ops_stack.top->value.type == MX_FUNCTION) {
+                    enqueue(&out_queue, pop(&ops_stack));
                 }
             }
 
             continue;
         }
 
-        if (mx_check_operator(config, character, true)) {
-            size_t len = mx_token_length(config, &expression[i], mx_check_operator);
-            mx_token *token = mx_lookup(config, &expression[i], len);
-
-            if (token == NULL) {
-                error_code = MX_UNDEFINED;
-                goto dealloc;
-            }
-
-            while (ops_stack.top != NULL && ops_stack.top->value.type == MX_OPERATOR && ops_stack.top->value.operator.precedence >= token->operator.precedence) {
-                enqueue(&res_queue, pop(&ops_stack));
-            }
-
-            push(&ops_stack, *token);
-
-            i += len - 1;
-            continue;
-        }
-
         if (character != ' ') {
             error_code = MX_SYNTAX_ERROR;
-            goto dealloc;
+            goto cleanup;
         }
     }
 
     while (ops_stack.top != NULL) {
-        enqueue(&res_queue, pop(&ops_stack));
+        mx_token token = pop(&ops_stack);
+
+        if (token.type == MX_LEFT_PAREN) {
+            // Mismatched parenthesis (ignore by default for implicit parentheses)
+            continue;
+        }
+
+        enqueue(&out_queue, token);
     }
 
-    while (res_queue.front != NULL) {
-        mx_token token = dequeue(&res_queue);
-        if (token.type == MX_NUMBER || token.type == MX_VARIABLE) {
-            push_double(&val_stack, token.value);
-        } else if (token.type == MX_OPERATOR) {
-            if (val_stack.top == NULL) return MX_SYNTAX_ERROR;
-            double b = pop_double(&val_stack);
-            if (val_stack.top == NULL) return MX_SYNTAX_ERROR;
-            double a = pop_double(&val_stack);
+    while (out_queue.front != NULL) {
+        mx_token token = dequeue(&out_queue);
 
-            push_double(&val_stack, token.operator.pointer(a, b));
+        switch (token.type) {
+        case MX_NUMBER:
+        case MX_VARIABLE:
+            push_double(&res_stack, token.value);
+            break;
+
+        case MX_OPERATOR:
+            if (res_stack.top == NULL) return MX_SYNTAX_ERROR;
+            double b = pop_double(&res_stack);
+            if (res_stack.top == NULL) return MX_SYNTAX_ERROR;
+            double a = pop_double(&res_stack);
+
+            push_double(&res_stack, token.operation(a, b));
+            break;
+
+        case MX_FUNCTION:
+            double value;
+
+            if (token.n_args == 0) {
+                value = token.function(NULL);
+            } else if (token.n_args == 1) {
+                if (res_stack.top == NULL) return MX_SYNTAX_ERROR;
+                double args[1] = {pop_double(&res_stack)};
+
+                value = token.function(args);
+            } else {
+                // Multiargument function
+            }
+
+            push_double(&res_stack, value);
+            break;
+
+        default:
+            break;
         }
     }
 
-    if (val_stack.top == NULL || val_stack.top->next != NULL) {
+    if (res_stack.top == NULL || res_stack.top->next != NULL) {
+        // No or more than one values left on result stack
         return MX_SYNTAX_ERROR;
     }
 
-    *result = pop_double(&val_stack);
+    *result = pop_double(&res_stack);
 
-dealloc:
+cleanup:
     free_stack(&ops_stack);
-    free_queue(&res_queue);
-    free_stack_double(&val_stack);
+    free_queue(&out_queue);
+    free_stack_double(&res_stack);
     return error_code;
 }
