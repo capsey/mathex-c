@@ -45,6 +45,7 @@ static void test_eval_func_invalid() {
     // Wrong number of arguments
     check_invalid("max(0, 0, 0)", MX_ARGS_NUM);
     check_invalid("max(1000)", MX_ARGS_NUM);
+    check_invalid("+min(10, x, 100)", MX_SYNTAX_ERROR);
 
     // Mismatched parentheses
     check_invalid("max(0, 0", MX_SYNTAX_ERROR);

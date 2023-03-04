@@ -48,6 +48,8 @@ static void test_eval_default_invalid() {
     check_invalid("1 +", MX_SYNTAX_ERROR);
     check_invalid("* 1", MX_SYNTAX_ERROR);
     check_invalid("* 1", MX_SYNTAX_ERROR);
+    check_invalid("1 1 +", MX_SYNTAX_ERROR);
+    check_invalid("+ 1 1", MX_SYNTAX_ERROR);
 
     // Multiple operations
     check_invalid("1 + + 1", MX_SYNTAX_ERROR);
