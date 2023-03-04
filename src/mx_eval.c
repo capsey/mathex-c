@@ -48,9 +48,14 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
 
     for (size_t i = 0; i < length; i++) {
         char character = expression[i];
-        bool expecting_left_paren = !is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_FUNCTION;
+        bool expecting_left_paren = (last_token == MX_FUNCTION);
 
         if (!expecting_left_paren && is_valid_num_char(character, true)) {
+            if (last_token != MX_OPERATOR && last_token != MX_LEFT_PAREN && last_token != MX_COMMA && last_token != -1) {
+                // Two operands in a row
+                return MX_SYNTAX_ERROR;
+            }
+
             size_t len = get_token_length(&expression[i], is_valid_num_char);
 
             if (!check_num_format(config, &expression[i], len)) {
@@ -67,6 +72,11 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
         }
 
         if (!expecting_left_paren && is_valid_id_char(character, true)) {
+            if (last_token != MX_OPERATOR && last_token != MX_LEFT_PAREN && last_token != MX_COMMA && last_token != -1) {
+                // Two operands in a row
+                return MX_SYNTAX_ERROR;
+            }
+
             size_t len = get_token_length(&expression[i], is_valid_id_char);
             mx_token *fetched_token = mx_lookup_name(config, &expression[i], len);
 
@@ -124,6 +134,11 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
         }
 
         if (is_operator) {
+            if (last_token != MX_NUMBER && last_token != MX_VARIABLE && last_token != MX_RIGHT_PAREN) {
+                // No operand on left hand side
+                return MX_SYNTAX_ERROR;
+            }
+
             while (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_OPERATOR && (peek_t(ops_stack).precedence > token.precedence || (peek_t(ops_stack).precedence == token.precedence && token.left_associative))) {
                 enqueue_t(out_queue, pop_t(ops_stack));
             }
@@ -148,6 +163,9 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
 
                     if (*next != ')') return MX_ARGS_NUM;
                 }
+            } else if (last_token != MX_OPERATOR && last_token != MX_LEFT_PAREN && last_token != -1) {
+                // Two operands in a row
+                return MX_SYNTAX_ERROR;
             }
 
             mx_token token = {.type = MX_LEFT_PAREN};
@@ -189,8 +207,8 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
         }
 
         if (!expecting_left_paren && character == ',') {
-            if (last_token == MX_LEFT_PAREN || last_token == MX_COMMA) {
-                // Empty argument
+            if (last_token != MX_NUMBER && last_token != MX_VARIABLE && last_token != MX_RIGHT_PAREN) {
+                // Empty or invalid argument
                 return MX_SYNTAX_ERROR;
             }
 
