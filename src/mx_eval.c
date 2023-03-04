@@ -156,13 +156,23 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
         }
 
         if (character == '(') {
-            mx_token token = {.type = MX_LEFT_PAREN};
-            push_t(ops_stack, token);
-
             if (expecting_left_paren) {
                 push_n(arg_stack, arg_count);
                 arg_count = 0;
+
+                if (peek_t(ops_stack).n_args == 0) {
+                    char *next = &expression[i + 1];
+
+                    while (*next == ' ') {
+                        next++;
+                    }
+
+                    if (*next != ')') return MX_ARGS_NUM;
+                }
             }
+
+            mx_token token = {.type = MX_LEFT_PAREN};
+            push_t(ops_stack, token);
 
             continue;
         }
@@ -186,7 +196,8 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                 pop_t(ops_stack); // Discard left parenthesis
 
                 if (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_FUNCTION) {
-                    if (peek_t(ops_stack).n_args != arg_count + 1) return MX_ARGS_NUM;
+                    unsigned int n_args = peek_t(ops_stack).n_args;
+                    if (n_args != arg_count + 1 && n_args != 0) return MX_ARGS_NUM;
                     arg_count = pop_n(arg_stack);
 
                     enqueue_t(out_queue, pop_t(ops_stack));
@@ -232,6 +243,11 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
         if (token.type == MX_LEFT_PAREN) {
             // Mismatched parenthesis (ignore by default for implicit parentheses)
             continue;
+        }
+
+        if (token.type == MX_FUNCTION && token.n_args == 0) {
+            // No implicit parentheses for zero argument functions
+            return MX_ARGS_NUM;
         }
 
         enqueue_t(out_queue, token);

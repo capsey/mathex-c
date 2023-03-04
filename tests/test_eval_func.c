@@ -21,11 +21,11 @@ static mx_config *init_func() {
 
     mx_insert_function(config, "atan2", _atan2, 2);
 
-    mx_insert_function(config, "abs", _abs, 2);
+    mx_insert_function(config, "abs", _abs, 1);
     mx_insert_function(config, "min", _min, 2);
     mx_insert_function(config, "max", _max, 2);
 
-    mx_insert_function(config, "foo", _foo, 2);
+    mx_insert_function(config, "foo", _foo, 0);
     mx_insert_variable(config, "x", x);
 
     return config;
@@ -58,14 +58,14 @@ static void test_eval_func_invalid() {
     // Wrong number of arguments
     check_invalid("max(0, 0, 0)", MX_ARGS_NUM);
     check_invalid("max(1000)", MX_ARGS_NUM);
-    check_invalid("+min(10, x, 100)", MX_SYNTAX_ERROR);
+    check_invalid("min(10, max(0, 3, 5))", MX_ARGS_NUM);
 
     // Missing parentheses
     check_invalid("max", MX_SYNTAX_ERROR);
     check_invalid("max 0, 2)", MX_SYNTAX_ERROR);
     check_invalid("min 1, 0", MX_SYNTAX_ERROR);
-    check_invalid("foo", MX_SYNTAX_ERROR);
-    check_invalid("foo(", MX_SYNTAX_ERROR); // No implicit parentheses for you!
+    check_invalid("foo", MX_ARGS_NUM);
+    check_invalid("foo(", MX_ARGS_NUM); // No implicit parentheses for you!
 
     mx_free(config);
 }
