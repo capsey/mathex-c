@@ -37,6 +37,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
 
     size_t length = strlen(expression);
     mx_error error_code = MX_SUCCESS;
+    mx_token_type last_token = -1;
 
     stack_t *ops_stack = create_stack_t();
     queue_t *out_queue = create_queue_t();
@@ -58,29 +59,29 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             }
 
             mx_token token = {.type = MX_NUMBER, .value = convert(&expression[i], len)};
-
             enqueue_t(out_queue, token);
 
+            last_token = MX_NUMBER;
             i += len - 1;
             continue;
         }
 
         if (!expecting_left_paren && is_valid_id_char(character, true)) {
             size_t len = get_token_length(&expression[i], is_valid_id_char);
-            mx_token *token = mx_lookup_name(config, &expression[i], len);
+            mx_token *fetched_token = mx_lookup_name(config, &expression[i], len);
 
-            if (token == NULL) {
+            if (fetched_token == NULL) {
                 error_code = MX_UNDEFINED;
                 goto cleanup;
             }
 
-            switch (token->type) {
+            switch (fetched_token->type) {
             case MX_FUNCTION:
-                push_t(ops_stack, *token);
+                push_t(ops_stack, *fetched_token);
                 break;
 
             case MX_VARIABLE:
-                enqueue_t(out_queue, *token);
+                enqueue_t(out_queue, *fetched_token);
                 break;
 
             default:
@@ -88,70 +89,48 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                 goto cleanup;
             }
 
+            last_token = fetched_token->type;
             i += len - 1;
             continue;
         }
 
+        mx_token token;
+        bool is_operator = false;
+
         if (!expecting_left_paren && character == '+') {
-            mx_token token = mx_add_token;
-
-            while (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_OPERATOR && (peek_t(ops_stack).precedence > token.precedence || (peek_t(ops_stack).precedence == token.precedence && token.left_associative))) {
-                enqueue_t(out_queue, pop_t(ops_stack));
-            }
-
-            push_t(ops_stack, token);
-            continue;
-        }
-
-        if (!expecting_left_paren && character == '-') {
-            mx_token token = mx_sub_token;
-
-            while (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_OPERATOR && (peek_t(ops_stack).precedence > token.precedence || (peek_t(ops_stack).precedence == token.precedence && token.left_associative))) {
-                enqueue_t(out_queue, pop_t(ops_stack));
-            }
-
-            push_t(ops_stack, token);
-            continue;
-        }
-
-        if (!expecting_left_paren && character == '*') {
-            mx_token token = mx_mul_token;
-
-            while (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_OPERATOR && (peek_t(ops_stack).precedence > token.precedence || (peek_t(ops_stack).precedence == token.precedence && token.left_associative))) {
-                enqueue_t(out_queue, pop_t(ops_stack));
-            }
-
-            push_t(ops_stack, token);
-            continue;
-        }
-
-        if (!expecting_left_paren && character == '/') {
-            mx_token token = mx_div_token;
-
-            while (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_OPERATOR && (peek_t(ops_stack).precedence > token.precedence || (peek_t(ops_stack).precedence == token.precedence && token.left_associative))) {
-                enqueue_t(out_queue, pop_t(ops_stack));
-            }
-
-            push_t(ops_stack, token);
-            continue;
-        }
-
-        if (!expecting_left_paren && is_valid_op_char(character, true)) {
+            token = mx_add_token;
+            is_operator = true;
+        } else if (!expecting_left_paren && character == '-') {
+            token = mx_sub_token;
+            is_operator = true;
+        } else if (!expecting_left_paren && character == '*') {
+            token = mx_mul_token;
+            is_operator = true;
+        } else if (!expecting_left_paren && character == '/') {
+            token = mx_div_token;
+            is_operator = true;
+        } else if (!expecting_left_paren && is_valid_op_char(character, true)) {
             size_t len = get_token_length(&expression[i], is_valid_op_char);
-            mx_token *token = mx_lookup_name(config, &expression[i], len);
+            mx_token *fetched_token = mx_lookup_name(config, &expression[i], len);
 
-            if (token == NULL) {
+            if (fetched_token == NULL) {
                 error_code = MX_UNDEFINED;
                 goto cleanup;
             }
 
-            while (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_OPERATOR && (peek_t(ops_stack).precedence > token->precedence || (peek_t(ops_stack).precedence == token->precedence && token->left_associative))) {
+            token = *fetched_token;
+            is_operator = true;
+            i += len - 1;
+        }
+
+        if (is_operator) {
+            while (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_OPERATOR && (peek_t(ops_stack).precedence > token.precedence || (peek_t(ops_stack).precedence == token.precedence && token.left_associative))) {
                 enqueue_t(out_queue, pop_t(ops_stack));
             }
 
-            push_t(ops_stack, *token);
+            push_t(ops_stack, token);
 
-            i += len - 1;
+            last_token = MX_OPERATOR;
             continue;
         }
 
@@ -174,6 +153,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             mx_token token = {.type = MX_LEFT_PAREN};
             push_t(ops_stack, token);
 
+            last_token = MX_LEFT_PAREN;
             continue;
         }
 
@@ -204,10 +184,16 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                 }
             }
 
+            last_token = MX_RIGHT_PAREN;
             continue;
         }
 
         if (!expecting_left_paren && character == ',') {
+            if (last_token == MX_LEFT_PAREN || last_token == MX_COMMA) {
+                // Empty argument
+                return MX_SYNTAX_ERROR;
+            }
+
             if (is_empty_stack_n(arg_stack)) {
                 // Comma outside function parentheses
                 return MX_SYNTAX_ERROR;
@@ -228,6 +214,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             }
 
             arg_count++;
+            last_token = MX_COMMA;
             continue;
         }
 

@@ -7,6 +7,7 @@
 typedef enum mx_token_type {
     MX_LEFT_PAREN,
     MX_RIGHT_PAREN,
+    MX_COMMA,
     MX_NUMBER,
     MX_VARIABLE,
     MX_OPERATOR,

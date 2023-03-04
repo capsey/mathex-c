@@ -60,6 +60,11 @@ static void test_eval_func_invalid() {
     check_invalid("max(1000)", MX_ARGS_NUM);
     check_invalid("min(10, max(0, 3, 5))", MX_ARGS_NUM);
 
+    // Empty argument
+    check_invalid("max(, 0)", MX_SYNTAX_ERROR);
+    check_invalid("max(1000, )", MX_SYNTAX_ERROR);
+    check_invalid("min(max(0, ), )", MX_SYNTAX_ERROR);
+
     // Missing parentheses
     check_invalid("max", MX_SYNTAX_ERROR);
     check_invalid("max 0, 2)", MX_SYNTAX_ERROR);
