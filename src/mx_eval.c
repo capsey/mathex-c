@@ -42,10 +42,14 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
     queue_t *out_queue = create_queue_t();
     stack_d *res_stack = create_stack_d();
 
+    unsigned int arg_count = 0;
+    stack_n *arg_stack = create_stack_n();
+
     for (size_t i = 0; i < length; i++) {
         char character = expression[i];
+        bool expecting_left_paren = !is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_FUNCTION;
 
-        if (is_valid_num_char(character, true)) {
+        if (!expecting_left_paren && is_valid_num_char(character, true)) {
             size_t len = get_token_length(&expression[i], is_valid_num_char);
 
             if (!check_num_format(config, &expression[i], len)) {
@@ -61,7 +65,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             continue;
         }
 
-        if (is_valid_id_char(character, true)) {
+        if (!expecting_left_paren && is_valid_id_char(character, true)) {
             size_t len = get_token_length(&expression[i], is_valid_id_char);
             mx_token *token = mx_lookup_name(config, &expression[i], len);
 
@@ -88,7 +92,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             continue;
         }
 
-        if (character == '+') {
+        if (!expecting_left_paren && character == '+') {
             mx_token token = mx_add_token;
 
             while (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_OPERATOR && (peek_t(ops_stack).precedence > token.precedence || (peek_t(ops_stack).precedence == token.precedence && token.left_associative))) {
@@ -99,7 +103,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             continue;
         }
 
-        if (character == '-') {
+        if (!expecting_left_paren && character == '-') {
             mx_token token = mx_sub_token;
 
             while (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_OPERATOR && (peek_t(ops_stack).precedence > token.precedence || (peek_t(ops_stack).precedence == token.precedence && token.left_associative))) {
@@ -110,7 +114,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             continue;
         }
 
-        if (character == '*') {
+        if (!expecting_left_paren && character == '*') {
             mx_token token = mx_mul_token;
 
             while (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_OPERATOR && (peek_t(ops_stack).precedence > token.precedence || (peek_t(ops_stack).precedence == token.precedence && token.left_associative))) {
@@ -121,7 +125,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             continue;
         }
 
-        if (character == '/') {
+        if (!expecting_left_paren && character == '/') {
             mx_token token = mx_div_token;
 
             while (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_OPERATOR && (peek_t(ops_stack).precedence > token.precedence || (peek_t(ops_stack).precedence == token.precedence && token.left_associative))) {
@@ -132,7 +136,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             continue;
         }
 
-        if (is_valid_op_char(character, true)) {
+        if (!expecting_left_paren && is_valid_op_char(character, true)) {
             size_t len = get_token_length(&expression[i], is_valid_op_char);
             mx_token *token = mx_lookup_name(config, &expression[i], len);
 
@@ -155,10 +159,15 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             mx_token token = {.type = MX_LEFT_PAREN};
             push_t(ops_stack, token);
 
+            if (expecting_left_paren) {
+                push_n(arg_stack, arg_count);
+                arg_count = 0;
+            }
+
             continue;
         }
 
-        if (character == ')') {
+        if (!expecting_left_paren && character == ')') {
             if (is_empty_stack_t(ops_stack)) {
                 // Mismatched parenthesis (ignore by default for implicit parentheses)
                 continue;
@@ -177,6 +186,9 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                 pop_t(ops_stack); // Discard left parenthesis
 
                 if (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_FUNCTION) {
+                    if (peek_t(ops_stack).n_args != arg_count + 1) return MX_ARGS_NUM;
+                    arg_count = pop_n(arg_stack);
+
                     enqueue_t(out_queue, pop_t(ops_stack));
                 }
             }
@@ -184,7 +196,12 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             continue;
         }
 
-        if (character == ',') {
+        if (!expecting_left_paren && character == ',') {
+            if (is_empty_stack_n(arg_stack)) {
+                // Comma outside function parentheses
+                return MX_SYNTAX_ERROR;
+            }
+
             if (is_empty_stack_t(ops_stack)) {
                 // Mismatched parenthesis (ignore by default for implicit parentheses)
                 continue;
@@ -199,6 +216,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                 }
             }
 
+            arg_count++;
             continue;
         }
 

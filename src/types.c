@@ -4,6 +4,60 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+struct node_n {
+    unsigned int value;
+    struct node_n *next;
+};
+
+struct stack_n {
+    node_n *top;
+};
+
+stack_n *create_stack_n() {
+    return calloc(1, sizeof(stack_n));
+}
+
+bool is_empty_stack_n(stack_n *stack) {
+    return stack->top == NULL;
+}
+
+unsigned int peek_n(stack_n *stack) {
+    return stack->top->value;
+}
+
+void push_n(stack_n *stack, unsigned int value) {
+    node_n *new_node = malloc(sizeof(node_n));
+
+    new_node->value = value;
+    new_node->next = stack->top;
+
+    stack->top = new_node;
+}
+
+unsigned int pop_n(stack_n *stack) {
+    if (stack->top == NULL) {
+        /* ... */
+    }
+
+    unsigned int value = stack->top->value;
+    node_n *temp = stack->top;
+    stack->top = stack->top->next;
+
+    free(temp);
+    return value;
+}
+
+void free_stack_n(stack_n *stack) {
+    while (stack->top != NULL) {
+        node_n *temp = stack->top;
+        stack->top = stack->top->next;
+
+        free(temp);
+    }
+
+    free(stack);
+}
+
 struct node_d {
     double value;
     struct node_d *next;

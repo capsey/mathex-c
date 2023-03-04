@@ -5,6 +5,17 @@
 #include "mathex_internal.h"
 #include <stddef.h>
 
+typedef struct node_n node_n;
+
+typedef struct stack_n stack_n;
+
+stack_n *create_stack_n();
+bool is_empty_stack_n(stack_n *stack);
+unsigned int peek_n(stack_n *stack);
+void push_n(stack_n *stack, unsigned int value);
+unsigned int pop_n(stack_n *stack);
+void free_stack_n(stack_n *stack);
+
 typedef struct node_d node_d;
 
 typedef struct stack_d stack_d;
