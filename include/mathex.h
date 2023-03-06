@@ -24,7 +24,7 @@ typedef struct mx_config mx_config;
 /**
  * @brief Creates empty configuration struct with given parsing rules. This function allocates memory, so it is mandatory to call `mx_free` to prevent memory leak. (mathex)
  *
- * @return Pointer to configuration struct. NULL if failed to allocate.
+ * @return Returns pointer to configuration struct. NULL if failed to allocate.
  */
 mx_config *mx_init();
 
@@ -65,9 +65,9 @@ mx_error mx_insert_function(mx_config *config, char *name, double (*function)(do
 mx_error mx_insert_variable(mx_config *config, char *name, double value);
 
 /**
- * @brief Frees configuration struct from memory. Does not perform checks, so passing invalid pointer is undefined. (mathex)
+ * @brief Frees configuration struct and its contents from memory. Does not perform checks, so passing invalid pointer is undefined. (mathex)
  *
- * @param config Pointer to a config allocated using `mx_init` or `mx_init_simple`.
+ * @param config Pointer to a config allocated using `mx_init`.
  */
 void mx_free(mx_config *config);
 
@@ -76,7 +76,7 @@ void mx_free(mx_config *config);
  *
  * @param config Configuration struct containing rules to evaluate by.
  * @param expression Null-terminated character array to evaluate.
- * @param result Pointer to write evaluation result to.
+ * @param result Pointer to write evaluation result to. Can be NULL.
  *
  * @return Returns MX_SUCCESS (0) if evaluation succeeded and error code if not.
  */

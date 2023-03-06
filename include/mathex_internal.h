@@ -4,6 +4,7 @@
 #include "mathex.h"
 #include <stdbool.h>
 
+// Type of expression token. (mathex_internal)
 typedef enum mx_token_type {
     MX_LEFT_PAREN,
     MX_RIGHT_PAREN,
@@ -14,6 +15,7 @@ typedef enum mx_token_type {
     MX_FUNCTION,
 } mx_token_type;
 
+// Value of expression token. Uses union, so check type before accessing! (mathex_internal)
 typedef struct mx_token {
     mx_token_type type;
     union {
@@ -30,18 +32,24 @@ typedef struct mx_token {
     };
 } mx_token;
 
-extern const mx_token mx_add_token;
-extern const mx_token mx_sub_token;
-extern const mx_token mx_mul_token;
-extern const mx_token mx_div_token;
+extern const mx_token mx_add_token; // Built-in addition operator. (mathex_internal)
+extern const mx_token mx_sub_token; // Built-in substraction operator. (mathex_internal)
+extern const mx_token mx_mul_token; // Built-in multiplication operator. (mathex_internal)
+extern const mx_token mx_div_token; // Built-in division operator. (mathex_internal)
 
+// Checks if given character is valid character for number literal. (mathex_internal)
 bool is_valid_num_char(char character, bool begin);
+
+// Checks if given character is valid character for function or variable. (mathex_internal)
 bool is_valid_id_char(char character, bool begin);
+
+// Checks if given character is valid character for operator. (mathex_internal)
 bool is_valid_op_char(char character, bool begin);
 
-size_t get_token_length(char *start, bool (*condition)(char, bool));
+// Checks if given string slice can be converted to a number. (mathex_internal)
 bool check_num_format(mx_config *config, char *start, size_t lenght);
 
+// Lookup given string slice among inserted variables, functions or operators. (mathex_internal)
 mx_token *mx_lookup_name(mx_config *config, char *name, size_t length);
 
 #endif /* __MATHEX_INTERNAL__ */

@@ -64,7 +64,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             }
 
             mx_token token = {.type = MX_NUMBER, .value = convert(&expression[i], len)};
-            enqueue_t(out_queue, token);
+            if (!enqueue_t(out_queue, token)) return MX_OUT_OF_MEMORY;
 
             last_token = MX_NUMBER;
             i += len - 1;
@@ -87,11 +87,11 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
 
             switch (fetched_token->type) {
             case MX_FUNCTION:
-                push_t(ops_stack, *fetched_token);
+                if (!push_t(ops_stack, *fetched_token)) return MX_OUT_OF_MEMORY;
                 break;
 
             case MX_VARIABLE:
-                enqueue_t(out_queue, *fetched_token);
+                if (!enqueue_t(out_queue, *fetched_token)) return MX_OUT_OF_MEMORY;
                 break;
 
             default:
@@ -120,6 +120,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             token = mx_div_token;
             is_operator = true;
         } else if (!expecting_left_paren && is_valid_op_char(character, true)) {
+            // Custom operator
             size_t len = get_token_length(&expression[i], is_valid_op_char);
             mx_token *fetched_token = mx_lookup_name(config, &expression[i], len);
 
@@ -140,10 +141,10 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             }
 
             while (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_OPERATOR && (peek_t(ops_stack).precedence > token.precedence || (peek_t(ops_stack).precedence == token.precedence && token.left_associative))) {
-                enqueue_t(out_queue, pop_t(ops_stack));
+                if (!enqueue_t(out_queue, pop_t(ops_stack))) return MX_OUT_OF_MEMORY;
             }
 
-            push_t(ops_stack, token);
+            if (!push_t(ops_stack, token)) return MX_OUT_OF_MEMORY;
 
             last_token = MX_OPERATOR;
             continue;
@@ -151,7 +152,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
 
         if (character == '(') {
             if (expecting_left_paren) {
-                push_n(arg_stack, arg_count);
+                if (!push_n(arg_stack, arg_count)) return MX_OUT_OF_MEMORY;
                 arg_count = 0;
 
                 if (peek_t(ops_stack).n_args == 0) {
@@ -169,7 +170,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             }
 
             mx_token token = {.type = MX_LEFT_PAREN};
-            push_t(ops_stack, token);
+            if (!push_t(ops_stack, token)) return MX_OUT_OF_MEMORY;
 
             last_token = MX_LEFT_PAREN;
             continue;
@@ -182,7 +183,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             }
 
             while (peek_t(ops_stack).type != MX_LEFT_PAREN) {
-                enqueue_t(out_queue, pop_t(ops_stack));
+                if (!enqueue_t(out_queue, pop_t(ops_stack))) return MX_OUT_OF_MEMORY;
 
                 if (is_empty_stack_t(ops_stack)) {
                     // Mismatched parenthesis (ignore by default for implicit parentheses)
@@ -198,7 +199,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                     if (n_args != arg_count + 1 && n_args != 0) return MX_ARGS_NUM;
                     arg_count = pop_n(arg_stack);
 
-                    enqueue_t(out_queue, pop_t(ops_stack));
+                    if (!enqueue_t(out_queue, pop_t(ops_stack))) return MX_OUT_OF_MEMORY;
                 }
             }
 
@@ -223,7 +224,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             }
 
             while (peek_t(ops_stack).type != MX_LEFT_PAREN) {
-                enqueue_t(out_queue, pop_t(ops_stack));
+                if (!enqueue_t(out_queue, pop_t(ops_stack))) return MX_OUT_OF_MEMORY;
 
                 if (is_empty_stack_t(ops_stack)) {
                     // Mismatched parenthesis (ignore by default for implicit parentheses)
@@ -255,7 +256,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             return MX_ARGS_NUM;
         }
 
-        enqueue_t(out_queue, token);
+        if (!enqueue_t(out_queue, token)) return MX_OUT_OF_MEMORY;
     }
 
     while (!is_empty_queue_t(out_queue)) {
@@ -264,7 +265,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
         switch (token.type) {
         case MX_NUMBER:
         case MX_VARIABLE:
-            push_d(res_stack, token.value);
+            if (!push_d(res_stack, token.value)) return MX_OUT_OF_MEMORY;
             break;
 
         case MX_OPERATOR:
@@ -273,12 +274,12 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             if (is_empty_stack_d(res_stack)) return MX_SYNTAX_ERROR;
             double a = pop_d(res_stack);
 
-            push_d(res_stack, token.operation(a, b));
+            if (!push_d(res_stack, token.operation(a, b))) return MX_OUT_OF_MEMORY;
             break;
 
         case MX_FUNCTION:
             if (token.n_args == 0) {
-                push_d(res_stack, token.function(NULL));
+                if (!push_d(res_stack, token.function(NULL))) return MX_OUT_OF_MEMORY;
             } else {
                 double args[token.n_args];
 
@@ -287,7 +288,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                     args[token.n_args - i - 1] = pop_d(res_stack);
                 }
 
-                push_d(res_stack, token.function(args));
+                if (!push_d(res_stack, token.function(args))) return MX_OUT_OF_MEMORY;
             }
             break;
 
@@ -301,7 +302,9 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
         return MX_SYNTAX_ERROR;
     }
 
-    *result = pop_d(res_stack);
+    if (result != NULL) {
+        *result = pop_d(res_stack);
+    }
 
     if (!is_empty_stack_d(res_stack)) {
         // More than one values left on result stack

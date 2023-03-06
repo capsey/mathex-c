@@ -4,10 +4,10 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-struct node_n {
+typedef struct node_n {
     unsigned int value;
     struct node_n *next;
-};
+} node_n;
 
 struct stack_n {
     node_n *top;
@@ -25,13 +25,15 @@ unsigned int peek_n(stack_n *stack) {
     return stack->top->value;
 }
 
-void push_n(stack_n *stack, unsigned int value) {
+bool push_n(stack_n *stack, unsigned int value) {
     node_n *new_node = malloc(sizeof(node_n));
+    if (new_node == NULL) return false;
 
     new_node->value = value;
     new_node->next = stack->top;
 
     stack->top = new_node;
+    return true;
 }
 
 unsigned int pop_n(stack_n *stack) {
@@ -58,10 +60,10 @@ void free_stack_n(stack_n *stack) {
     free(stack);
 }
 
-struct node_d {
+typedef struct node_d {
     double value;
     struct node_d *next;
-};
+} node_d;
 
 struct stack_d {
     node_d *top;
@@ -79,13 +81,15 @@ double peek_d(stack_d *stack) {
     return stack->top->value;
 }
 
-void push_d(stack_d *stack, double value) {
+bool push_d(stack_d *stack, double value) {
     node_d *new_node = malloc(sizeof(node_d));
+    if (new_node == NULL) return false;
 
     new_node->value = value;
     new_node->next = stack->top;
 
     stack->top = new_node;
+    return true;
 }
 
 double pop_d(stack_d *stack) {
@@ -112,10 +116,10 @@ void free_stack_d(stack_d *stack) {
     free(stack);
 }
 
-struct node_t {
+typedef struct node_t {
     mx_token value;
     struct node_t *next;
-};
+} node_t;
 
 struct stack_t {
     node_t *top;
@@ -133,13 +137,15 @@ mx_token peek_t(stack_t *stack) {
     return stack->top->value;
 }
 
-void push_t(stack_t *stack, mx_token value) {
+bool push_t(stack_t *stack, mx_token value) {
     node_t *new_node = malloc(sizeof(node_t));
+    if (new_node == NULL) return false;
 
     new_node->value = value;
     new_node->next = stack->top;
 
     stack->top = new_node;
+    return true;
 }
 
 mx_token pop_t(stack_t *stack) {
@@ -179,8 +185,9 @@ bool is_empty_queue_t(queue_t *queue) {
     return queue->front == NULL;
 }
 
-void enqueue_t(queue_t *queue, mx_token value) {
+bool enqueue_t(queue_t *queue, mx_token value) {
     node_t *new_node = malloc(sizeof(node_t));
+    if (new_node == NULL) return false;
 
     new_node->value = value;
     new_node->next = NULL;
@@ -192,6 +199,7 @@ void enqueue_t(queue_t *queue, mx_token value) {
 
     queue->rear->next = new_node;
     queue->rear = new_node;
+    return true;
 }
 
 mx_token dequeue_t(queue_t *queue) {
