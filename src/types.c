@@ -193,12 +193,13 @@ bool enqueue_t(queue_t *queue, mx_token value) {
     new_node->next = NULL;
 
     if (queue->rear == NULL) {
-        queue->front = queue->rear = new_node;
-        return;
+        queue->front = new_node;
+        queue->rear = new_node;
+    } else {
+        queue->rear->next = new_node;
+        queue->rear = new_node;
     }
 
-    queue->rear->next = new_node;
-    queue->rear = new_node;
     return true;
 }
 

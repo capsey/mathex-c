@@ -6,7 +6,8 @@
 
 // Type of expression token. (mathex_internal)
 typedef enum mx_token_type {
-    MX_LEFT_PAREN,
+    // 0 reserved for none value
+    MX_LEFT_PAREN = 1,
     MX_RIGHT_PAREN,
     MX_COMMA,
     MX_NUMBER,
@@ -37,19 +38,13 @@ extern const mx_token mx_sub_token; // Built-in substraction operator. (mathex_i
 extern const mx_token mx_mul_token; // Built-in multiplication operator. (mathex_internal)
 extern const mx_token mx_div_token; // Built-in division operator. (mathex_internal)
 
-// Checks if given character is valid character for number literal. (mathex_internal)
-bool is_valid_num_char(char character, bool begin);
-
 // Checks if given character is valid character for function or variable. (mathex_internal)
 bool is_valid_id_char(char character, bool begin);
 
 // Checks if given character is valid character for operator. (mathex_internal)
-bool is_valid_op_char(char character, bool begin);
+bool is_valid_op_char(char character);
 
-// Checks if given string slice can be converted to a number. (mathex_internal)
-bool check_num_format(mx_config *config, char *start, size_t lenght);
-
-// Lookup given string slice among inserted variables, functions or operators. (mathex_internal)
+// Lookup given string slice among inserted variables, functions or operators. NULL if not found. (mathex_internal)
 mx_token *mx_lookup_name(mx_config *config, char *name, size_t length);
 
 #endif /* __MATHEX_INTERNAL__ */

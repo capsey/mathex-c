@@ -6,38 +6,30 @@
 #include <stdlib.h>
 #include <string.h>
 
-static double convert(char *input, size_t length) {
-    double result = 0;
-    unsigned int decimal_place = 10;
-    bool decimal_found = false;
-
-    for (size_t i = 0; i < length; i++) {
-        char character = input[i];
-
-        if (character >= '0' && character <= '9') {
-            int digit = character - '0';
-
-            if (!decimal_found) {
-                result *= 10;
-                result += (double)digit;
-            } else {
-                result += (double)digit / (double)decimal_place;
-                decimal_place *= 10;
-            }
-        } else if (character == '.') {
-            decimal_found = true;
-        }
+#define return_error(error) \
+    {                       \
+        error_code = error; \
+        goto cleanup;       \
     }
 
-    return result;
-}
+#define assert_alloc(expr)              \
+    if (!(expr)) {                      \
+        return_error(MX_OUT_OF_MEMORY); \
+    }
+
+#define assert_syntax(condition)       \
+    if (!(condition)) {                \
+        return_error(MX_SYNTAX_ERROR); \
+    }
+
+#define char_to_digit(character) (double)(character - '0')
 
 mx_error mx_eval(mx_config *config, char *expression, double *result) {
     // https://en.wikipedia.org/wiki/Shunting_yard_algorithm#The_algorithm_in_detail
 
     size_t length = strlen(expression);
     mx_error error_code = MX_SUCCESS;
-    mx_token_type last_token = -1;
+    mx_token_type last_token = 0;
 
     stack_t *ops_stack = create_stack_t();
     queue_t *out_queue = create_queue_t();
@@ -50,127 +42,144 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
         char character = expression[i];
         bool expecting_left_paren = (last_token == MX_FUNCTION);
 
-        if (!expecting_left_paren && is_valid_num_char(character, true)) {
-            if (last_token != MX_OPERATOR && last_token != MX_LEFT_PAREN && last_token != MX_COMMA && last_token != -1) {
-                // Two operands in a row
-                return MX_SYNTAX_ERROR;
+        if (!expecting_left_paren && (isdigit(character) || character == '.')) {
+            // Two operands in a row are not allowed
+            // Operand should only either be first in expression or right after operator
+            assert_syntax(!last_token || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_OPERATOR);
+
+            size_t token_length;
+            double value = isdigit(character) ? char_to_digit(character) : 0;
+            bool decimal_found = (character == '.');
+            long decimal_place = 10;
+
+            for (token_length = 1; token_length < length; token_length++) {
+                char num_char = expression[i + token_length];
+
+                if (isdigit(num_char)) {
+                    if (!decimal_found) {
+                        value = (value * 10) + char_to_digit(num_char);
+                    } else {
+                        value += char_to_digit(num_char) / (double)decimal_place;
+                        decimal_place *= 10;
+                    }
+
+                    continue;
+                }
+
+                if (num_char == '.') {
+                    // There can only be one decimal point
+                    assert_syntax(!decimal_found);
+                    decimal_found = true;
+                    continue;
+                }
+
+                break;
             }
 
-            size_t len = get_token_length(&expression[i], is_valid_num_char);
+            // ".1" => 0.1 and "1." => 1.0 but "." != 0.0
+            assert_syntax(token_length != 1 || character != '.');
 
-            if (!check_num_format(config, &expression[i], len)) {
-                error_code = MX_SYNTAX_ERROR;
-                goto cleanup;
-            }
-
-            mx_token token = {.type = MX_NUMBER, .value = convert(&expression[i], len)};
-            if (!enqueue_t(out_queue, token)) return MX_OUT_OF_MEMORY;
+            mx_token token = {.type = MX_NUMBER, .value = value};
+            assert_alloc(enqueue_t(out_queue, token));
 
             last_token = MX_NUMBER;
-            i += len - 1;
+            i += token_length - 1;
             continue;
         }
 
         if (!expecting_left_paren && is_valid_id_char(character, true)) {
-            if (last_token != MX_OPERATOR && last_token != MX_LEFT_PAREN && last_token != MX_COMMA && last_token != -1) {
-                // Two operands in a row
-                return MX_SYNTAX_ERROR;
+            // Two operands in a row are not allowed
+            // Operand should only either be first in expression or right after operator
+            assert_syntax(!last_token || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_OPERATOR);
+
+            size_t token_length;
+
+            for (token_length = 1; token_length < length; token_length++) {
+                if (!is_valid_id_char(expression[i + token_length], false)) break;
             }
 
-            size_t len = get_token_length(&expression[i], is_valid_id_char);
-            mx_token *fetched_token = mx_lookup_name(config, &expression[i], len);
-
-            if (fetched_token == NULL) {
-                error_code = MX_UNDEFINED;
-                goto cleanup;
-            }
+            mx_token *fetched_token = mx_lookup_name(config, &expression[i], token_length);
+            if (fetched_token == NULL) return_error(MX_UNDEFINED);
 
             switch (fetched_token->type) {
             case MX_FUNCTION:
-                if (!push_t(ops_stack, *fetched_token)) return MX_OUT_OF_MEMORY;
+                assert_alloc(push_t(ops_stack, *fetched_token));
                 break;
 
             case MX_VARIABLE:
-                if (!enqueue_t(out_queue, *fetched_token)) return MX_OUT_OF_MEMORY;
+                assert_alloc(enqueue_t(out_queue, *fetched_token));
                 break;
 
             default:
-                error_code = MX_INVALID_NAME;
-                goto cleanup;
+                return_error(MX_INVALID_NAME);
             }
 
             last_token = fetched_token->type;
-            i += len - 1;
+            i += token_length - 1;
             continue;
         }
 
-        mx_token token;
-        bool is_operator = false;
+        if (!expecting_left_paren && is_valid_op_char(character)) {
+            // There should always be an operand on the left hand side of the operator
+            assert_syntax(last_token == MX_NUMBER || last_token == MX_VARIABLE || last_token == MX_RIGHT_PAREN);
 
-        if (!expecting_left_paren && character == '+') {
-            token = mx_add_token;
-            is_operator = true;
-        } else if (!expecting_left_paren && character == '-') {
-            token = mx_sub_token;
-            is_operator = true;
-        } else if (!expecting_left_paren && character == '*') {
-            token = mx_mul_token;
-            is_operator = true;
-        } else if (!expecting_left_paren && character == '/') {
-            token = mx_div_token;
-            is_operator = true;
-        } else if (!expecting_left_paren && is_valid_op_char(character, true)) {
-            // Custom operator
-            size_t len = get_token_length(&expression[i], is_valid_op_char);
-            mx_token *fetched_token = mx_lookup_name(config, &expression[i], len);
+            mx_token token;
+            size_t token_length;
 
-            if (fetched_token == NULL) {
-                error_code = MX_UNDEFINED;
-                goto cleanup;
+            for (token_length = 1; token_length < length; token_length++) {
+                if (!is_valid_op_char(expression[i + token_length])) break;
             }
 
-            token = *fetched_token;
-            is_operator = true;
-            i += len - 1;
-        }
+            if (token_length == 1 && character == '+') {
+                token = mx_add_token;
+            } else if (token_length == 1 && character == '-') {
+                token = mx_sub_token;
+            } else if (token_length == 1 && character == '*') {
+                token = mx_mul_token;
+            } else if (token_length == 1 && character == '/') {
+                token = mx_div_token;
+            } else {
+                // Custom token
+                mx_token *fetched_token = mx_lookup_name(config, &expression[i], token_length);
+                if (fetched_token == NULL) return_error(MX_UNDEFINED);
 
-        if (is_operator) {
-            if (last_token != MX_NUMBER && last_token != MX_VARIABLE && last_token != MX_RIGHT_PAREN) {
-                // No operand on left hand side
-                return MX_SYNTAX_ERROR;
+                token = *fetched_token;
             }
 
             while (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_OPERATOR && (peek_t(ops_stack).precedence > token.precedence || (peek_t(ops_stack).precedence == token.precedence && token.left_associative))) {
-                if (!enqueue_t(out_queue, pop_t(ops_stack))) return MX_OUT_OF_MEMORY;
+                assert_alloc(enqueue_t(out_queue, pop_t(ops_stack)));
             }
 
-            if (!push_t(ops_stack, token)) return MX_OUT_OF_MEMORY;
+            assert_alloc(push_t(ops_stack, token));
 
+            i += token_length - 1;
             last_token = MX_OPERATOR;
             continue;
         }
 
         if (character == '(') {
             if (expecting_left_paren) {
-                if (!push_n(arg_stack, arg_count)) return MX_OUT_OF_MEMORY;
+                assert_alloc(push_n(arg_stack, arg_count));
                 arg_count = 0;
 
                 if (peek_t(ops_stack).n_args == 0) {
+                    // Functions with no arguments should have empty parentheses
                     char *next = &expression[i + 1];
 
                     while (*next == ' ') {
                         next++;
                     }
 
-                    if (*next != ')') return MX_ARGS_NUM;
+                    if (*next != ')') return_error(MX_ARGS_NUM);
                 }
-            } else if (last_token != MX_OPERATOR && last_token != MX_LEFT_PAREN && last_token != -1) {
-                // Two operands in a row
-                return MX_SYNTAX_ERROR;
+            } else {
+                // Two operands in a row are not allowed
+                // Operand should only either be first in expression or right after operator
+                assert_syntax(!last_token || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_OPERATOR);
             }
 
             mx_token token = {.type = MX_LEFT_PAREN};
-            if (!push_t(ops_stack, token)) return MX_OUT_OF_MEMORY;
+            assert_alloc(push_t(ops_stack, token));
 
             last_token = MX_LEFT_PAREN;
             continue;
@@ -183,7 +192,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             }
 
             while (peek_t(ops_stack).type != MX_LEFT_PAREN) {
-                if (!enqueue_t(out_queue, pop_t(ops_stack))) return MX_OUT_OF_MEMORY;
+                assert_alloc(enqueue_t(out_queue, pop_t(ops_stack)));
 
                 if (is_empty_stack_t(ops_stack)) {
                     // Mismatched parenthesis (ignore by default for implicit parentheses)
@@ -196,10 +205,10 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
 
                 if (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_FUNCTION) {
                     unsigned int n_args = peek_t(ops_stack).n_args;
-                    if (n_args != arg_count + 1 && n_args != 0) return MX_ARGS_NUM;
+                    if (n_args != arg_count + 1 && n_args != 0) return_error(MX_ARGS_NUM);
                     arg_count = pop_n(arg_stack);
 
-                    if (!enqueue_t(out_queue, pop_t(ops_stack))) return MX_OUT_OF_MEMORY;
+                    assert_alloc(enqueue_t(out_queue, pop_t(ops_stack)));
                 }
             }
 
@@ -208,15 +217,11 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
         }
 
         if (!expecting_left_paren && character == ',') {
-            if (last_token != MX_NUMBER && last_token != MX_VARIABLE && last_token != MX_RIGHT_PAREN) {
-                // Empty or invalid argument
-                return MX_SYNTAX_ERROR;
-            }
+            // Previous argument has to be non-empty
+            assert_syntax(last_token == MX_NUMBER || last_token == MX_VARIABLE || last_token == MX_RIGHT_PAREN);
 
-            if (is_empty_stack_n(arg_stack)) {
-                // Comma outside function parentheses
-                return MX_SYNTAX_ERROR;
-            }
+            // Comma is only valid inside function parentheses
+            assert_syntax(!is_empty_stack_n(arg_stack));
 
             if (is_empty_stack_t(ops_stack)) {
                 // Mismatched parenthesis (ignore by default for implicit parentheses)
@@ -224,7 +229,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             }
 
             while (peek_t(ops_stack).type != MX_LEFT_PAREN) {
-                if (!enqueue_t(out_queue, pop_t(ops_stack))) return MX_OUT_OF_MEMORY;
+                assert_alloc(enqueue_t(out_queue, pop_t(ops_stack)));
 
                 if (is_empty_stack_t(ops_stack)) {
                     // Mismatched parenthesis (ignore by default for implicit parentheses)
@@ -237,10 +242,8 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             continue;
         }
 
-        if (character != ' ') {
-            error_code = MX_SYNTAX_ERROR;
-            goto cleanup;
-        }
+        // Any character that was not captured by previous checks that is not space is considered invalid
+        assert_syntax(character == ' ');
     }
 
     while (!is_empty_stack_t(ops_stack)) {
@@ -253,10 +256,10 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
 
         if (token.type == MX_FUNCTION && token.n_args == 0) {
             // No implicit parentheses for zero argument functions
-            return MX_ARGS_NUM;
+            return_error(MX_ARGS_NUM);
         }
 
-        if (!enqueue_t(out_queue, token)) return MX_OUT_OF_MEMORY;
+        assert_alloc(enqueue_t(out_queue, token));
     }
 
     while (!is_empty_queue_t(out_queue)) {
@@ -265,30 +268,31 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
         switch (token.type) {
         case MX_NUMBER:
         case MX_VARIABLE:
-            if (!push_d(res_stack, token.value)) return MX_OUT_OF_MEMORY;
+            assert_alloc(push_d(res_stack, token.value));
             break;
 
         case MX_OPERATOR:
-            if (is_empty_stack_d(res_stack)) return MX_SYNTAX_ERROR;
+            assert_syntax(!is_empty_stack_d(res_stack));
             double b = pop_d(res_stack);
-            if (is_empty_stack_d(res_stack)) return MX_SYNTAX_ERROR;
+
+            assert_syntax(!is_empty_stack_d(res_stack));
             double a = pop_d(res_stack);
 
-            if (!push_d(res_stack, token.operation(a, b))) return MX_OUT_OF_MEMORY;
+            assert_alloc(push_d(res_stack, token.operation(a, b)));
             break;
 
         case MX_FUNCTION:
             if (token.n_args == 0) {
-                if (!push_d(res_stack, token.function(NULL))) return MX_OUT_OF_MEMORY;
+                assert_alloc(push_d(res_stack, token.function(NULL)));
             } else {
                 double args[token.n_args];
 
                 for (size_t i = 0; i < token.n_args; i++) {
-                    if (is_empty_stack_d(res_stack)) return MX_SYNTAX_ERROR;
+                    assert_syntax(!is_empty_stack_d(res_stack));
                     args[token.n_args - i - 1] = pop_d(res_stack);
                 }
 
-                if (!push_d(res_stack, token.function(args))) return MX_OUT_OF_MEMORY;
+                assert_alloc(push_d(res_stack, token.function(args)));
             }
             break;
 
@@ -297,19 +301,10 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
         }
     }
 
-    if (is_empty_stack_d(res_stack)) {
-        // No values left on result stack
-        return MX_SYNTAX_ERROR;
-    }
-
-    if (result != NULL) {
-        *result = pop_d(res_stack);
-    }
-
-    if (!is_empty_stack_d(res_stack)) {
-        // More than one values left on result stack
-        return MX_SYNTAX_ERROR;
-    }
+    // Exactly one value has to be left on results stack
+    assert_syntax(!is_empty_stack_d(res_stack));
+    if (result != NULL) *result = pop_d(res_stack);
+    assert_syntax(is_empty_stack_d(res_stack));
 
 cleanup:
     stack_free_t(ops_stack);

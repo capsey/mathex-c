@@ -107,7 +107,7 @@ mx_error mx_insert_operator(mx_config *config, char *name, double (*operation)(d
     mx_token token;
 
     for (char *check = name; *check != '\0'; check++) {
-        if (!is_valid_op_char(*check, check == name)) {
+        if (!is_valid_op_char(*check)) {
             return MX_INVALID_NAME;
         }
     }
