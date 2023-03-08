@@ -112,6 +112,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                 if (num_char == '.') {
                     // There should only be one decimal point and only in mantissa
                     assert_syntax(conversion_state == INTEGER_PART);
+
                     conversion_state = FRACTION_PART;
                     continue;
                 }

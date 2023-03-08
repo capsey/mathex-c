@@ -1,6 +1,7 @@
 #ifndef TEST_H
 #define TEST_H
 
+#include <float.h>
 #include <math.h>
 #include <stdbool.h>
 
@@ -17,6 +18,6 @@
         sput_fail_unless(mx_eval(config, input, &result) == error, #error " expected"); \
     } while (0)
 
-bool float_cmp(double a, double b) { return fabs(a - b) < 0.00001; }
+bool float_cmp(double a, double b) { return fabs(a - b) < DBL_EPSILON; }
 
 #endif /* TEST_H */
