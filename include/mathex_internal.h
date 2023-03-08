@@ -16,21 +16,21 @@ typedef enum mx_token_type {
     MX_FUNCTION,
 } mx_token_type;
 
-// Value of expression token. Uses union, so check type before accessing! (mathex_internal)
+// Value of expression token. Check `type` before accessing `data`! (mathex_internal)
 typedef struct mx_token {
     mx_token_type type;
     union {
-        double value;
+        double value; // value of variable or number
         struct {
-            double (*operation)(double, double);
-            unsigned int precedence;
-            bool left_associative;
-        };
+            double (*func)(double, double); // operator
+            unsigned int prec;              // precedence
+            bool left_assoc;                // left associativity
+        } op;
         struct {
-            double (*function)(double[]);
-            unsigned int n_args;
-        };
-    };
+            double (*func)(double[]); // function
+            unsigned int n_args;      // number of arguments
+        } fn;
+    } data;
 } mx_token;
 
 extern const mx_token mx_add_token; // Built-in addition operator. (mathex_internal)
@@ -43,6 +43,9 @@ bool is_valid_id_char(char character, bool begin);
 
 // Checks if given character is valid character for operator. (mathex_internal)
 bool is_valid_op_char(char character);
+
+// Returns whether given flag is turned on. (mathex_internal)
+bool mx_get_flag(mx_config *config, mx_flag flag);
 
 // Lookup given string slice among inserted variables, functions or operators. NULL if not found. (mathex_internal)
 mx_token *mx_lookup_name(mx_config *config, char *name, size_t length);

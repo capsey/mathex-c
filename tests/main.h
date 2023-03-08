@@ -18,6 +18,14 @@
         sput_fail_unless(mx_eval(config, input, &result) == error, #error " expected"); \
     } while (0)
 
+#define check_setting(input, flags, res_on, res_off)                                                                       \
+    do {                                                                                                                   \
+        mx_set_flags(config, MX_DEFAULT | (flags));                                                                        \
+        sput_fail_unless(mx_eval(config, input, &result) == (res_on), "Correct evaluation result with flags turned on");   \
+        mx_set_flags(config, MX_DEFAULT & ~(flags));                                                                       \
+        sput_fail_unless(mx_eval(config, input, &result) == (res_off), "Correct evaluation result with flags turned off"); \
+    } while (0)
+
 bool float_cmp(double a, double b) { return fabs(a - b) < DBL_EPSILON; }
 
 #endif /* TEST_H */

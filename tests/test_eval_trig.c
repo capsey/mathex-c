@@ -14,7 +14,7 @@ static double _sinh(double *args) { return sinh(args[0]); }
 static double _cosh(double *args) { return cosh(args[0]); }
 
 static mx_config *init_trig() {
-    mx_config *config = mx_init();
+    mx_config *config = mx_init(MX_DEFAULT);
 
     mx_insert_function(config, "sin", _sin, 1);
     mx_insert_function(config, "cos", _cos, 1);
@@ -60,11 +60,11 @@ static void test_eval_trig_invalid() {
     double result;
 
     // Split identifiers
-    check_invalid("p i * 2", MX_UNDEFINED);
-    check_invalid("s in(0)", MX_UNDEFINED);
+    check_invalid("p i * 2", MX_ERR_UNDEFINED);
+    check_invalid("s in(0)", MX_ERR_UNDEFINED);
 
     // Implicit variable multiplication
-    check_invalid("pisin(pi)", MX_UNDEFINED);
+    check_invalid("pisin(pi)", MX_ERR_UNDEFINED);
 
     mx_free(config);
 }

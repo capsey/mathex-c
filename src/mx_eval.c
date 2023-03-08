@@ -13,12 +13,12 @@
 
 #define assert_alloc(expr)              \
     if (!(expr)) {                      \
-        return_error(MX_OUT_OF_MEMORY); \
+        return_error(MX_ERR_NO_MEMORY); \
     }
 
-#define assert_syntax(condition)       \
-    if (!(condition)) {                \
-        return_error(MX_SYNTAX_ERROR); \
+#define assert_syntax(condition)     \
+    if (!(condition)) {              \
+        return_error(MX_ERR_SYNTAX); \
     }
 
 enum state {
@@ -117,7 +117,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                     continue;
                 }
 
-                if ((conversion_state == INTEGER_PART || conversion_state == FRACTION_PART) && (num_char == 'e' || num_char == 'E')) {
+                if ((conversion_state == INTEGER_PART || conversion_state == FRACTION_PART) && (num_char == 'e' || num_char == 'E') && mx_get_flag(config, MX_SCI_NOTATION)) {
                     conversion_state = EXP_START;
                     continue;
                 }
@@ -141,7 +141,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                 value *= ten_in(exponent, exponent_sign);
             }
 
-            mx_token token = {.type = MX_NUMBER, .value = value};
+            mx_token token = {.type = MX_NUMBER, .data.value = value};
             assert_alloc(enqueue_t(out_queue, token));
 
             last_token = MX_NUMBER;
@@ -161,7 +161,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             }
 
             mx_token *fetched_token = mx_lookup_name(config, &expression[i], token_length);
-            if (fetched_token == NULL) return_error(MX_UNDEFINED);
+            if (fetched_token == NULL) return_error(MX_ERR_UNDEFINED);
 
             switch (fetched_token->type) {
             case MX_FUNCTION:
@@ -173,7 +173,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                 break;
 
             default:
-                return_error(MX_INVALID_NAME);
+                return_error(MX_ERR_ILLEGAL_NAME);
             }
 
             last_token = fetched_token->type;
@@ -192,23 +192,23 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                 if (!is_valid_op_char(expression[i + token_length])) break;
             }
 
-            if (token_length == 1 && character == '+') {
+            if (token_length == 1 && character == '+' && mx_get_flag(config, MX_DEFAULT_ADD)) {
                 token = mx_add_token;
-            } else if (token_length == 1 && character == '-') {
+            } else if (token_length == 1 && character == '-' && mx_get_flag(config, MX_DEFAULT_ADD)) {
                 token = mx_sub_token;
-            } else if (token_length == 1 && character == '*') {
+            } else if (token_length == 1 && character == '*' && mx_get_flag(config, MX_DEFAULT_MUL)) {
                 token = mx_mul_token;
-            } else if (token_length == 1 && character == '/') {
+            } else if (token_length == 1 && character == '/' && mx_get_flag(config, MX_DEFAULT_MUL)) {
                 token = mx_div_token;
             } else {
                 // Custom token
                 mx_token *fetched_token = mx_lookup_name(config, &expression[i], token_length);
-                if (fetched_token == NULL) return_error(MX_UNDEFINED);
+                if (fetched_token == NULL) return_error(MX_ERR_UNDEFINED);
 
                 token = *fetched_token;
             }
 
-            while (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_OPERATOR && (peek_t(ops_stack).precedence > token.precedence || (peek_t(ops_stack).precedence == token.precedence && token.left_associative))) {
+            while (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_OPERATOR && (peek_t(ops_stack).data.op.prec > token.data.op.prec || (peek_t(ops_stack).data.op.prec == token.data.op.prec && token.data.op.left_assoc))) {
                 assert_alloc(enqueue_t(out_queue, pop_t(ops_stack)));
             }
 
@@ -224,7 +224,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                 assert_alloc(push_n(arg_stack, arg_count));
                 arg_count = 0;
 
-                if (peek_t(ops_stack).n_args == 0) {
+                if (peek_t(ops_stack).data.fn.n_args == 0) {
                     // Functions with no arguments should have empty parentheses
                     char *next = &expression[i + 1];
 
@@ -232,7 +232,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                         next++;
                     }
 
-                    if (*next != ')') return_error(MX_ARGS_NUM);
+                    if (*next != ')') return_error(MX_ERR_ARGS_NUM);
                 }
             } else {
                 // Two operands in a row are not allowed
@@ -249,7 +249,8 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
 
         if (!expecting_left_paren && character == ')') {
             if (is_empty_stack_t(ops_stack)) {
-                // Mismatched parenthesis (ignore by default for implicit parentheses)
+                // Mismatched parenthesis (ignore if implicit parentheses are enabled)
+                assert_syntax(mx_get_flag(config, MX_IMPLICIT_PARENS));
                 continue;
             }
 
@@ -257,7 +258,8 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                 assert_alloc(enqueue_t(out_queue, pop_t(ops_stack)));
 
                 if (is_empty_stack_t(ops_stack)) {
-                    // Mismatched parenthesis (ignore by default for implicit parentheses)
+                    // Mismatched parenthesis (ignore if implicit parentheses are enabled)
+                    assert_syntax(mx_get_flag(config, MX_IMPLICIT_PARENS));
                     break;
                 }
             }
@@ -266,8 +268,8 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                 pop_t(ops_stack); // Discard left parenthesis
 
                 if (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_FUNCTION) {
-                    unsigned int n_args = peek_t(ops_stack).n_args;
-                    if (n_args != arg_count + 1 && n_args != 0) return_error(MX_ARGS_NUM);
+                    unsigned int n_args = peek_t(ops_stack).data.fn.n_args;
+                    if (n_args != arg_count + 1 && n_args != 0) return_error(MX_ERR_ARGS_NUM);
                     arg_count = pop_n(arg_stack);
 
                     assert_alloc(enqueue_t(out_queue, pop_t(ops_stack)));
@@ -286,7 +288,8 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             assert_syntax(!is_empty_stack_n(arg_stack));
 
             if (is_empty_stack_t(ops_stack)) {
-                // Mismatched parenthesis (ignore by default for implicit parentheses)
+                // Mismatched parenthesis (ignore if implicit parentheses are enabled)
+                assert_syntax(mx_get_flag(config, MX_IMPLICIT_PARENS));
                 continue;
             }
 
@@ -294,7 +297,8 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                 assert_alloc(enqueue_t(out_queue, pop_t(ops_stack)));
 
                 if (is_empty_stack_t(ops_stack)) {
-                    // Mismatched parenthesis (ignore by default for implicit parentheses)
+                    // Mismatched parenthesis (ignore if implicit parentheses are enabled)
+                    assert_syntax(mx_get_flag(config, MX_IMPLICIT_PARENS));
                     break;
                 }
             }
@@ -312,13 +316,14 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
         mx_token token = pop_t(ops_stack);
 
         if (token.type == MX_LEFT_PAREN) {
-            // Mismatched parenthesis (ignore by default for implicit parentheses)
+            // Mismatched parenthesis (ignore if implicit parentheses are enabled)
+            assert_syntax(mx_get_flag(config, MX_IMPLICIT_PARENS));
             continue;
         }
 
-        if (token.type == MX_FUNCTION && token.n_args == 0) {
+        if (token.type == MX_FUNCTION && token.data.fn.n_args == 0) {
             // No implicit parentheses for zero argument functions
-            return_error(MX_ARGS_NUM);
+            return_error(MX_ERR_ARGS_NUM);
         }
 
         assert_alloc(enqueue_t(out_queue, token));
@@ -330,7 +335,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
         switch (token.type) {
         case MX_NUMBER:
         case MX_VARIABLE:
-            assert_alloc(push_d(res_stack, token.value));
+            assert_alloc(push_d(res_stack, token.data.value));
             break;
 
         case MX_OPERATOR:
@@ -340,21 +345,21 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             assert_syntax(!is_empty_stack_d(res_stack));
             double a = pop_d(res_stack);
 
-            assert_alloc(push_d(res_stack, token.operation(a, b)));
+            assert_alloc(push_d(res_stack, token.data.op.func(a, b)));
             break;
 
         case MX_FUNCTION:
-            if (token.n_args == 0) {
-                assert_alloc(push_d(res_stack, token.function(NULL)));
+            if (token.data.fn.n_args == 0) {
+                assert_alloc(push_d(res_stack, token.data.fn.func(NULL)));
             } else {
-                double args[token.n_args];
+                double args[token.data.fn.n_args];
 
-                for (size_t i = 0; i < token.n_args; i++) {
+                for (size_t i = 0; i < token.data.fn.n_args; i++) {
                     assert_syntax(!is_empty_stack_d(res_stack));
-                    args[token.n_args - i - 1] = pop_d(res_stack);
+                    args[token.data.fn.n_args - i - 1] = pop_d(res_stack);
                 }
 
-                assert_alloc(push_d(res_stack, token.function(args)));
+                assert_alloc(push_d(res_stack, token.data.fn.func(args)));
             }
             break;
 

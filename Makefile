@@ -1,5 +1,6 @@
 CC = gcc
-CFLAGS = -g -std=c17 -Wall -Wextra -Wconversion -Wpedantic
+CFLAGS = -g -std=c99 -Wall -Wextra -Wconversion -Wpedantic
+TESTFLAGS = -g -std=c99 -lm
 AR = ar rcs
 INCLUDES = -Iinclude
 
@@ -25,7 +26,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $^ -o $@
 
 $(TESTBIN): $(TESTDIR)/*.c $(OBJECTS)
-	$(CC) $(CFLAGS) $(INCLUDES) $(TEST) $(OBJECTS) -o $@ -lm
+	$(CC) $(TESTFLAGS) $(INCLUDES) $(TEST) $(OBJECTS) -o $@
 
 mkdir:
 	mkdir -p $(OBJDIR)

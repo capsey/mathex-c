@@ -3,7 +3,7 @@
 #include "sput.h"
 
 static void test_eval_default_valid() {
-    mx_config *config = mx_init();
+    mx_config *config = mx_init(MX_DEFAULT);
     double result;
 
     // Integers
@@ -24,6 +24,7 @@ static void test_eval_default_valid() {
     check_valid_literal(1.532e10);
     check_valid_literal(1.5e+3);
     check_valid_literal(1.5e-3);
+    check_valid_literal(1.e-4);
 
     // Grouping (parentheses)
     check_valid_literal((1 + 2) / 3);
@@ -42,49 +43,49 @@ static void test_eval_default_valid() {
 }
 
 static void test_eval_default_invalid() {
-    mx_config *config = mx_init();
+    mx_config *config = mx_init(MX_DEFAULT);
     double result;
 
     // Illegal characters
-    check_invalid("\"", MX_SYNTAX_ERROR);
-    check_invalid("\r", MX_SYNTAX_ERROR);
-    check_invalid("\7", MX_SYNTAX_ERROR);
+    check_invalid("\"", MX_ERR_SYNTAX);
+    check_invalid("\r", MX_ERR_SYNTAX);
+    check_invalid("\7", MX_ERR_SYNTAX);
 
     // Incomplete operations
-    check_invalid("1 +", MX_SYNTAX_ERROR);
-    check_invalid("* 1", MX_SYNTAX_ERROR);
-    check_invalid("* 1", MX_SYNTAX_ERROR);
-    check_invalid("1 1 +", MX_SYNTAX_ERROR);
-    check_invalid("+ 1 1", MX_SYNTAX_ERROR);
+    check_invalid("1 +", MX_ERR_SYNTAX);
+    check_invalid("* 1", MX_ERR_SYNTAX);
+    check_invalid("* 1", MX_ERR_SYNTAX);
+    check_invalid("1 1 +", MX_ERR_SYNTAX);
+    check_invalid("+ 1 1", MX_ERR_SYNTAX);
 
     // Multiple operations
-    check_invalid("1 + + 1", MX_SYNTAX_ERROR);
+    check_invalid("1 + + 1", MX_ERR_SYNTAX);
 
     // Number format
-    check_invalid("1.1.5", MX_SYNTAX_ERROR);
-    check_invalid("1..5", MX_SYNTAX_ERROR);
-    check_invalid("..5", MX_SYNTAX_ERROR);
-    check_invalid("5..", MX_SYNTAX_ERROR);
-    check_invalid(".", MX_SYNTAX_ERROR);
+    check_invalid("1.1.5", MX_ERR_SYNTAX);
+    check_invalid("1..5", MX_ERR_SYNTAX);
+    check_invalid("..5", MX_ERR_SYNTAX);
+    check_invalid("5..", MX_ERR_SYNTAX);
+    check_invalid(".", MX_ERR_SYNTAX);
 
-    check_invalid("1ee2", MX_SYNTAX_ERROR);
-    check_invalid("1e2.3", MX_SYNTAX_ERROR);
-    check_invalid("1.1e2.3", MX_SYNTAX_ERROR);
-    check_invalid("1.1e + 2", MX_SYNTAX_ERROR);
+    check_invalid("1ee2", MX_ERR_SYNTAX);
+    check_invalid("1e2.3", MX_ERR_SYNTAX);
+    check_invalid("1.1e2.3", MX_ERR_SYNTAX);
+    check_invalid("1.1e + 2", MX_ERR_SYNTAX);
 
     // Double values
-    check_invalid("10 5", MX_SYNTAX_ERROR);
-    check_invalid("5, 5", MX_SYNTAX_ERROR);
+    check_invalid("10 5", MX_ERR_SYNTAX);
+    check_invalid("5, 5", MX_ERR_SYNTAX);
 
     // Undefined identifiers
-    check_invalid("x", MX_UNDEFINED);
+    check_invalid("x", MX_ERR_UNDEFINED);
 
     // Empty expression
-    check_invalid(")", MX_SYNTAX_ERROR);
-    check_invalid("(", MX_SYNTAX_ERROR);
-    check_invalid("()", MX_SYNTAX_ERROR);
-    check_invalid("", MX_SYNTAX_ERROR);
-    check_invalid("5 + ()", MX_SYNTAX_ERROR);
+    check_invalid(")", MX_ERR_SYNTAX);
+    check_invalid("(", MX_ERR_SYNTAX);
+    check_invalid("()", MX_ERR_SYNTAX);
+    check_invalid("", MX_ERR_SYNTAX);
+    check_invalid("5 + ()", MX_ERR_SYNTAX);
 
     mx_free(config);
 }

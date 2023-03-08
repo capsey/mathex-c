@@ -17,7 +17,7 @@ static double _foo(double *args) { return foo(); }
 static const double x = 9.5;
 
 static mx_config *init_func() {
-    mx_config *config = mx_init();
+    mx_config *config = mx_init(MX_DEFAULT);
 
     mx_insert_function(config, "atan2", _atan2, 2);
 
@@ -56,21 +56,21 @@ static void test_eval_func_invalid() {
     double result;
 
     // Wrong number of arguments
-    check_invalid("max(0, 0, 0)", MX_ARGS_NUM);
-    check_invalid("max(1000)", MX_ARGS_NUM);
-    check_invalid("min(10, max(0, 3, 5))", MX_ARGS_NUM);
+    check_invalid("max(0, 0, 0)", MX_ERR_ARGS_NUM);
+    check_invalid("max(1000)", MX_ERR_ARGS_NUM);
+    check_invalid("min(10, max(0, 3, 5))", MX_ERR_ARGS_NUM);
 
     // Empty argument
-    check_invalid("max(, 0)", MX_SYNTAX_ERROR);
-    check_invalid("max(1000, )", MX_SYNTAX_ERROR);
-    check_invalid("min(max(0, ), )", MX_SYNTAX_ERROR);
+    check_invalid("max(, 0)", MX_ERR_SYNTAX);
+    check_invalid("max(1000, )", MX_ERR_SYNTAX);
+    check_invalid("min(max(0, ), )", MX_ERR_SYNTAX);
 
     // Missing parentheses
-    check_invalid("max", MX_SYNTAX_ERROR);
-    check_invalid("max 0, 2)", MX_SYNTAX_ERROR);
-    check_invalid("min 1, 0", MX_SYNTAX_ERROR);
-    check_invalid("foo", MX_ARGS_NUM);
-    check_invalid("foo(", MX_ARGS_NUM); // No implicit parentheses for you!
+    check_invalid("max", MX_ERR_SYNTAX);
+    check_invalid("max 0, 2)", MX_ERR_SYNTAX);
+    check_invalid("min 1, 0", MX_ERR_SYNTAX);
+    check_invalid("foo", MX_ERR_ARGS_NUM);
+    check_invalid("foo(", MX_ERR_ARGS_NUM); // No implicit parentheses for you!
 
     mx_free(config);
 }

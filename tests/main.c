@@ -2,6 +2,7 @@
 #include "mathex.h"
 #include "sput.h"
 
+#include "test_config_flags.c"
 #include "test_eval_default.c"
 #include "test_eval_func.c"
 #include "test_eval_trig.c"
@@ -29,6 +30,10 @@ int main() {
 
     sput_enter_suite("mx_eval(...): Invalid input with multiargument functions");
     sput_run_test(test_eval_func_invalid);
+
+    // mx_config: Configuration flags
+    sput_enter_suite("mx_config: Configuration flags");
+    sput_run_test(test_config_flags);
 
     sput_finish_testing();
     return sput_get_return_value();
