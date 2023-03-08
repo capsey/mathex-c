@@ -4,6 +4,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+// Default parameters. (mathex)
+#define MX_DEFAULT (MX_IMPLICIT_PARENS | MX_SCI_NOTATION | MX_DEFAULT_ADD | MX_DEFAULT_MUL)
+
 /**
  * @brief Evaluation parameters. (mathex)
  */
@@ -14,9 +17,6 @@ typedef enum mx_flag {
     MX_DEFAULT_ADD = 4,     // Enables built-in addition and substraction operators. (mathex)
     MX_DEFAULT_MUL = 8,     // Enables built-in multiplication and division operators. (mathex)
 } mx_flag;
-
-// Default flags enabled by `mx_init`. (mathex)
-static const mx_flag MX_DEFAULT = MX_IMPLICIT_PARENS | MX_SCI_NOTATION | MX_DEFAULT_ADD | MX_DEFAULT_MUL;
 
 /**
  * @brief Error codes. (mathex)
