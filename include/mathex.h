@@ -52,6 +52,17 @@ mx_config *mx_init(mx_flag flags);
 void mx_set_flags(mx_config *config, mx_flag flags);
 
 /**
+ * @brief Inserts an variable to the configuration struct to be available for parsing. (mathex)
+ *
+ * @param config Configuration struct to insert to.
+ * @param name Null-terminated string representing name of the variable (should only contain letters, digits or underscore and cannot start with a digit)
+ * @param func Function that takes an argument and returns the result
+ *
+ * @return Returns MX_SUCCESS (0) if insertion succeeded and error code if not.
+ */
+mx_error mx_insert_variable(mx_config *config, char *name, double value);
+
+/**
  * @brief Inserts an operator to the configuration struct to be available for parsing. (mathex)
  *
  * @param config Configuration struct to insert to.
@@ -75,17 +86,6 @@ mx_error mx_insert_operator(mx_config *config, char *name, double (*func)(double
  * @return Returns MX_SUCCESS (0) if insertion succeeded and error code if not.
  */
 mx_error mx_insert_function(mx_config *config, char *name, double (*func)(double *), unsigned int n_args);
-
-/**
- * @brief Inserts an variable to the configuration struct to be available for parsing. (mathex)
- *
- * @param config Configuration struct to insert to.
- * @param name Null-terminated string representing name of the variable (should only contain letters, digits or underscore and cannot start with a digit)
- * @param func Function that takes an argument and returns the result
- *
- * @return Returns MX_SUCCESS (0) if insertion succeeded and error code if not.
- */
-mx_error mx_insert_variable(mx_config *config, char *name, double value);
 
 /**
  * @brief Frees configuration struct and its contents from memory. Does not perform checks, so passing invalid pointer is undefined. (mathex)

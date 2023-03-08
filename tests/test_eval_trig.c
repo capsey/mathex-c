@@ -3,16 +3,6 @@
 #include "sput.h"
 #include <math.h>
 
-static const double pi = 3.14159265358979323846;
-
-static double _sin(double *args) { return sin(args[0]); }
-static double _cos(double *args) { return cos(args[0]); }
-static double _tan(double *args) { return tan(args[0]); }
-static double _asin(double *args) { return asin(args[0]); }
-static double _acos(double *args) { return acos(args[0]); }
-static double _sinh(double *args) { return sinh(args[0]); }
-static double _cosh(double *args) { return cosh(args[0]); }
-
 static mx_config *init_trig() {
     mx_config *config = mx_init(MX_DEFAULT);
 

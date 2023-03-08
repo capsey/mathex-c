@@ -1,20 +1,6 @@
 #include "main.h"
 #include "mathex.h"
 #include "sput.h"
-#include <math.h>
-
-static double min(double a, double b) { return a < b ? a : b; }
-static double max(double a, double b) { return a > b ? a : b; }
-static double foo() { return 420; }
-
-static double _atan2(double *args) { return atan2(args[0], args[1]); }
-
-static double _abs(double *args) { return fabs(args[0]); }
-static double _min(double *args) { return min(args[0], args[1]); }
-static double _max(double *args) { return max(args[0], args[1]); }
-
-static double _foo(double *args) { return foo(); }
-static const double x = 9.5;
 
 static mx_config *init_func() {
     mx_config *config = mx_init(MX_DEFAULT);

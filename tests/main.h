@@ -26,6 +26,30 @@
         sput_fail_unless(mx_eval(config, input, &result) == (res_off), "Correct evaluation result with flags turned off"); \
     } while (0)
 
-bool float_cmp(double a, double b) { return fabs(a - b) < DBL_EPSILON; }
+static bool float_cmp(double a, double b) { return fabs(a - b) < DBL_EPSILON; }
+
+static const double pi = 3.14159265358979323846;
+static const double x = 9.5;
+static const double y = 3.4;
+static const double z = -1.3;
+
+static double min(double a, double b) { return a < b ? a : b; }
+static double max(double a, double b) { return a > b ? a : b; }
+static double foo() { return 420; }
+
+static double _sin(double *args) { return sin(args[0]); }
+static double _cos(double *args) { return cos(args[0]); }
+static double _tan(double *args) { return tan(args[0]); }
+static double _asin(double *args) { return asin(args[0]); }
+static double _acos(double *args) { return acos(args[0]); }
+static double _sinh(double *args) { return sinh(args[0]); }
+static double _cosh(double *args) { return cosh(args[0]); }
+static double _atan2(double *args) { return atan2(args[0], args[1]); }
+
+static double _abs(double *args) { return fabs(args[0]); }
+static double _min(double *args) { return min(args[0], args[1]); }
+static double _max(double *args) { return max(args[0], args[1]); }
+
+static double _foo(double *args) { return foo(); }
 
 #endif /* TEST_H */

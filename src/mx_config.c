@@ -113,6 +113,21 @@ mx_config *mx_init(mx_flag flags) {
     return config;
 }
 
+mx_error mx_insert_variable(mx_config *config, char *name, double value) {
+    mx_token token;
+
+    for (char *check = name; *check != '\0'; check++) {
+        if (!is_valid_id_char(*check, check == name)) {
+            return MX_ERR_ILLEGAL_NAME;
+        }
+    }
+
+    token.type = MX_VARIABLE;
+    token.data.value = value;
+
+    return insert(config, name, token);
+}
+
 mx_error mx_insert_operator(mx_config *config, char *name, double (*func)(double, double), unsigned int precedence, bool left_associative) {
     mx_token token;
 
@@ -142,21 +157,6 @@ mx_error mx_insert_function(mx_config *config, char *name, double (*func)(double
     token.type = MX_FUNCTION;
     token.data.fn.func = func;
     token.data.fn.n_args = n_args;
-
-    return insert(config, name, token);
-}
-
-mx_error mx_insert_variable(mx_config *config, char *name, double value) {
-    mx_token token;
-
-    for (char *check = name; *check != '\0'; check++) {
-        if (!is_valid_id_char(*check, check == name)) {
-            return MX_ERR_ILLEGAL_NAME;
-        }
-    }
-
-    token.type = MX_VARIABLE;
-    token.data.value = value;
 
     return insert(config, name, token);
 }
