@@ -21,12 +21,31 @@
         return_error(MX_SYNTAX_ERROR); \
     }
 
-enum conversion_state {
-    INTEGER_PART,  // Integer portion of decimal fraction (before decimal point)
-    FRACTION_PART, // Fractional portion of decimal fraction (after decimal point)
-    EXP_START,     // Separator of mantissa and exponent in scientific notation (including sign)
-    EXP_VALUE,     // Exponent of scientific notation
+enum state {
+    INTEGER_PART,  // Integer portion of decimal fraction. (before decimal point)
+    FRACTION_PART, // Fractional portion of decimal fraction. (after decimal point)
+    EXP_START,     // Separator of mantissa and exponent in scientific notation. (including sign)
+    EXP_VALUE,     // Exponent of scientific notation.
 };
+
+// Returns 10 in power of `exp` or `-exp` depending on `sign` parameter.
+double ten_in(unsigned int exp, bool sign) {
+    // https://cp-algorithms.com/algebra/binary-exp.html
+
+    double result = 1.0;
+    double base = 10.0;
+
+    while (exp > 0) {
+        if (exp & 1) {
+            result *= base;
+        }
+
+        base *= base;
+        exp >>= 1;
+    }
+
+    return sign ? result : 1.0 / result;
+}
 
 mx_error mx_eval(mx_config *config, char *expression, double *result) {
     // https://en.wikipedia.org/wiki/Shunting_yard_algorithm#The_algorithm_in_detail
@@ -53,15 +72,15 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
 
             size_t token_length;
             double value = 0;
-            enum conversion_state state = INTEGER_PART;
-            long decimal_place = 10;
+            enum state conversion_state = INTEGER_PART;
+            unsigned long decimal_place = 10;
+            unsigned long exponent = 0;
             bool exponent_sign = true;
-            long exponent = 0;
 
             if (isdigit(character)) {
                 value = (double)(character - '0');
             } else {
-                state = FRACTION_PART;
+                conversion_state = FRACTION_PART;
             }
 
             for (token_length = 1; token_length < length; token_length++) {
@@ -70,14 +89,21 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                 if (isdigit(num_char)) {
                     int digit = num_char - '0';
 
-                    if (state == INTEGER_PART) {
+                    switch (conversion_state) {
+                    case INTEGER_PART:
                         value = (value * 10) + (double)digit;
-                    } else if (state == FRACTION_PART) {
+                        break;
+
+                    case FRACTION_PART:
                         value += (double)digit / (double)decimal_place;
                         decimal_place *= 10;
-                    } else if (state == EXP_START || state == EXP_VALUE) {
-                        exponent = (exponent * 10) + digit;
-                        state = EXP_VALUE;
+                        break;
+
+                    case EXP_START:
+                    case EXP_VALUE:
+                        exponent = (exponent * 10) + (unsigned)digit;
+                        conversion_state = EXP_VALUE;
+                        break;
                     }
 
                     continue;
@@ -85,21 +111,19 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
 
                 if (num_char == '.') {
                     // There should only be one decimal point and only in mantissa
-                    assert_syntax(state == INTEGER_PART);
-                    state = FRACTION_PART;
+                    assert_syntax(conversion_state == INTEGER_PART);
+                    conversion_state = FRACTION_PART;
                     continue;
                 }
 
-                if ((state == INTEGER_PART || state == FRACTION_PART) && (num_char == 'e' || num_char == 'E')) {
-                    // There should only be one exponent specifier
-                    assert_syntax(state == INTEGER_PART || state == FRACTION_PART);
-                    state = EXP_START;
+                if ((conversion_state == INTEGER_PART || conversion_state == FRACTION_PART) && (num_char == 'e' || num_char == 'E')) {
+                    conversion_state = EXP_START;
                     continue;
                 }
 
-                if (state == EXP_START && (num_char == '+' || num_char == '-')) {
-                    exponent_sign = num_char == '+';
-                    state = EXP_VALUE;
+                if (conversion_state == EXP_START && (num_char == '+' || num_char == '-')) {
+                    exponent_sign = (num_char == '+');
+                    conversion_state = EXP_VALUE;
                     continue;
                 }
 
@@ -107,19 +131,13 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             }
 
             // Cannot have scientific notation separator without specifying exponent
-            assert_syntax(state != EXP_START);
+            assert_syntax(conversion_state != EXP_START);
 
             // ".1" => 0.1 and "1." => 1.0 but "." != 0.0
             assert_syntax(token_length != 1 || character != '.');
 
             if (exponent != 0) {
-                for (long i = 0; i < exponent; i++) {
-                    if (exponent_sign) {
-                        value *= 10;
-                    } else {
-                        value /= 10;
-                    }
-                }
+                value *= ten_in(exponent, exponent_sign);
             }
 
             mx_token token = {.type = MX_NUMBER, .value = value};
