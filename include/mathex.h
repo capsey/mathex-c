@@ -13,6 +13,7 @@ typedef enum mx_error {
     MX_OUT_OF_MEMORY, // No memory left.
     MX_SYNTAX_ERROR,  // Expression syntax is invalid.
     MX_UNDEFINED,     // Identifier name not found.
+    MX_ARGS_NUM,      // Incorrect number of arguments.
 } mx_error;
 
 /**
@@ -23,40 +24,34 @@ typedef struct mx_config mx_config;
 /**
  * @brief Creates empty configuration struct with given parsing rules. This function allocates memory, so it is mandatory to call `mx_free` to prevent memory leak. (mathex)
  *
- * @return Pointer to configuration struct. NULL if failed to allocate.
+ * @return Returns pointer to configuration struct. NULL if failed to allocate.
  */
 mx_config *mx_init();
-
-/**
- * @brief Creates configuration struct with given parsing rules and simple operators (+, -, *, /). This function allocates memory, so it is mandatory to call `mx_free` to prevent memory leak. (mathex)
- *
- * @return Pointer to configuration struct. NULL if failed to allocate.
- */
-mx_config *mx_init_simple();
 
 /**
  * @brief Inserts an operator to the configuration struct to be available for parsing. (mathex)
  *
  * @param config Configuration struct to insert to.
  * @param name Null-terminated string representing an operator. (should only contain ASCII symbols)
- * @param op_function Function that takes left and right operands and returns the result.
- * @param precedence Precedence (priority) of an operator.
+ * @param operation Function that takes left and right operands and returns the result.
+ * @param precedence Precedence of an operator.
+ * @param left_associative Is an operator left-associative.
  *
  * @return Returns MX_SUCCESS (0) if insertion succeeded and error code if not.
  */
-mx_error mx_insert_operator(mx_config *config, char *name, double (*op_function)(double, double), unsigned int precedence);
+mx_error mx_insert_operator(mx_config *config, char *name, double (*operation)(double, double), unsigned int precedence, bool left_associative);
 
 /**
  * @brief Inserts an function to the configuration struct to be available for parsing. (mathex)
  *
  * @param config Configuration struct to insert to.
  * @param name Null-terminated string representing name of the function. (should only contain letters, digits or underscore and cannot start with a digit)
- * @param fn_function Function that takes arguments array and returns the result.
+ * @param function Function that takes arguments array and returns the result.
  * @param n_args Number of arguments the function takes. (can be zero)
  *
  * @return Returns MX_SUCCESS (0) if insertion succeeded and error code if not.
  */
-mx_error mx_insert_function(mx_config *config, char *name, double (*fn_function)(double *), unsigned int n_args);
+mx_error mx_insert_function(mx_config *config, char *name, double (*function)(double *), unsigned int n_args);
 
 /**
  * @brief Inserts an variable to the configuration struct to be available for parsing. (mathex)
@@ -70,9 +65,9 @@ mx_error mx_insert_function(mx_config *config, char *name, double (*fn_function)
 mx_error mx_insert_variable(mx_config *config, char *name, double value);
 
 /**
- * @brief Frees configuration struct from memory. Does not perform checks, so passing invalid pointer is undefined. (mathex)
+ * @brief Frees configuration struct and its contents from memory. Does not perform checks, so passing invalid pointer is undefined. (mathex)
  *
- * @param config Pointer to a config allocated using `mx_init` or `mx_init_simple`.
+ * @param config Pointer to a config allocated using `mx_init`.
  */
 void mx_free(mx_config *config);
 
@@ -81,7 +76,7 @@ void mx_free(mx_config *config);
  *
  * @param config Configuration struct containing rules to evaluate by.
  * @param expression Null-terminated character array to evaluate.
- * @param result Pointer to write evaluation result to.
+ * @param result Pointer to write evaluation result to. Can be NULL.
  *
  * @return Returns MX_SUCCESS (0) if evaluation succeeded and error code if not.
  */
