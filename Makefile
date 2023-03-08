@@ -25,7 +25,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $^ -o $@
 
 $(TESTBIN): $(TESTDIR)/*.c $(OBJECTS)
-	$(CC) $(CFLAGS) $(INCLUDES) $(TEST) $(OBJECTS) -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) $(TEST) $(OBJECTS) -o $@ -lm
 
 mkdir:
 	mkdir -p $(OBJDIR)
