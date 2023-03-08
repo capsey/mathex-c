@@ -1,6 +1,5 @@
 #include "mathex.h"
 #include "mathex_internal.h"
-#include "mathex_internal_types.h"
 #include <stddef.h>
 #include <stdlib.h>
 

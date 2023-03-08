@@ -1,6 +1,5 @@
 #include "mathex.h"
 #include "mathex_internal.h"
-#include "mathex_internal_types.h"
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -22,7 +21,9 @@
         return_error(MX_SYNTAX_ERROR); \
     }
 
-#define char_to_digit(character) (double)(character - '0')
+static inline double char_to_digit(char character) {
+    return (double)(character - '0');
+}
 
 mx_error mx_eval(mx_config *config, char *expression, double *result) {
     // https://en.wikipedia.org/wiki/Shunting_yard_algorithm#The_algorithm_in_detail
