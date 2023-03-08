@@ -19,6 +19,12 @@ static void test_eval_default_valid() {
     check_valid("5 / 2", 2.5);
     check_valid("1 / 3", 1.0 / 3);
 
+    // Sciencific notation
+    check_valid_literal(1e3);
+    check_valid_literal(1.532e10);
+    check_valid_literal(1.5e+3);
+    check_valid_literal(1.5e-3);
+
     // Grouping (parentheses)
     check_valid_literal((1 + 2) / 3);
     check_valid_literal((9 * 2.12) / 1.8);
@@ -60,6 +66,11 @@ static void test_eval_default_invalid() {
     check_invalid("..5", MX_SYNTAX_ERROR);
     check_invalid("5..", MX_SYNTAX_ERROR);
     check_invalid(".", MX_SYNTAX_ERROR);
+
+    check_invalid("1ee2", MX_SYNTAX_ERROR);
+    check_invalid("1e2.3", MX_SYNTAX_ERROR);
+    check_invalid("1.1e2.3", MX_SYNTAX_ERROR);
+    check_invalid("1.1e + 2", MX_SYNTAX_ERROR);
 
     // Double values
     check_invalid("10 5", MX_SYNTAX_ERROR);
