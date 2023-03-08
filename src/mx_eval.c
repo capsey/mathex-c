@@ -21,9 +21,12 @@
         return_error(MX_SYNTAX_ERROR); \
     }
 
-static inline double char_to_digit(char character) {
-    return (double)(character - '0');
-}
+enum conversion_state {
+    INTEGER_PART,  // Integer portion of decimal fraction (before decimal point)
+    FRACTION_PART, // Fractional portion of decimal fraction (after decimal point)
+    EXP_START,     // Separator of mantissa and exponent in scientific notation (including sign)
+    EXP_VALUE,     // Exponent of scientific notation
+};
 
 mx_error mx_eval(mx_config *config, char *expression, double *result) {
     // https://en.wikipedia.org/wiki/Shunting_yard_algorithm#The_algorithm_in_detail
@@ -49,36 +52,75 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
             assert_syntax(!last_token || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_OPERATOR);
 
             size_t token_length;
-            double value = isdigit(character) ? char_to_digit(character) : 0;
-            bool decimal_found = (character == '.');
+            double value = 0;
+            enum conversion_state state = INTEGER_PART;
             long decimal_place = 10;
+            bool exponent_sign = true;
+            long exponent = 0;
+
+            if (isdigit(character)) {
+                value = (double)(character - '0');
+            } else {
+                state = FRACTION_PART;
+            }
 
             for (token_length = 1; token_length < length; token_length++) {
                 char num_char = expression[i + token_length];
 
                 if (isdigit(num_char)) {
-                    if (!decimal_found) {
-                        value = (value * 10) + char_to_digit(num_char);
-                    } else {
-                        value += char_to_digit(num_char) / (double)decimal_place;
+                    int digit = num_char - '0';
+
+                    if (state == INTEGER_PART) {
+                        value = (value * 10) + (double)digit;
+                    } else if (state == FRACTION_PART) {
+                        value += (double)digit / (double)decimal_place;
                         decimal_place *= 10;
+                    } else if (state == EXP_START || state == EXP_VALUE) {
+                        exponent = (exponent * 10) + digit;
+                        state = EXP_VALUE;
                     }
 
                     continue;
                 }
 
                 if (num_char == '.') {
-                    // There can only be one decimal point
-                    assert_syntax(!decimal_found);
-                    decimal_found = true;
+                    // There should only be one decimal point and only in mantissa
+                    assert_syntax(state == INTEGER_PART);
+                    state = FRACTION_PART;
+                    continue;
+                }
+
+                if ((state == INTEGER_PART || state == FRACTION_PART) && (num_char == 'e' || num_char == 'E')) {
+                    // There should only be one exponent specifier
+                    assert_syntax(state == INTEGER_PART || state == FRACTION_PART);
+                    state = EXP_START;
+                    continue;
+                }
+
+                if (state == EXP_START && (num_char == '+' || num_char == '-')) {
+                    exponent_sign = num_char == '+';
+                    state = EXP_VALUE;
                     continue;
                 }
 
                 break;
             }
 
+            // Cannot have scientific notation separator without specifying exponent
+            assert_syntax(state != EXP_START);
+
             // ".1" => 0.1 and "1." => 1.0 but "." != 0.0
             assert_syntax(token_length != 1 || character != '.');
+
+            if (exponent != 0) {
+                for (long i = 0; i < exponent; i++) {
+                    if (exponent_sign) {
+                        value *= 10;
+                    } else {
+                        value /= 10;
+                    }
+                }
+            }
 
             mx_token token = {.type = MX_NUMBER, .value = value};
             assert_alloc(enqueue_t(out_queue, token));
