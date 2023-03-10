@@ -1,6 +1,7 @@
 #include "main.h"
 #include "mathex.h"
 #include "sput.h"
+#include <float.h>
 
 static void test_eval_default_valid() {
     mx_config *config = mx_init_default();
@@ -43,6 +44,17 @@ static void test_eval_default_valid() {
     check_valid("5 + 4) *2", 18);
     check_valid("5 * (2 + 1", 15);
     check_valid("5 + 4) * (2 + 1", 27);
+
+    // Precision
+    {
+        mx_config *config = mx_init(MX_DEFAULT, -DBL_MAX, DBL_MAX, 1, UINT_MAX);
+
+        check_valid("5.59999", 5.5);
+        check_valid("5.09999", 5.0);
+        check_valid("0.09999e9", 0);
+
+        mx_free(config);
+    }
 
     mx_free(config);
 }
@@ -91,6 +103,12 @@ static void test_eval_default_invalid() {
     check_invalid("()", MX_ERR_SYNTAX);
     check_invalid("", MX_ERR_SYNTAX);
     check_invalid("5 + ()", MX_ERR_SYNTAX);
+
+    // Overflow
+    check_invalid("1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", MX_ERR_OVERFLOW);
+    check_invalid("-1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", MX_ERR_OVERFLOW);
+    check_invalid("1e10000", MX_ERR_OVERFLOW);
+    check_invalid("-1e10000", MX_ERR_OVERFLOW);
 
     mx_free(config);
 }

@@ -57,6 +57,12 @@ bool is_valid_op_char(char character);
 // Returns whether given flag is turned on.
 bool get_flag(mx_config *config, mx_flag flag);
 
+// Checks if a number is in a valid number range.
+bool check_range(mx_config *config, double value);
+
+// Returns current precision
+unsigned int get_precision(mx_config *config);
+
 // Lookup given string slice among inserted variables, functions or operators. NULL if not found.
 mx_token *lookup_id(mx_config *config, char *name, size_t length);
 

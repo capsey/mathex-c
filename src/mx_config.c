@@ -97,6 +97,14 @@ bool get_flag(mx_config *config, mx_flag flag) {
     return config->flags & flag;
 }
 
+bool check_range(mx_config *config, double value) {
+    return value < config->max && value > config->min;
+}
+
+unsigned int get_precision(mx_config *config) {
+    return config->precision;
+}
+
 mx_token *lookup_id(mx_config *config, char *key, size_t length) {
     if (config->n_buckets == 0) return NULL;
 
