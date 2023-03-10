@@ -3,7 +3,7 @@
 #include "sput.h"
 
 static mx_config *init_func() {
-    mx_config *config = mx_init(MX_DEFAULT);
+    mx_config *config = mx_init_default();
 
     mx_insert_function(config, "atan2", _atan2, 2);
 

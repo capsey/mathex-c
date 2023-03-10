@@ -1,48 +1,71 @@
-#ifndef __MATHEX__
-#define __MATHEX__
+#ifndef MATHEX_H
+#define MATHEX_H
 
 #include <stdbool.h>
 #include <stddef.h>
 
-// Default parameters. (mathex)
-#define MX_DEFAULT (MX_IMPLICIT_PARENS | MX_SCI_NOTATION | MX_DEFAULT_ADD | MX_DEFAULT_MUL)
+// Default parameters. Does not include exponentiation and modulus operators.
+#define MX_DEFAULT (MX_IMPLICIT_PARENS | MX_SCI_NOTATION | MX_ENABLE_ADD | MX_ENABLE_SUB | MX_ENABLE_MUL | MX_ENABLE_DIV)
 
 /**
- * @brief Evaluation parameters. (mathex)
+ * @brief Evaluation parameters.
  */
 typedef enum mx_flag {
-    MX_NONE = 0,            // Disable all parameters. (mathex)
-    MX_IMPLICIT_PARENS = 1, // Enables implicit parentheses. (mathex)
-    MX_SCI_NOTATION = 2,    // Enables numbers in scientific notation. (mathex)
-    MX_DEFAULT_ADD = 4,     // Enables built-in addition and substraction operators. (mathex)
-    MX_DEFAULT_MUL = 8,     // Enables built-in multiplication and division operators. (mathex)
+    MX_NONE = 0,            // Disable all parameters.
+    MX_IMPLICIT_PARENS = 1, // Enables implicit parentheses.
+    MX_SCI_NOTATION = 2,    // Enables numbers in scientific notation.
+    MX_ENABLE_ADD = 4,      // Enables addition operator.
+    MX_ENABLE_SUB = 8,      // Enables substraction operator.
+    MX_ENABLE_MUL = 16,     // Enables multiplication operator.
+    MX_ENABLE_DIV = 32,     // Enables division operator.
+    MX_ENABLE_POW = 64,     // Enables exponentiation operator.
+    MX_ENABLE_MOD = 128,    // Enables modulus operator.
 } mx_flag;
 
 /**
- * @brief Error codes. (mathex)
+ * @brief Error codes.
  */
 typedef enum mx_error {
-    MX_SUCCESS,          // Parsed successfully. (mathex)
-    MX_ERR_ILLEGAL_NAME, // Name of operator/variable/function is invalid. (mathex)
-    MX_ERR_NO_MEMORY,    // Out of memory. (mathex)
-    MX_ERR_SYNTAX,       // Expression syntax is invalid. (mathex)
-    MX_ERR_UNDEFINED,    // Identifier name not found. (mathex)
-    MX_ERR_ARGS_NUM,     // Incorrect number of arguments. (mathex)
+    MX_SUCCESS = 0,      // Parsed successfully.
+    MX_ERR_ILLEGAL_NAME, // Name of operator/variable/function contains illegal characters.
+    MX_ERR_NO_MEMORY,    // Out of memory.
+    MX_ERR_DIV_ZERO,     // Division by zero.
+    MX_ERR_OVERFLOW,     // Expression overflowed allowed range.
+    MX_ERR_SYNTAX,       // Expression syntax is invalid.
+    MX_ERR_UNDEFINED,    // Function, variable or operator not found.
+    MX_ERR_INVALID_ARGS, // Arguments validation failed.
+    MX_ERR_ARGS_NUM,     // Incorrect number of arguments.
 } mx_error;
 
 /**
- * @brief Configuration for parsing. (mathex)
+ * @brief Configuration for parsing.
  */
 typedef struct mx_config mx_config;
 
 /**
- * @brief Creates empty configuration struct with default parsing parameters. This function allocates memory, so it is mandatory to free using `mx_free` after usage. (mathex)
+ * @brief Creates empty configuration struct with given parsing parameters.
  *
- * @param flags Evaluation parameters.
+ * This function allocates memory, so it is mandatory to free using `mx_free` after usage.
+ *
+ * @param flags Evaluation flags.
+ * @param min Smallest allowed value.
+ * @param max Largest allowed value.
+ * @param precision Maximum number of digits after decimal point.
+ * @param max_nesting_depth Maximum function nesting allowed.
  *
  * @return Returns pointer to configuration struct. NULL if failed to allocate.
  */
-mx_config *mx_init(mx_flag flags);
+mx_config *mx_init(mx_flag flags, double min, double max, unsigned int precision, unsigned int max_nesting_depth);
+
+/**
+ * @brief Creates configuration struct with default parameters.
+ *
+ * This function allocates memory, so it is mandatory to free using `mx_free` after usage.
+ * Default flags are defined in MX_DEFAULT. Default value range is full range of double value type. Default precision and maximum nesting depth are unlimited.
+ *
+ * @return Returns pointer to configuration struct. NULL if failed to allocate.
+ */
+mx_config *mx_init_default();
 
 /**
  * @brief Sets given evaluation parameters in the configuration struct.
@@ -52,57 +75,48 @@ mx_config *mx_init(mx_flag flags);
 void mx_set_flags(mx_config *config, mx_flag flags);
 
 /**
- * @brief Inserts an variable to the configuration struct to be available for parsing. (mathex)
+ * @brief Inserts an variable to the configuration struct to be available for parsing.
  *
  * @param config Configuration struct to insert to.
  * @param name Null-terminated string representing name of the variable (should only contain letters, digits or underscore and cannot start with a digit)
  * @param func Function that takes an argument and returns the result
  *
- * @return Returns MX_SUCCESS (0) if insertion succeeded and error code if not.
+ * @return Returns MX_SUCCESS if insertion succeeded and error code if not.
  */
 mx_error mx_insert_variable(mx_config *config, char *name, double value);
 
 /**
- * @brief Inserts an operator to the configuration struct to be available for parsing. (mathex)
- *
- * @param config Configuration struct to insert to.
- * @param name Null-terminated string representing an operator. (should only contain any combination of `#!$%&*+-/:<>?@^|~`)
- * @param func Function that takes left and right operands and returns the result.
- * @param precedence Precedence of an operator.
- * @param left_associative Is an operator left-associative.
- *
- * @return Returns MX_SUCCESS (0) if insertion succeeded and error code if not.
- */
-mx_error mx_insert_operator(mx_config *config, char *name, double (*func)(double, double), unsigned int precedence, bool left_associative);
-
-/**
- * @brief Inserts an function to the configuration struct to be available for parsing. (mathex)
+ * @brief Inserts an function to the configuration struct to be available for parsing.
  *
  * @param config Configuration struct to insert to.
  * @param name Null-terminated string representing name of the function. (should only contain letters, digits or underscore and cannot start with a digit)
  * @param func Function that takes arguments array and returns the result.
  * @param n_args Number of arguments the function takes. (can be zero)
  *
- * @return Returns MX_SUCCESS (0) if insertion succeeded and error code if not.
+ * @return Returns MX_SUCCESS if insertion succeeded and error code if not.
  */
 mx_error mx_insert_function(mx_config *config, char *name, double (*func)(double *), unsigned int n_args);
 
 /**
- * @brief Frees configuration struct and its contents from memory. Does not perform checks, so passing invalid pointer is undefined. (mathex)
+ * @brief Frees configuration struct and its contents from memory.
+ *
+ * Does not perform any checks, so passing invalid or NULL pointer is undefined and will likely result in segmentation fault.
  *
  * @param config Pointer to a config allocated using `mx_init`.
  */
 void mx_free(mx_config *config);
 
 /**
- * @brief Takes mathematical expression and evaluates its numerical value. If evaluation failed, returns error code. (mathex)
+ * @brief Takes mathematical expression and evaluates its numerical value.
+ *
+ * Result of the evaluation is written into a `result` pointer. If evaluation failed, returns error code.
  *
  * @param config Configuration struct containing rules to evaluate by.
  * @param expression Null-terminated character array to evaluate.
  * @param result Pointer to write evaluation result to. Can be NULL.
  *
- * @return Returns MX_SUCCESS (0) if evaluation succeeded and error code if not.
+ * @return Returns MX_SUCCESS if evaluation succeeded and error code if not.
  */
-mx_error mx_eval(mx_config *config, char *expression, double *result);
+mx_error mx_evaluate(mx_config *config, char *expression, double *result);
 
-#endif /* __MATHEX__ */
+#endif /* MATHEX_H */

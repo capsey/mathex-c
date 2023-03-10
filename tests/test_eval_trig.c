@@ -4,7 +4,7 @@
 #include <math.h>
 
 static mx_config *init_trig() {
-    mx_config *config = mx_init(MX_DEFAULT);
+    mx_config *config = mx_init_default();
 
     mx_insert_function(config, "sin", _sin, 1);
     mx_insert_function(config, "cos", _cos, 1);

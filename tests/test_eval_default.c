@@ -3,7 +3,7 @@
 #include "sput.h"
 
 static void test_eval_default_valid() {
-    mx_config *config = mx_init(MX_DEFAULT);
+    mx_config *config = mx_init_default();
     double result;
 
     // Integers
@@ -43,7 +43,7 @@ static void test_eval_default_valid() {
 }
 
 static void test_eval_default_invalid() {
-    mx_config *config = mx_init(MX_DEFAULT);
+    mx_config *config = mx_init_default();
     double result;
 
     // Illegal characters

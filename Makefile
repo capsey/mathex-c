@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -std=c99 -Wall -Wextra -Wconversion -Wpedantic
+CFLAGS = -g -std=c99 -lm -Wall -Wextra -Wconversion -Wpedantic
 TESTFLAGS = -g -std=c99 -lm
 AR = ar rcs
 INCLUDES = -Iinclude

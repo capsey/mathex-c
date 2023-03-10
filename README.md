@@ -20,14 +20,14 @@ int main()
 {
     // Here you specify evaluation settings
     // Pass `MX_DEFAULT` to use default ones
-    mx_config *config = mx_init(MX_DEFAULT);
+    mx_config *config = mx_init_default();
 
     char *input = "5 + 5";
     double result;
 
     // Mathex writes result into the pointer you provide
     // Here we use an address to a `result` variable
-    if (mx_eval(config, input, &result) == MX_SUCCESS)
+    if (mx_evaluate(config, input, &result) == MX_SUCCESS)
     {
         printf("%s is %lf\n", input, result); // Outputs `5 + 5 is 10`
     }

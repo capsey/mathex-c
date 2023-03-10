@@ -47,7 +47,7 @@ double ten_in(unsigned int exp, bool sign) {
     return sign ? result : 1.0 / result;
 }
 
-mx_error mx_eval(mx_config *config, char *expression, double *result) {
+mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
     // https://en.wikipedia.org/wiki/Shunting_yard_algorithm#The_algorithm_in_detail
 
     size_t length = strlen(expression);
@@ -117,7 +117,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                     continue;
                 }
 
-                if ((conversion_state == INTEGER_PART || conversion_state == FRACTION_PART) && (num_char == 'e' || num_char == 'E') && mx_get_flag(config, MX_SCI_NOTATION)) {
+                if ((conversion_state == INTEGER_PART || conversion_state == FRACTION_PART) && (num_char == 'e' || num_char == 'E') && get_flag(config, MX_SCI_NOTATION)) {
                     conversion_state = EXP_START;
                     continue;
                 }
@@ -160,7 +160,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                 if (!is_valid_id_char(expression[i + token_length], false)) break;
             }
 
-            mx_token *fetched_token = mx_lookup_name(config, &expression[i], token_length);
+            mx_token *fetched_token = lookup_id(config, &expression[i], token_length);
             if (fetched_token == NULL) return_error(MX_ERR_UNDEFINED);
 
             switch (fetched_token->type) {
@@ -192,20 +192,20 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
                 if (!is_valid_op_char(expression[i + token_length])) break;
             }
 
-            if (token_length == 1 && character == '+' && mx_get_flag(config, MX_DEFAULT_ADD)) {
+            if (get_flag(config, MX_ENABLE_ADD) && token_length == 1 && character == '+') {
                 token = mx_add_token;
-            } else if (token_length == 1 && character == '-' && mx_get_flag(config, MX_DEFAULT_ADD)) {
+            } else if (get_flag(config, MX_ENABLE_SUB) && token_length == 1 && character == '-') {
                 token = mx_sub_token;
-            } else if (token_length == 1 && character == '*' && mx_get_flag(config, MX_DEFAULT_MUL)) {
+            } else if (get_flag(config, MX_ENABLE_MUL) && token_length == 1 && character == '*') {
                 token = mx_mul_token;
-            } else if (token_length == 1 && character == '/' && mx_get_flag(config, MX_DEFAULT_MUL)) {
+            } else if (get_flag(config, MX_ENABLE_DIV) && token_length == 1 && character == '/') {
                 token = mx_div_token;
+            } else if (get_flag(config, MX_ENABLE_POW) && token_length == 1 && character == '^') {
+                token = mx_pow_token;
+            } else if (get_flag(config, MX_ENABLE_MOD) && token_length == 1 && character == '%') {
+                token = mx_mod_token;
             } else {
-                // Custom token
-                mx_token *fetched_token = mx_lookup_name(config, &expression[i], token_length);
-                if (fetched_token == NULL) return_error(MX_ERR_UNDEFINED);
-
-                token = *fetched_token;
+                return_error(MX_ERR_UNDEFINED);
             }
 
             while (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_OPERATOR && (peek_t(ops_stack).data.op.prec > token.data.op.prec || (peek_t(ops_stack).data.op.prec == token.data.op.prec && token.data.op.left_assoc))) {
@@ -250,7 +250,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
         if (!expecting_left_paren && character == ')') {
             if (is_empty_stack_t(ops_stack)) {
                 // Mismatched parenthesis (ignore if implicit parentheses are enabled)
-                assert_syntax(mx_get_flag(config, MX_IMPLICIT_PARENS));
+                assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
                 continue;
             }
 
@@ -259,7 +259,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
 
                 if (is_empty_stack_t(ops_stack)) {
                     // Mismatched parenthesis (ignore if implicit parentheses are enabled)
-                    assert_syntax(mx_get_flag(config, MX_IMPLICIT_PARENS));
+                    assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
                     break;
                 }
             }
@@ -289,7 +289,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
 
             if (is_empty_stack_t(ops_stack)) {
                 // Mismatched parenthesis (ignore if implicit parentheses are enabled)
-                assert_syntax(mx_get_flag(config, MX_IMPLICIT_PARENS));
+                assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
                 continue;
             }
 
@@ -298,7 +298,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
 
                 if (is_empty_stack_t(ops_stack)) {
                     // Mismatched parenthesis (ignore if implicit parentheses are enabled)
-                    assert_syntax(mx_get_flag(config, MX_IMPLICIT_PARENS));
+                    assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
                     break;
                 }
             }
@@ -317,7 +317,7 @@ mx_error mx_eval(mx_config *config, char *expression, double *result) {
 
         if (token.type == MX_LEFT_PAREN) {
             // Mismatched parenthesis (ignore if implicit parentheses are enabled)
-            assert_syntax(mx_get_flag(config, MX_IMPLICIT_PARENS));
+            assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
             continue;
         }
 
