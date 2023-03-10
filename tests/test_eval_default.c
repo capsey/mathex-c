@@ -12,6 +12,11 @@ static void test_eval_default_valid() {
     check_valid_literal(5 + 5);
     check_valid("6 * 18 / 2", 54);
 
+    // Negation and identity
+    check_valid_literal(-25);
+    check_valid_literal(+25);
+    check_valid_literal(-+-+-+25);
+
     // Rational
     check_valid_literal(3.54);
     check_valid_literal(.8);

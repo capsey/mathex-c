@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define OPERAND_ORDER (!last_token || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_BINARY_OPERATOR || last_token == MX_UNARY_OPERATOR)
+#define UNARY_OPERATOR_ORDER (!last_token || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_UNARY_OPERATOR)
+#define BINARY_OPERATOR_ORDER (last_token == MX_NUMBER || last_token == MX_VARIABLE || last_token == MX_RIGHT_PAREN)
+
 #define return_error(error) \
     {                       \
         error_code = error; \
@@ -68,7 +72,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
         if (!expecting_left_paren && (isdigit(character) || character == '.')) {
             // Two operands in a row are not allowed
             // Operand should only either be first in expression or right after operator
-            assert_syntax(!last_token || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_OPERATOR);
+            assert_syntax(OPERAND_ORDER);
 
             size_t token_length;
             double value = 0;
@@ -152,7 +156,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
         if (!expecting_left_paren && is_valid_id_char(character, true)) {
             // Two operands in a row are not allowed
             // Operand should only either be first in expression or right after operator
-            assert_syntax(!last_token || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_OPERATOR);
+            assert_syntax(OPERAND_ORDER);
 
             size_t token_length;
 
@@ -181,41 +185,69 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             continue;
         }
 
-        if (!expecting_left_paren && is_valid_op_char(character)) {
-            // There should always be an operand on the left hand side of the operator
-            assert_syntax(last_token == MX_NUMBER || last_token == MX_VARIABLE || last_token == MX_RIGHT_PAREN);
+        mx_token token;
+        bool is_operator = false;
 
-            mx_token token;
-            size_t token_length;
-
-            for (token_length = 1; token_length < length; token_length++) {
-                if (!is_valid_op_char(expression[i + token_length])) break;
-            }
-
-            if (get_flag(config, MX_ENABLE_ADD) && token_length == 1 && character == '+') {
+        if (!expecting_left_paren && character == '+') {
+            if (get_flag(config, MX_ENABLE_ADD) && BINARY_OPERATOR_ORDER) {
+                // Used as binary operator
+                is_operator = true;
                 token = mx_add_token;
-            } else if (get_flag(config, MX_ENABLE_SUB) && token_length == 1 && character == '-') {
-                token = mx_sub_token;
-            } else if (get_flag(config, MX_ENABLE_MUL) && token_length == 1 && character == '*') {
-                token = mx_mul_token;
-            } else if (get_flag(config, MX_ENABLE_DIV) && token_length == 1 && character == '/') {
-                token = mx_div_token;
-            } else if (get_flag(config, MX_ENABLE_POW) && token_length == 1 && character == '^') {
-                token = mx_pow_token;
-            } else if (get_flag(config, MX_ENABLE_MOD) && token_length == 1 && character == '%') {
-                token = mx_mod_token;
+            } else if (get_flag(config, MX_ENABLE_POS) && UNARY_OPERATOR_ORDER) {
+                // Used as unary operator
+                assert_alloc(push_t(ops_stack, mx_pos_token));
+                last_token = MX_UNARY_OPERATOR;
+                continue;
             } else {
-                return_error(MX_ERR_UNDEFINED);
+                return_error(MX_ERR_SYNTAX);
             }
+        } else if (!expecting_left_paren && character == '-') {
+            if (get_flag(config, MX_ENABLE_SUB) && BINARY_OPERATOR_ORDER) {
+                // Used as binary operator
+                is_operator = true;
+                token = mx_sub_token;
+            } else if (get_flag(config, MX_ENABLE_NEG) && UNARY_OPERATOR_ORDER) {
+                // Used as unary operator
+                assert_alloc(push_t(ops_stack, mx_neg_token));
+                last_token = MX_UNARY_OPERATOR;
+                continue;
+            } else {
+                return_error(MX_ERR_SYNTAX);
+            }
+        } else if (!expecting_left_paren && get_flag(config, MX_ENABLE_MUL) && character == '*') {
+            // There should always be an operand on the left hand side of the operator
+            assert_syntax(BINARY_OPERATOR_ORDER);
 
-            while (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_OPERATOR && (peek_t(ops_stack).data.op.prec > token.data.op.prec || (peek_t(ops_stack).data.op.prec == token.data.op.prec && token.data.op.left_assoc))) {
+            is_operator = true;
+            token = mx_mul_token;
+        } else if (!expecting_left_paren && get_flag(config, MX_ENABLE_DIV) && character == '/') {
+            // There should always be an operand on the left hand side of the operator
+            assert_syntax(BINARY_OPERATOR_ORDER);
+
+            is_operator = true;
+            token = mx_div_token;
+        } else if (!expecting_left_paren && get_flag(config, MX_ENABLE_POW) && character == '^') {
+            // There should always be an operand on the left hand side of the operator
+            assert_syntax(BINARY_OPERATOR_ORDER);
+
+            is_operator = true;
+            token = mx_pow_token;
+        } else if (!expecting_left_paren && get_flag(config, MX_ENABLE_MOD) && character == '%') {
+            // There should always be an operand on the left hand side of the operator
+            assert_syntax(BINARY_OPERATOR_ORDER);
+
+            is_operator = true;
+            token = mx_mod_token;
+        }
+
+        if (is_operator) {
+            while (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_BINARY_OPERATOR && (peek_t(ops_stack).data.biop.prec > token.data.biop.prec || (peek_t(ops_stack).data.biop.prec == token.data.biop.prec && token.data.biop.left_assoc))) {
                 assert_alloc(enqueue_t(out_queue, pop_t(ops_stack)));
             }
 
             assert_alloc(push_t(ops_stack, token));
 
-            i += token_length - 1;
-            last_token = MX_OPERATOR;
+            last_token = MX_BINARY_OPERATOR;
             continue;
         }
 
@@ -224,7 +256,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
                 assert_alloc(push_n(arg_stack, arg_count));
                 arg_count = 0;
 
-                if (peek_t(ops_stack).data.fn.n_args == 0) {
+                if (peek_t(ops_stack).data.func.n_args == 0) {
                     // Functions with no arguments should have empty parentheses
                     char *next = &expression[i + 1];
 
@@ -237,7 +269,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             } else {
                 // Two operands in a row are not allowed
                 // Operand should only either be first in expression or right after operator
-                assert_syntax(!last_token || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_OPERATOR);
+                assert_syntax(OPERAND_ORDER);
             }
 
             mx_token token = {.type = MX_LEFT_PAREN};
@@ -268,7 +300,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
                 pop_t(ops_stack); // Discard left parenthesis
 
                 if (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_FUNCTION) {
-                    unsigned int n_args = peek_t(ops_stack).data.fn.n_args;
+                    unsigned int n_args = peek_t(ops_stack).data.func.n_args;
                     if (n_args != arg_count + 1 && n_args != 0) return_error(MX_ERR_ARGS_NUM);
                     arg_count = pop_n(arg_stack);
 
@@ -282,7 +314,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
 
         if (!expecting_left_paren && character == ',') {
             // Previous argument has to be non-empty
-            assert_syntax(last_token == MX_NUMBER || last_token == MX_VARIABLE || last_token == MX_RIGHT_PAREN);
+            assert_syntax(BINARY_OPERATOR_ORDER);
 
             // Comma is only valid inside function parentheses
             assert_syntax(!is_empty_stack_n(arg_stack));
@@ -321,7 +353,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             continue;
         }
 
-        if (token.type == MX_FUNCTION && token.data.fn.n_args == 0) {
+        if (token.type == MX_FUNCTION && token.data.func.n_args == 0) {
             // No implicit parentheses for zero argument functions
             return_error(MX_ERR_ARGS_NUM);
         }
@@ -338,28 +370,35 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             assert_alloc(push_d(res_stack, token.data.value));
             break;
 
-        case MX_OPERATOR:
+        case MX_BINARY_OPERATOR:
             assert_syntax(!is_empty_stack_d(res_stack));
             double b = pop_d(res_stack);
 
             assert_syntax(!is_empty_stack_d(res_stack));
             double a = pop_d(res_stack);
 
-            assert_alloc(push_d(res_stack, token.data.op.func(a, b)));
+            assert_alloc(push_d(res_stack, token.data.biop.apply(a, b)));
+            break;
+
+        case MX_UNARY_OPERATOR:
+            assert_syntax(!is_empty_stack_d(res_stack));
+            double x = pop_d(res_stack);
+
+            assert_alloc(push_d(res_stack, token.data.unop.apply(x)));
             break;
 
         case MX_FUNCTION:
-            if (token.data.fn.n_args == 0) {
-                assert_alloc(push_d(res_stack, token.data.fn.func(NULL)));
+            if (token.data.func.n_args == 0) {
+                assert_alloc(push_d(res_stack, token.data.func.apply(NULL)));
             } else {
-                double args[token.data.fn.n_args];
+                double args[token.data.func.n_args];
 
-                for (size_t i = 0; i < token.data.fn.n_args; i++) {
+                for (size_t i = 0; i < token.data.func.n_args; i++) {
                     assert_syntax(!is_empty_stack_d(res_stack));
-                    args[token.data.fn.n_args - i - 1] = pop_d(res_stack);
+                    args[token.data.func.n_args - i - 1] = pop_d(res_stack);
                 }
 
-                assert_alloc(push_d(res_stack, token.data.fn.func(args)));
+                assert_alloc(push_d(res_stack, token.data.func.apply(args)));
             }
             break;
 

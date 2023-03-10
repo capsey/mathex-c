@@ -36,10 +36,10 @@ static void test_config_flags() {
     check_setting("1.e-4", MX_SCI_NOTATION, MX_SUCCESS, MX_ERR_SYNTAX);
 
     // Default operators
-    check_setting("1 + 1", MX_ENABLE_ADD, MX_SUCCESS, MX_ERR_UNDEFINED);
-    check_setting("2 - 1", MX_ENABLE_SUB, MX_SUCCESS, MX_ERR_UNDEFINED);
-    check_setting("3 * 2", MX_ENABLE_MUL, MX_SUCCESS, MX_ERR_UNDEFINED);
-    check_setting("6 / 2", MX_ENABLE_DIV, MX_SUCCESS, MX_ERR_UNDEFINED);
-    check_setting("6 ^ 2", MX_ENABLE_POW, MX_SUCCESS, MX_ERR_UNDEFINED);
-    check_setting("6 % 2", MX_ENABLE_MOD, MX_SUCCESS, MX_ERR_UNDEFINED);
+    check_setting("1 + 1", MX_ENABLE_ADD, MX_SUCCESS, MX_ERR_SYNTAX);
+    check_setting("2 - 1", MX_ENABLE_SUB, MX_SUCCESS, MX_ERR_SYNTAX);
+    check_setting("3 * 2", MX_ENABLE_MUL, MX_SUCCESS, MX_ERR_SYNTAX);
+    check_setting("6 / 2", MX_ENABLE_DIV, MX_SUCCESS, MX_ERR_SYNTAX);
+    check_setting("6 ^ 2", MX_ENABLE_POW, MX_SUCCESS, MX_ERR_SYNTAX);
+    check_setting("6 % 2", MX_ENABLE_MOD, MX_SUCCESS, MX_ERR_SYNTAX);
 }

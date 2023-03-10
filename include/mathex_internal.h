@@ -11,8 +11,9 @@ typedef enum mx_token_type {
     MX_RIGHT_PAREN,
     MX_COMMA,
     MX_NUMBER,
+    MX_BINARY_OPERATOR,
+    MX_UNARY_OPERATOR,
     MX_VARIABLE,
-    MX_OPERATOR,
     MX_FUNCTION,
 } mx_token_type;
 
@@ -22,14 +23,17 @@ typedef struct mx_token {
     union {
         double value; // value of variable or number
         struct {
-            double (*func)(double, double); // operator
-            unsigned int prec;              // precedence
-            bool left_assoc;                // left associativity
-        } op;
+            double (*apply)(double, double); // operator
+            unsigned int prec;               // precedence
+            bool left_assoc;                 // left associativity
+        } biop;
         struct {
-            double (*func)(double[]); // function
-            unsigned int n_args;      // number of arguments
-        } fn;
+            double (*apply)(double); // operator
+        } unop;
+        struct {
+            double (*apply)(double[]); // function
+            unsigned int n_args;       // number of arguments
+        } func;
     } data;
 } mx_token;
 
@@ -37,8 +41,12 @@ extern const mx_token mx_add_token; // Addition operator.
 extern const mx_token mx_sub_token; // Substraction operator.
 extern const mx_token mx_mul_token; // Multiplication operator.
 extern const mx_token mx_div_token; // Division operator.
+
 extern const mx_token mx_pow_token; // Exponentiation operator.
 extern const mx_token mx_mod_token; // Modulus operator.
+
+extern const mx_token mx_pos_token; // Unary identity operator.
+extern const mx_token mx_neg_token; // Unary negation operator.
 
 // Checks if given character is valid character for function or variable.
 bool is_valid_id_char(char character, bool begin);

@@ -145,7 +145,7 @@ mx_error mx_insert_variable(mx_config *config, char *name, double value) {
     return insert(config, name, token);
 }
 
-mx_error mx_insert_function(mx_config *config, char *name, double (*func)(double *), unsigned int n_args) {
+mx_error mx_insert_function(mx_config *config, char *name, double (*apply)(double *), unsigned int n_args) {
     mx_token token;
 
     for (char *check = name; *check != '\0'; check++) {
@@ -155,8 +155,8 @@ mx_error mx_insert_function(mx_config *config, char *name, double (*func)(double
     }
 
     token.type = MX_FUNCTION;
-    token.data.fn.func = func;
-    token.data.fn.n_args = n_args;
+    token.data.func.apply = apply;
+    token.data.func.n_args = n_args;
 
     return insert(config, name, token);
 }
