@@ -2,6 +2,7 @@
 #include "mathex.h"
 #include "sput.h"
 #include <float.h>
+#include <limits.h>
 
 static void test_eval_default_valid() {
     mx_config *config = mx_init_default();

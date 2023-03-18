@@ -2,6 +2,7 @@
 #define TEST_H
 
 #include <float.h>
+#include <limits.h>
 #include <math.h>
 #include <stdbool.h>
 
