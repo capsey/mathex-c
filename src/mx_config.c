@@ -1,5 +1,7 @@
 #include "mathex.h"
 #include "mathex_internal.h"
+#include <float.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -9,11 +11,19 @@ struct item {
     struct item *next;
 };
 
-typedef struct mx_config {
+struct mx_config {
+    // Settings
+    mx_flag flags;
+    double min;
+    double max;
+    unsigned int precision;
+    unsigned int max_nesting_depth;
+
+    // Hashtable
     struct item **buckets;
     size_t n_buckets;
     size_t n_items;
-} mx_config;
+};
 
 static size_t hash(char *key, size_t length) {
     // https://stackoverflow.com/a/2351171/15250154
@@ -29,17 +39,19 @@ static size_t hash(char *key, size_t length) {
 
 static mx_error insert(mx_config *config, char *key, mx_token value) {
     if (config->n_buckets == 0) {
+        // Initialize first time
         config->n_buckets = 4;
         config->buckets = calloc(config->n_buckets, sizeof(struct item *));
-        if (config->buckets == NULL) return MX_OUT_OF_MEMORY;
+        if (config->buckets == NULL) return MX_ERR_NO_MEMORY;
     } else if (config->n_items >= 2 * config->n_buckets / 3) {
+        // Expand hashtable
         size_t length = config->n_buckets;
         struct item **temp = config->buckets;
 
         config->n_items = 0;
         config->n_buckets *= 2;
         config->buckets = calloc(config->n_buckets, sizeof(struct item *));
-        if (config->buckets == NULL) return MX_OUT_OF_MEMORY;
+        if (config->buckets == NULL) return MX_ERR_NO_MEMORY;
 
         for (size_t i = 0; i < length; i++) {
             if (temp[i] != NULL) {
@@ -64,8 +76,9 @@ static mx_error insert(mx_config *config, char *key, mx_token value) {
     }
 
     if (*item == NULL) {
+        // Create new item
         struct item *new = malloc(sizeof(struct item));
-        if (new == NULL) return MX_OUT_OF_MEMORY;
+        if (new == NULL) return MX_ERR_NO_MEMORY;
 
         new->key = key;
         new->next = NULL;
@@ -74,13 +87,26 @@ static mx_error insert(mx_config *config, char *key, mx_token value) {
         *item = new;
         config->n_items++;
     } else {
+        // Key already in the table
         (*item)->value = value;
     }
 
     return MX_SUCCESS;
 }
 
-mx_token *mx_lookup_name(mx_config *config, char *key, size_t length) {
+bool get_flag(mx_config *config, mx_flag flag) {
+    return config->flags & flag;
+}
+
+bool check_range(mx_config *config, double value) {
+    return value < config->max && value > config->min;
+}
+
+unsigned int get_precision(mx_config *config) {
+    return config->precision;
+}
+
+mx_token *lookup_id(mx_config *config, char *key, size_t length) {
     if (config->n_buckets == 0) return NULL;
 
     size_t index = hash(key, length) % config->n_buckets;
@@ -93,8 +119,14 @@ mx_token *mx_lookup_name(mx_config *config, char *key, size_t length) {
     return item != NULL ? &item->value : NULL;
 }
 
-mx_config *mx_init() {
+mx_config *mx_init(mx_flag flags, double min, double max, unsigned int precision, unsigned int max_nesting_depth) {
     mx_config *config = malloc(sizeof(mx_config));
+
+    config->flags = flags;
+    config->min = min;
+    config->max = max;
+    config->precision = precision;
+    config->max_nesting_depth = max_nesting_depth;
 
     config->buckets = NULL;
     config->n_buckets = 0;
@@ -103,37 +135,8 @@ mx_config *mx_init() {
     return config;
 }
 
-mx_error mx_insert_operator(mx_config *config, char *name, double (*operation)(double, double), unsigned int precedence, bool left_associative) {
-    mx_token token;
-
-    for (char *check = name; *check != '\0'; check++) {
-        if (!is_valid_op_char(*check)) {
-            return MX_INVALID_NAME;
-        }
-    }
-
-    token.type = MX_OPERATOR;
-    token.operation = operation;
-    token.precedence = precedence;
-    token.left_associative = left_associative;
-
-    return insert(config, name, token);
-}
-
-mx_error mx_insert_function(mx_config *config, char *name, double (*function)(double *), unsigned int n_args) {
-    mx_token token;
-
-    for (char *check = name; *check != '\0'; check++) {
-        if (!is_valid_id_char(*check, check == name)) {
-            return MX_INVALID_NAME;
-        }
-    }
-
-    token.type = MX_FUNCTION;
-    token.function = function;
-    token.n_args = n_args;
-
-    return insert(config, name, token);
+mx_config *mx_init_default() {
+    return mx_init(MX_DEFAULT, -DBL_MAX, DBL_MAX, UINT_MAX, UINT_MAX);
 }
 
 mx_error mx_insert_variable(mx_config *config, char *name, double value) {
@@ -141,12 +144,28 @@ mx_error mx_insert_variable(mx_config *config, char *name, double value) {
 
     for (char *check = name; *check != '\0'; check++) {
         if (!is_valid_id_char(*check, check == name)) {
-            return MX_INVALID_NAME;
+            return MX_ERR_ILLEGAL_NAME;
         }
     }
 
     token.type = MX_VARIABLE;
-    token.value = value;
+    token.data.value = value;
+
+    return insert(config, name, token);
+}
+
+mx_error mx_insert_function(mx_config *config, char *name, double (*apply)(double *), unsigned int n_args) {
+    mx_token token;
+
+    for (char *check = name; *check != '\0'; check++) {
+        if (!is_valid_id_char(*check, check == name)) {
+            return MX_ERR_ILLEGAL_NAME;
+        }
+    }
+
+    token.type = MX_FUNCTION;
+    token.data.func.apply = apply;
+    token.data.func.n_args = n_args;
 
     return insert(config, name, token);
 }
