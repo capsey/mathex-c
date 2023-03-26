@@ -1,6 +1,6 @@
-#include "main.h"
 #include "mathex.h"
 #include "sput.h"
+#include "test.h"
 
 static mx_config *init_func() {
     mx_config *config = mx_init_default();
@@ -22,13 +22,13 @@ static void test_eval_func_valid() {
     double result;
 
     // Simple
-    check_valid_literal(min(1, 0));
-    check_valid_literal(max(9, 2 * x));
-    check_valid_literal(foo());
+    check_valid("min(1, 0)", 0);
+    check_valid("max(9, 2 * x)", 2 * x);
+    check_valid("foo()", foo());
 
     // Nested
-    check_valid_literal(max(min(x, 10), 0));
-    check_valid_literal(min(max(atan2(1, 2), 0), 10));
+    check_valid("max(min(x, 10), 0)", x);
+    check_valid("min(max(atan2(1, 2), 0), 10)", atan2(1, 2));
 
     // Implicit parentheses
     check_valid("max(0, 0", max(0, 0));

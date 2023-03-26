@@ -1,6 +1,6 @@
-#include "main.h"
 #include "mathex.h"
 #include "sput.h"
+#include "test.h"
 
 #include "test_config.c"
 #include "test_eval_default.c"

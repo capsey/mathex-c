@@ -1,5 +1,5 @@
-#ifndef TEST_H
-#define TEST_H
+#ifndef TESTS_H
+#define TESTS_H
 
 #include <float.h>
 #include <limits.h>
@@ -11,8 +11,6 @@
         sput_fail_unless(mx_evaluate(config, input, &result) == MX_SUCCESS, "No evaluation errors: " input); \
         sput_fail_unless(float_cmp(result, expected), "Correct result expected: " #expected);                \
     } while (0)
-
-#define check_valid_literal(input) check_valid(#input, input)
 
 #define check_invalid(input, error)                                                         \
     do {                                                                                    \
@@ -55,4 +53,4 @@ static double _max(double *args) { return max(args[0], args[1]); }
 
 static double _foo(double *args) { return foo(); }
 
-#endif /* TEST_H */
+#endif /* TESTS_H */

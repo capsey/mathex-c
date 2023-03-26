@@ -1,7 +1,6 @@
-#include "main.h"
-#include "math.h"
 #include "mathex.h"
 #include "sput.h"
+#include "test.h"
 
 static void test_config_insert() {
     mx_config *config = mx_init_default();

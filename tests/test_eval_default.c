@@ -1,6 +1,6 @@
-#include "main.h"
 #include "mathex.h"
 #include "sput.h"
+#include "test.h"
 #include <float.h>
 #include <limits.h>
 
@@ -9,33 +9,33 @@ static void test_eval_default_valid() {
     double result;
 
     // Integers
-    check_valid_literal(25);
-    check_valid_literal(1 - 1);
-    check_valid_literal(5 + 5);
-    check_valid("6 * 18 / 2", 54);
+    check_valid("25", 25.0);
+    check_valid("1 - 1", 0.0);
+    check_valid("5 + 5", 10.0);
+    check_valid("6 * 18 / 2", 54.0);
 
     // Negation and identity
-    check_valid_literal(-25);
-    check_valid_literal(+25);
-    check_valid_literal(-+-+-+25);
+    check_valid("-25", -25.0);
+    check_valid("+25", 25.0);
+    check_valid("-+-+-+25", -25.0);
 
     // Rational
-    check_valid_literal(3.54);
-    check_valid_literal(.8);
-    check_valid_literal(1.);
+    check_valid("3.54", 3.54);
+    check_valid(".8", 0.8);
+    check_valid("1.", 1.0);
     check_valid("5 / 2", 2.5);
     check_valid("1 / 3", 1.0 / 3);
 
     // Sciencific notation
-    check_valid_literal(1e3);
-    check_valid_literal(1.532e10);
-    check_valid_literal(1.5e+3);
-    check_valid_literal(1.5e-3);
-    check_valid_literal(1.e-4);
+    check_valid("1e3", 1000);
+    check_valid("1.532e10", 1.532e10);
+    check_valid("1.5e+3", 1.5e+3);
+    check_valid("1.5e-3", 1.5e-3);
+    check_valid("1.e-4", 1.e-4);
 
     // Grouping (parentheses)
-    check_valid_literal((1 + 2) / 3);
-    check_valid_literal((9 * 2.12) / 1.8);
+    check_valid("(1 + 2) / 3", 1);
+    check_valid("(9 * 2.12) / 1.8", (9 * 2.12) / 1.8);
 
     // Precedence/Order of operations/PEMDAS
     check_valid("2 * 4 + 2", 10);

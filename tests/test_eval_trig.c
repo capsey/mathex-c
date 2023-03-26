@@ -1,6 +1,6 @@
-#include "main.h"
 #include "mathex.h"
 #include "sput.h"
+#include "test.h"
 #include <math.h>
 
 static mx_config *init_trig() {
@@ -23,14 +23,14 @@ static void test_eval_trig_valid() {
     double result;
 
     // Variables
-    check_valid_literal(pi);
-    check_valid_literal(pi / 2);
-    check_valid_literal(pi + 1);
+    check_valid("pi", pi);
+    check_valid("pi/2", pi / 2);
+    check_valid("pi + 1", pi + 1);
 
     // Functions
-    check_valid_literal(sin(0));
-    check_valid_literal(sin(pi));
-    check_valid_literal(cos(1.5 * pi));
+    check_valid("sin(0)", 0);
+    check_valid("sin(pi)", 0);
+    check_valid("cos(1.5 * pi)", 0);
 
     // Implicit multiplication
     // check_valid("2pi", 2 * pi);
@@ -39,8 +39,8 @@ static void test_eval_trig_valid() {
     // check_valid("2sin(pi/2)", 2 * sin(pi / 2));
 
     // Nested functions
-    check_valid_literal(sin(acos(0)));
-    check_valid_literal(sin(2 * acos(0)));
+    check_valid("sin(acos(0))", 1);
+    check_valid("sin(2 * acos(0))", 0);
 
     mx_free(config);
 }
