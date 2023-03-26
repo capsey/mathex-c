@@ -87,22 +87,22 @@ double pop_d(stack_d *stack);
 void free_stack_d(stack_d *stack);
 
 // A stack data structure storing values of type `mx_token`.
-typedef struct stack_t stack_t;
+typedef struct stack_m stack_m;
 
-stack_t *create_stack_t();
-bool is_empty_stack_t(stack_t *stack);
-mx_token peek_t(stack_t *stack);
-bool push_t(stack_t *stack, mx_token value);
-mx_token pop_t(stack_t *stack);
-void stack_free_t(stack_t *stack);
+stack_m *create_stack_m();
+bool is_empty_stack_m(stack_m *stack);
+mx_token peek_m(stack_m *stack);
+bool push_m(stack_m *stack, mx_token value);
+mx_token pop_m(stack_m *stack);
+void stack_free_m(stack_m *stack);
 
 // A queue data structure storing values of type `mx_token`.
-typedef struct queue_t queue_t;
+typedef struct queue_m queue_m;
 
-queue_t *create_queue_t();
-bool is_empty_queue_t(queue_t *queue);
-bool enqueue_t(queue_t *queue, mx_token value);
-mx_token dequeue_t(queue_t *queue);
-void queue_free_t(queue_t *queue);
+queue_m *create_queue_m();
+bool is_empty_queue_m(queue_m *queue);
+bool enqueue_m(queue_m *queue, mx_token value);
+mx_token dequeue_m(queue_m *queue);
+void queue_free_m(queue_m *queue);
 
 #endif /* MATHEX_INTERNAL_H */

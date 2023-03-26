@@ -67,8 +67,8 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
     mx_error error_code = MX_SUCCESS;
     mx_token_type last_token = 0;
 
-    stack_t *ops_stack = create_stack_t();
-    queue_t *out_queue = create_queue_t();
+    stack_m *ops_stack = create_stack_m();
+    queue_m *out_queue = create_queue_m();
     stack_d *res_stack = create_stack_d();
 
     unsigned int arg_count = 0;
@@ -159,7 +159,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             }
 
             mx_token token = {.type = MX_NUMBER, .data.value = value};
-            assert_alloc(enqueue_t(out_queue, token));
+            assert_alloc(enqueue_m(out_queue, token));
 
             last_token = MX_NUMBER;
             i += token_length - 1;
@@ -182,11 +182,11 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
 
             switch (fetched_token->type) {
             case MX_FUNCTION:
-                assert_alloc(push_t(ops_stack, *fetched_token));
+                assert_alloc(push_m(ops_stack, *fetched_token));
                 break;
 
             case MX_VARIABLE:
-                assert_alloc(enqueue_t(out_queue, *fetched_token));
+                assert_alloc(enqueue_m(out_queue, *fetched_token));
                 break;
 
             default:
@@ -208,7 +208,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
                 token = mx_add_token;
             } else if (get_flag(config, MX_ENABLE_POS) && UNARY_OPERATOR_ORDER) {
                 // Used as unary operator
-                assert_alloc(push_t(ops_stack, mx_pos_token));
+                assert_alloc(push_m(ops_stack, mx_pos_token));
                 last_token = MX_UNARY_OPERATOR;
                 continue;
             } else {
@@ -221,7 +221,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
                 token = mx_sub_token;
             } else if (get_flag(config, MX_ENABLE_NEG) && UNARY_OPERATOR_ORDER) {
                 // Used as unary operator
-                assert_alloc(push_t(ops_stack, mx_neg_token));
+                assert_alloc(push_m(ops_stack, mx_neg_token));
                 last_token = MX_UNARY_OPERATOR;
                 continue;
             } else {
@@ -254,11 +254,11 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
         }
 
         if (is_operator) {
-            while (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_BINARY_OPERATOR && (peek_t(ops_stack).data.biop.prec > token.data.biop.prec || (peek_t(ops_stack).data.biop.prec == token.data.biop.prec && token.data.biop.left_assoc))) {
-                assert_alloc(enqueue_t(out_queue, pop_t(ops_stack)));
+            while (!is_empty_stack_m(ops_stack) && peek_m(ops_stack).type == MX_BINARY_OPERATOR && (peek_m(ops_stack).data.biop.prec > token.data.biop.prec || (peek_m(ops_stack).data.biop.prec == token.data.biop.prec && token.data.biop.left_assoc))) {
+                assert_alloc(enqueue_m(out_queue, pop_m(ops_stack)));
             }
 
-            assert_alloc(push_t(ops_stack, token));
+            assert_alloc(push_m(ops_stack, token));
 
             last_token = MX_BINARY_OPERATOR;
             continue;
@@ -269,7 +269,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
                 assert_alloc(push_n(arg_stack, arg_count));
                 arg_count = 0;
 
-                if (peek_t(ops_stack).data.func.n_args == 0) {
+                if (peek_m(ops_stack).data.func.n_args == 0) {
                     // Functions with no arguments should have empty parentheses
                     char *next = &expression[i + 1];
 
@@ -286,38 +286,38 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             }
 
             mx_token token = {.type = MX_LEFT_PAREN};
-            assert_alloc(push_t(ops_stack, token));
+            assert_alloc(push_m(ops_stack, token));
 
             last_token = MX_LEFT_PAREN;
             continue;
         }
 
         if (!expecting_left_paren && character == ')') {
-            if (is_empty_stack_t(ops_stack)) {
+            if (is_empty_stack_m(ops_stack)) {
                 // Mismatched parenthesis (ignore if implicit parentheses are enabled)
                 assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
                 continue;
             }
 
-            while (peek_t(ops_stack).type != MX_LEFT_PAREN) {
-                assert_alloc(enqueue_t(out_queue, pop_t(ops_stack)));
+            while (peek_m(ops_stack).type != MX_LEFT_PAREN) {
+                assert_alloc(enqueue_m(out_queue, pop_m(ops_stack)));
 
-                if (is_empty_stack_t(ops_stack)) {
+                if (is_empty_stack_m(ops_stack)) {
                     // Mismatched parenthesis (ignore if implicit parentheses are enabled)
                     assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
                     break;
                 }
             }
 
-            if (!is_empty_stack_t(ops_stack)) {
-                pop_t(ops_stack); // Discard left parenthesis
+            if (!is_empty_stack_m(ops_stack)) {
+                pop_m(ops_stack); // Discard left parenthesis
 
-                if (!is_empty_stack_t(ops_stack) && peek_t(ops_stack).type == MX_FUNCTION) {
-                    unsigned int n_args = peek_t(ops_stack).data.func.n_args;
+                if (!is_empty_stack_m(ops_stack) && peek_m(ops_stack).type == MX_FUNCTION) {
+                    unsigned int n_args = peek_m(ops_stack).data.func.n_args;
                     if (n_args != arg_count + 1 && n_args != 0) return_error(MX_ERR_ARGS_NUM);
                     arg_count = pop_n(arg_stack);
 
-                    assert_alloc(enqueue_t(out_queue, pop_t(ops_stack)));
+                    assert_alloc(enqueue_m(out_queue, pop_m(ops_stack)));
                 }
             }
 
@@ -332,16 +332,16 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             // Comma is only valid inside function parentheses
             assert_syntax(!is_empty_stack_n(arg_stack));
 
-            if (is_empty_stack_t(ops_stack)) {
+            if (is_empty_stack_m(ops_stack)) {
                 // Mismatched parenthesis (ignore if implicit parentheses are enabled)
                 assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
                 continue;
             }
 
-            while (peek_t(ops_stack).type != MX_LEFT_PAREN) {
-                assert_alloc(enqueue_t(out_queue, pop_t(ops_stack)));
+            while (peek_m(ops_stack).type != MX_LEFT_PAREN) {
+                assert_alloc(enqueue_m(out_queue, pop_m(ops_stack)));
 
-                if (is_empty_stack_t(ops_stack)) {
+                if (is_empty_stack_m(ops_stack)) {
                     // Mismatched parenthesis (ignore if implicit parentheses are enabled)
                     assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
                     break;
@@ -357,8 +357,8 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
         assert_syntax(character == ' ');
     }
 
-    while (!is_empty_stack_t(ops_stack)) {
-        mx_token token = pop_t(ops_stack);
+    while (!is_empty_stack_m(ops_stack)) {
+        mx_token token = pop_m(ops_stack);
 
         if (token.type == MX_LEFT_PAREN) {
             // Mismatched parenthesis (ignore if implicit parentheses are enabled)
@@ -371,11 +371,11 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             return_error(MX_ERR_ARGS_NUM);
         }
 
-        assert_alloc(enqueue_t(out_queue, token));
+        assert_alloc(enqueue_m(out_queue, token));
     }
 
-    while (!is_empty_queue_t(out_queue)) {
-        mx_token token = dequeue_t(out_queue);
+    while (!is_empty_queue_m(out_queue)) {
+        mx_token token = dequeue_m(out_queue);
 
         switch (token.type) {
         case MX_NUMBER:
@@ -430,8 +430,8 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
     *result = final_result;
 
 cleanup:
-    stack_free_t(ops_stack);
-    queue_free_t(out_queue);
+    stack_free_m(ops_stack);
+    queue_free_m(out_queue);
     free_stack_d(res_stack);
 
     return error_code;
