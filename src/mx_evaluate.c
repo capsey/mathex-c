@@ -42,7 +42,7 @@ enum state {
 };
 
 // Returns 10 in power of `exp` or `-exp` depending on `sign` parameter.
-double ten_in(unsigned int exp, bool sign) {
+double ten_in(unsigned long exp, bool sign) {
     // https://cp-algorithms.com/algebra/binary-exp.html
 
     double result = 1.0;
@@ -82,6 +82,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             // Two operands in a row are not allowed
             // Operand should only either be first in expression or right after operator
             assert_syntax(OPERAND_ORDER);
+            if (arg_count == 0) arg_count++;
 
             size_t token_length;
             double value = 0;
@@ -170,6 +171,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             // Two operands in a row are not allowed
             // Operand should only either be first in expression or right after operator
             assert_syntax(OPERAND_ORDER);
+            if (arg_count == 0) arg_count++;
 
             size_t token_length;
 
@@ -268,21 +270,11 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             if (expecting_left_paren) {
                 assert_alloc(push_n(arg_stack, arg_count));
                 arg_count = 0;
-
-                if (peek_m(ops_stack).data.func.n_args == 0) {
-                    // Functions with no arguments should have empty parentheses
-                    char *next = &expression[i + 1];
-
-                    while (*next == ' ') {
-                        next++;
-                    }
-
-                    if (*next != ')') return_error(MX_ERR_ARGS_NUM);
-                }
             } else {
                 // Two operands in a row are not allowed
                 // Operand should only either be first in expression or right after operator
                 assert_syntax(OPERAND_ORDER);
+                if (arg_count == 0) arg_count++;
             }
 
             mx_token token = {.type = MX_LEFT_PAREN};
@@ -314,7 +306,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
 
                 if (!is_empty_stack_m(ops_stack) && peek_m(ops_stack).type == MX_FUNCTION) {
                     unsigned int n_args = peek_m(ops_stack).data.func.n_args;
-                    if (n_args != arg_count + 1 && n_args != 0) return_error(MX_ERR_ARGS_NUM);
+                    if (arg_count != n_args) return_error(MX_ERR_ARGS_NUM);
                     arg_count = pop_n(arg_stack);
 
                     assert_alloc(enqueue_m(out_queue, pop_m(ops_stack)));
@@ -361,14 +353,14 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
         mx_token token = pop_m(ops_stack);
 
         if (token.type == MX_LEFT_PAREN) {
-            // Mismatched parenthesis (ignore if implicit parentheses are enabled)
-            assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
+            // Mismatched parenthesis (ignore if implicit parentheses are enabled, unless zero-argument function)
+            assert_syntax(get_flag(config, MX_IMPLICIT_PARENS) && !(!is_empty_stack_m(ops_stack) && peek_m(ops_stack).type == MX_FUNCTION && peek_m(ops_stack).data.func.n_args == 0));
             continue;
         }
 
         if (token.type == MX_FUNCTION && token.data.func.n_args == 0) {
             // No implicit parentheses for zero argument functions
-            return_error(MX_ERR_ARGS_NUM);
+            return_error(MX_ERR_SYNTAX);
         }
 
         assert_alloc(enqueue_m(out_queue, token));
@@ -427,7 +419,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
 
     // Check for user-defined valid range
     if (!check_range(config, final_result)) return_error(MX_ERR_OVERFLOW);
-    *result = final_result;
+    if (result != NULL) *result = final_result;
 
 cleanup:
     stack_free_m(ops_stack);

@@ -185,6 +185,7 @@ spec("mx_evaluate") {
             check(mx_evaluate(config, "max 0, 2)", &result) == MX_ERR_SYNTAX);
             check(mx_evaluate(config, "min 1, 0", &result) == MX_ERR_SYNTAX);
             check(mx_evaluate(config, "foo", &result) == MX_ERR_SYNTAX);
+            check(mx_evaluate(config, "foo + 1", &result) == MX_ERR_SYNTAX);
         }
 
         it("spaces in identifiers") {

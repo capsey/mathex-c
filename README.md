@@ -18,15 +18,15 @@ Using Mathex is super easy - just include one header, initialize, evaluate and f
 
 int main()
 {
-    // Here you specify evaluation settings
-    // Pass `MX_DEFAULT` to use default ones
+    // Use `mx_init_default` to get default configuration
+    // For specifying your own settings, check out documentation
     mx_config *config = mx_init_default();
 
     char *input = "5 + 5";
     double result;
 
     // Mathex writes result into the pointer you provide
-    // Here we use an address to a `result` variable
+    // Here we pass an address to a `result` variable
     if (mx_evaluate(config, input, &result) == MX_SUCCESS)
     {
         printf("%s is %lf\n", input, result); // Outputs `5 + 5 is 10`
