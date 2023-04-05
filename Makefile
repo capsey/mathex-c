@@ -1,40 +1,44 @@
-CC = gcc
-CFLAGS = -g -std=c99 -Wall -Wextra -Wconversion -Wpedantic
-TESTFLAGS = -g -std=c99
-AR = ar rcs
-INCLUDES = -Iinclude
+# Compiler flags
+CC := gcc
+AR := ar rcs
 
-SRCDIR = src
-OBJDIR = bin/obj
-LIBDIR = bin/lib
+CFLAGS := -g -std=c99 -Wall -Wextra -Wconversion -Wpedantic
+TESTFLAGS := -g -std=c99
+INCLUDES := -Iinclude
 
-SOURCES = $(wildcard $(SRCDIR)/*.c)
-OBJECTS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SOURCES))
-LIBRARY = $(LIBDIR)/mathex.a
+# Variables
+SOURCES := $(wildcard src/*.c)
+OBJECTS := $(patsubst src/%.c, bin/obj/%.o, $(SOURCES))
+LIBRARY := bin/lib/libmathex.a
 
-TESTDIR = tests
-TEST = $(TESTDIR)/main.c
-TESTBINDIR = $(TESTDIR)/bin
-TESTBIN = $(TESTBINDIR)/main
+TESTSRC := $(wildcard test/*_spec.c)
+TESTBIN := $(patsubst test/%.c, test/bin/%, $(TESTSRC))
+TESTDEP := test/bdd-for-c.h
 
-all: $(LIBRARY)
-
-$(LIBRARY): $(OBJECTS)
-	$(AR) $(LIBRARY) $(OBJECTS)
-
-$(OBJDIR)/%.o: $(SRCDIR)/%.c
-	$(CC) $(CFLAGS) $(INCLUDES) -c $^ -o $@ -lm
-
-$(TESTBIN): $(TESTDIR)/*.c $(OBJECTS)
-	$(CC) $(TESTFLAGS) $(INCLUDES) $(TEST) $(OBJECTS) -o $@ -lm
+# Phonies
+build: $(LIBRARY)
 
 mkdir:
-	mkdir -p $(OBJDIR)
-	mkdir -p $(LIBDIR)
-	mkdir -p $(TESTBINDIR)
+	mkdir -p bin/obj
+	mkdir -p bin/lib
+	mkdir -p test/bin
 
-test: $(LIBRARY) $(TESTBIN)
-	$(TESTBIN)
+test: $(TESTDEP) $(LIBRARY) $(TESTBIN)
+	$(foreach bin, $(TESTBIN), $(bin);)
 
 clean:
 	rm -f $(OBJECTS) $(LIBRARY) $(TESTBIN)
+
+# Library
+$(LIBRARY): $(OBJECTS)
+	$(AR) $(LIBRARY) $(OBJECTS)
+
+bin/obj/%.o: src/%.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c $^ -o $@ -lm
+
+# Testing
+test/bin/%_spec: test/%_spec.c $(LIBRARY)
+	$(CC) $(TESTFLAGS) $(INCLUDES) $< -o $@ -Lbin/lib -lmathex -lm
+
+$(TESTDEP):
+	curl -o $@ https://raw.githubusercontent.com/grassator/bdd-for-c/master/bdd-for-c.h

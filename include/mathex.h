@@ -70,13 +70,6 @@ mx_config *mx_init(mx_flag flags, double min, double max, unsigned int precision
 mx_config *mx_init_default();
 
 /**
- * @brief Sets given evaluation parameters in the configuration struct.
- *
- * @param flags Evaluation parameters.
- */
-void mx_set_flags(mx_config *config, mx_flag flags);
-
-/**
  * @brief Inserts an variable to the configuration struct to be available for parsing.
  *
  * @param config Configuration struct to insert to.
