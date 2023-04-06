@@ -6,25 +6,31 @@ CFLAGS := -g -std=c99 -Wall -Wextra -Wconversion -Wpedantic
 TESTFLAGS := -g -std=c99
 INCLUDES := -Iinclude
 
-# Variables
-SOURCES := $(wildcard src/*.c)
-OBJECTS := $(patsubst src/%.c, bin/obj/%.o, $(SOURCES))
-LIBRARY := bin/lib/libmathex.a
+# Library variables
+SOURCEDIR := ./src
+BINARYDIR := ./bin
 
-TESTSRC := $(wildcard test/*_spec.c)
-TESTBIN := $(patsubst test/%.c, test/bin/%, $(TESTSRC))
-TESTDEP := test/bdd-for-c.h
+SOURCES := $(wildcard $(SOURCEDIR)/*.c)
+OBJECTS := $(patsubst $(SOURCEDIR)/%.c, $(BINARYDIR)/%.o, $(SOURCES))
+LIBRARY := $(BINARYDIR)/libmathex.a
+
+# Testing variables
+TESTDIR := ./test
+TESTBINDIR := $(TESTDIR)/bin
+
+TESTSRC := $(wildcard $(TESTDIR)/*_spec.c)
+TESTBIN := $(patsubst $(TESTDIR)/%.c, $(TESTBINDIR)/%, $(TESTSRC))
+TESTDEP := $(TESTDIR)/bdd-for-c.h
 
 # Phonies
 build: $(LIBRARY)
 
 mkdir:
-	mkdir -p bin/obj
-	mkdir -p bin/lib
-	mkdir -p test/bin
+	mkdir -p $(BINARYDIR)
+	mkdir -p $(TESTBINDIR)
 
 test: $(TESTDEP) $(LIBRARY) $(TESTBIN)
-	$(foreach bin, $(TESTBIN), ./$(bin);)
+	$(foreach EXE, $(TESTBIN), $(EXE);)
 
 clean:
 	rm -f $(OBJECTS) $(LIBRARY) $(TESTBIN)
@@ -33,12 +39,12 @@ clean:
 $(LIBRARY): $(OBJECTS)
 	$(AR) $(LIBRARY) $(OBJECTS)
 
-bin/obj/%.o: src/%.c
+$(BINARYDIR)/%.o: $(SOURCEDIR)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $^ -o $@ -lm
 
 # Testing
-test/bin/%_spec: test/%_spec.c $(LIBRARY)
-	$(CC) $(TESTFLAGS) $(INCLUDES) $< -o $@ -Lbin/lib -lmathex -lm
+$(TESTBINDIR)/%_spec: $(TESTDIR)/%_spec.c $(LIBRARY)
+	$(CC) $(TESTFLAGS) $(INCLUDES) $< -o $@ -L$(BINARYDIR) -lmathex -lm
 
 $(TESTDEP):
 	curl -o $@ https://raw.githubusercontent.com/grassator/bdd-for-c/master/bdd-for-c.h

@@ -2,8 +2,9 @@
 .vscode/
 
 # Output
-obj/
 bin/
+test/bin
 
 # Dependencies
 test/bdd-for-c.h
+
