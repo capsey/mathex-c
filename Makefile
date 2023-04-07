@@ -24,7 +24,7 @@ mkdir:
 	mkdir -p test/bin
 
 test: $(TESTDEP) $(LIBRARY) $(TESTBIN)
-	$(foreach bin, $(TESTBIN), $(bin);)
+	$(foreach bin, $(TESTBIN), ./$(bin);)
 
 clean:
 	rm -f $(OBJECTS) $(LIBRARY) $(TESTBIN)

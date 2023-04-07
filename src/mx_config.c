@@ -135,7 +135,7 @@ mx_config *mx_init(mx_flag flags, double min, double max, unsigned int precision
     return config;
 }
 
-mx_config *mx_init_default() {
+mx_config *mx_init_default(void) {
     return mx_init(MX_DEFAULT, -DBL_MAX, DBL_MAX, UINT_MAX, UINT_MAX);
 }
 

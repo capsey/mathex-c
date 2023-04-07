@@ -12,7 +12,7 @@ struct stack_n {
     node_n *top;
 };
 
-stack_n *create_stack_n() {
+stack_n *create_stack_n(void) {
     return calloc(1, sizeof(stack_n));
 }
 
@@ -68,7 +68,7 @@ struct stack_d {
     node_d *top;
 };
 
-stack_d *create_stack_d() {
+stack_d *create_stack_d(void) {
     return calloc(1, sizeof(stack_d));
 }
 
@@ -124,7 +124,7 @@ struct stack_m {
     node_t *top;
 };
 
-stack_m *create_stack_m() {
+stack_m *create_stack_m(void) {
     return calloc(1, sizeof(stack_m));
 }
 
@@ -176,7 +176,7 @@ struct queue_m {
     node_t *rear;
 };
 
-queue_m *create_queue_m() {
+queue_m *create_queue_m(void) {
     return calloc(1, sizeof(queue_m));
 }
 
