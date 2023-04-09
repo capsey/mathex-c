@@ -1,5 +1,7 @@
-# IDE specific
+# Generated
 .vscode/
+.cache/
+compile_commands.json
 
 # Output
 bin/

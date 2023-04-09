@@ -21,6 +21,12 @@ static double _max(double args[]) {
     return args[0] > args[1] ? args[0] : args[1];
 }
 
+#define check_flag(input, expected_a, expected_b) \
+    do { \
+        check(mx_evaluate(config, input, NULL) == expected_a); \
+        check(mx_evaluate(custom_config, input, NULL) == expected_b); \
+    } while(0)
+
 spec("mx_config") {
     static mx_config *config;
     static double result;
@@ -39,11 +45,8 @@ spec("mx_config") {
         it("implicit parentheses flag") {
             custom_config = mx_init(MX_DEFAULT & ~MX_IMPLICIT_PARENS, -DBL_MAX, DBL_MAX, UINT_MAX, UINT_MAX);
 
-            check(mx_evaluate(config, "5 + 5) * 2", NULL) == MX_SUCCESS);
-            check(mx_evaluate(custom_config, "5 + 5) * 2", NULL) == MX_ERR_SYNTAX);
-
-            check(mx_evaluate(config, "2 * (5 + 5", NULL) == MX_SUCCESS);
-            check(mx_evaluate(custom_config, "2 * (5 + 5", NULL) == MX_ERR_SYNTAX);
+            check_flag("5 + 5) * 2", MX_SUCCESS, MX_ERR_SYNTAX);
+            check_flag("2 * (5 + 5", MX_SUCCESS, MX_ERR_SYNTAX);
 
             mx_free(custom_config);
         }
@@ -51,14 +54,9 @@ spec("mx_config") {
         it("scientific notation") {
             custom_config = mx_init(MX_DEFAULT & ~MX_SCI_NOTATION, -DBL_MAX, DBL_MAX, UINT_MAX, UINT_MAX);
 
-            check(mx_evaluate(config, "4e3", NULL) == MX_SUCCESS);
-            check(mx_evaluate(custom_config, "4e3", NULL) == MX_ERR_SYNTAX);
-
-            check(mx_evaluate(config, "1.21e10", NULL) == MX_SUCCESS);
-            check(mx_evaluate(custom_config, "1.21e10", NULL) == MX_ERR_SYNTAX);
-
-            check(mx_evaluate(config, "1.e-4", NULL) == MX_SUCCESS);
-            check(mx_evaluate(custom_config, "1.e-4", NULL) == MX_ERR_SYNTAX);
+            check_flag("4e3", MX_SUCCESS, MX_ERR_SYNTAX);
+            check_flag("1.21e10", MX_SUCCESS, MX_ERR_SYNTAX);
+            check_flag("1.e-4", MX_SUCCESS, MX_ERR_SYNTAX);
 
             mx_free(custom_config);
         }
@@ -66,23 +64,12 @@ spec("mx_config") {
         it("default operators") {
             custom_config = mx_init(MX_DEFAULT & ~(MX_ENABLE_ADD | MX_ENABLE_SUB | MX_ENABLE_MUL | MX_ENABLE_DIV | MX_ENABLE_POS | MX_ENABLE_NEG), -DBL_MAX, DBL_MAX, UINT_MAX, UINT_MAX);
 
-            check(mx_evaluate(config, "1 + 1", NULL) == MX_SUCCESS);
-            check(mx_evaluate(custom_config, "1 + 1", NULL) == MX_ERR_SYNTAX);
-
-            check(mx_evaluate(config, "2 - 1", NULL) == MX_SUCCESS);
-            check(mx_evaluate(custom_config, "2 - 1", NULL) == MX_ERR_SYNTAX);
-
-            check(mx_evaluate(config, "3 * 2", NULL) == MX_SUCCESS);
-            check(mx_evaluate(custom_config, "3 * 2", NULL) == MX_ERR_SYNTAX);
-
-            check(mx_evaluate(config, "6 / 2", NULL) == MX_SUCCESS);
-            check(mx_evaluate(custom_config, "6 / 2", NULL) == MX_ERR_SYNTAX);
-
-            check(mx_evaluate(config, "+2", NULL) == MX_SUCCESS);
-            check(mx_evaluate(custom_config, "+2", NULL) == MX_ERR_SYNTAX);
-
-            check(mx_evaluate(config, "-2", NULL) == MX_SUCCESS);
-            check(mx_evaluate(custom_config, "-2", NULL) == MX_ERR_SYNTAX);
+            check_flag("1 + 1", MX_SUCCESS, MX_ERR_SYNTAX);
+            check_flag("2 - 1", MX_SUCCESS, MX_ERR_SYNTAX);
+            check_flag("3 * 2", MX_SUCCESS, MX_ERR_SYNTAX);
+            check_flag("6 / 2", MX_SUCCESS, MX_ERR_SYNTAX);
+            check_flag("+2", MX_SUCCESS, MX_ERR_SYNTAX);
+            check_flag("-2", MX_SUCCESS, MX_ERR_SYNTAX);
 
             mx_free(custom_config);
         }
@@ -90,11 +77,8 @@ spec("mx_config") {
         it("extra operators") {
             custom_config = mx_init(MX_DEFAULT | (MX_ENABLE_POW | MX_ENABLE_MOD), -DBL_MAX, DBL_MAX, UINT_MAX, UINT_MAX);
 
-            check(mx_evaluate(config, "6 ^ 2", NULL) == MX_ERR_SYNTAX);
-            check(mx_evaluate(custom_config, "6 ^ 2", NULL) == MX_SUCCESS);
-
-            check(mx_evaluate(config, "6 % 2", NULL) == MX_ERR_SYNTAX);
-            check(mx_evaluate(custom_config, "6 % 2", NULL) == MX_SUCCESS);
+            check_flag("6 ^ 2", MX_ERR_SYNTAX, MX_SUCCESS);
+            check_flag("6 % 2", MX_ERR_SYNTAX, MX_SUCCESS);
 
             mx_free(custom_config);
         }
@@ -116,3 +100,4 @@ spec("mx_config") {
         }
     }
 }
+
