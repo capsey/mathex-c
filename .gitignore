@@ -1,9 +1,12 @@
-# IDE specific
+# Generated
 .vscode/
+.cache/
+compile_commands.json
 
 # Output
-obj/
 bin/
+test/bin
 
 # Dependencies
-tests/sput.h
+test/bdd-for-c.h
+

@@ -67,14 +67,7 @@ mx_config *mx_init(mx_flag flags, double min, double max, unsigned int precision
  *
  * @return Returns pointer to configuration struct. NULL if failed to allocate.
  */
-mx_config *mx_init_default();
-
-/**
- * @brief Sets given evaluation parameters in the configuration struct.
- *
- * @param flags Evaluation parameters.
- */
-void mx_set_flags(mx_config *config, mx_flag flags);
+mx_config *mx_init_default(void);
 
 /**
  * @brief Inserts an variable to the configuration struct to be available for parsing.

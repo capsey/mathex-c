@@ -69,7 +69,7 @@ mx_token *lookup_id(mx_config *config, char *name, size_t length);
 // A stack data structure storing unsigned integer numbers.
 typedef struct stack_n stack_n;
 
-stack_n *create_stack_n();
+stack_n *create_stack_n(void);
 bool is_empty_stack_n(stack_n *stack);
 unsigned int peek_n(stack_n *stack);
 bool push_n(stack_n *stack, unsigned int value);
@@ -79,7 +79,7 @@ void free_stack_n(stack_n *stack);
 // A stack data structure storing double precision floating point numbers.
 typedef struct stack_d stack_d;
 
-stack_d *create_stack_d();
+stack_d *create_stack_d(void);
 bool is_empty_stack_d(stack_d *stack);
 double peek_d(stack_d *stack);
 bool push_d(stack_d *stack, double value);
@@ -89,7 +89,7 @@ void free_stack_d(stack_d *stack);
 // A stack data structure storing values of type `mx_token`.
 typedef struct stack_m stack_m;
 
-stack_m *create_stack_m();
+stack_m *create_stack_m(void);
 bool is_empty_stack_m(stack_m *stack);
 mx_token peek_m(stack_m *stack);
 bool push_m(stack_m *stack, mx_token value);
@@ -99,7 +99,7 @@ void stack_free_m(stack_m *stack);
 // A queue data structure storing values of type `mx_token`.
 typedef struct queue_m queue_m;
 
-queue_m *create_queue_m();
+queue_m *create_queue_m(void);
 bool is_empty_queue_m(queue_m *queue);
 bool enqueue_m(queue_m *queue, mx_token value);
 mx_token dequeue_m(queue_m *queue);

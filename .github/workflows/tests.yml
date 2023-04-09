@@ -23,9 +23,6 @@ jobs:
       uses: msys2/setup-msys2@v2
       with:
         update: true
-
-    - name: Set up dependencies
-      run: sh install_test_dependencies.sh
       
     - name: Build and test
       run: |
