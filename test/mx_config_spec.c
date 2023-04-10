@@ -32,7 +32,7 @@ spec("mx_config") {
     static double result;
 
     before() {
-        config = mx_init_default();
+        config = mx_init(MX_DEFAULT, -DBL_MAX, DBL_MAX, UINT_MAX, UINT_MAX);
     }
 
     after() {

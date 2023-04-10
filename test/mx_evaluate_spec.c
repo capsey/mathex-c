@@ -1,6 +1,7 @@
 #include "bdd-for-c.h"
 #include "mathex.h"
 #include <float.h>
+#include <limits.h>
 #include <math.h>
 #include <stdbool.h>
 
@@ -34,7 +35,7 @@ spec("mx_evaluate") {
     static double result;
 
     before() {
-        config = mx_init_default();
+        config = mx_init(MX_DEFAULT, -DBL_MAX, DBL_MAX, UINT_MAX, UINT_MAX);
     }
 
     after() {

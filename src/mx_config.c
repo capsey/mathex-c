@@ -135,10 +135,6 @@ mx_config *mx_init(mx_flag flags, double min, double max, unsigned int precision
     return config;
 }
 
-mx_config *mx_init_default(void) {
-    return mx_init(MX_DEFAULT, -DBL_MAX, DBL_MAX, UINT_MAX, UINT_MAX);
-}
-
 mx_error mx_insert_variable(mx_config *config, char *name, double value) {
     mx_token token;
 

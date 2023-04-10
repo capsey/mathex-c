@@ -15,12 +15,15 @@ Using Mathex is super easy - just include one header, initialize, evaluate and f
 ```c
 #include <stdio.h>
 #include <mathex.h>
+#include <float.h>
+#include <limits.h>
 
 int main()
 {
-    // Use `mx_init_default` to get default configuration
+    // Use `mx_init` and `MX_DEFAULT` to get default configuration
     // For specifying your own settings, check out documentation
-    mx_config *config = mx_init_default();
+    mx_config *config = mx_init(MX_DEFAULT, -DBL_MAX, DBL_MAX, UINT_MAX, UINT_MAX);
+    //                                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ this looks ugly
 
     char *input = "5 + 5";
     double result;
@@ -37,7 +40,7 @@ int main()
 }
 ```
 
-Don't forget to add it when you compile your program:
+Don't forget to add Mathex when you compile your program:
 
 ```shell
 gcc program.c -lmathex

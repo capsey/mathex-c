@@ -60,16 +60,6 @@ typedef struct mx_config mx_config;
 mx_config *mx_init(mx_flag flags, double min, double max, unsigned int precision, unsigned int max_nesting_depth);
 
 /**
- * @brief Creates configuration struct with default parameters.
- *
- * This function allocates memory, so it is mandatory to free using `mx_free` after usage.
- * Default flags are defined in MX_DEFAULT. Default value range is full range of double value type. Default precision and maximum nesting depth are unlimited.
- *
- * @return Returns pointer to configuration struct. NULL if failed to allocate.
- */
-mx_config *mx_init_default(void);
-
-/**
  * @brief Inserts an variable to the configuration struct to be available for parsing.
  *
  * @param config Configuration struct to insert to.
