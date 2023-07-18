@@ -76,9 +76,8 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
 
     for (size_t i = 0; i < length; i++) {
         char character = expression[i];
-        bool expecting_left_paren = (last_token == MX_FUNCTION);
 
-        if (!expecting_left_paren && (isdigit(character) || character == '.')) {
+        if (isdigit(character) || character == '.') {
             // Two operands in a row are not allowed
             // Operand should only either be first in expression or right after operator
             assert_syntax(OPERAND_ORDER);
@@ -167,7 +166,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             continue;
         }
 
-        if (!expecting_left_paren && is_valid_id_char(character, true)) {
+        if (is_valid_id_char(character, true)) {
             // Two operands in a row are not allowed
             // Operand should only either be first in expression or right after operator
             assert_syntax(OPERAND_ORDER);
@@ -184,6 +183,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
 
             switch (fetched_token->type) {
             case MX_FUNCTION:
+                assert_syntax(expression[i + token_length] == '(');
                 assert_alloc(push_m(ops_stack, *fetched_token));
                 break;
 
@@ -192,7 +192,9 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
                 break;
 
             default:
-                return_error(MX_ERR_ILLEGAL_NAME);
+                // This clause should not be possible, since you can
+                // only insert variable or function into the config.
+                break;
             }
 
             last_token = fetched_token->type;
@@ -203,7 +205,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
         mx_token token;
         bool is_operator = false;
 
-        if (!expecting_left_paren && character == '+') {
+        if (character == '+') {
             if (get_flag(config, MX_ENABLE_ADD) && BINARY_OPERATOR_ORDER) {
                 // Used as binary operator
                 is_operator = true;
@@ -216,7 +218,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             } else {
                 return_error(MX_ERR_SYNTAX);
             }
-        } else if (!expecting_left_paren && character == '-') {
+        } else if (character == '-') {
             if (get_flag(config, MX_ENABLE_SUB) && BINARY_OPERATOR_ORDER) {
                 // Used as binary operator
                 is_operator = true;
@@ -229,25 +231,25 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             } else {
                 return_error(MX_ERR_SYNTAX);
             }
-        } else if (!expecting_left_paren && get_flag(config, MX_ENABLE_MUL) && character == '*') {
+        } else if (get_flag(config, MX_ENABLE_MUL) && character == '*') {
             // There should always be an operand on the left hand side of the operator
             assert_syntax(BINARY_OPERATOR_ORDER);
 
             is_operator = true;
             token = mx_mul_token;
-        } else if (!expecting_left_paren && get_flag(config, MX_ENABLE_DIV) && character == '/') {
+        } else if (get_flag(config, MX_ENABLE_DIV) && character == '/') {
             // There should always be an operand on the left hand side of the operator
             assert_syntax(BINARY_OPERATOR_ORDER);
 
             is_operator = true;
             token = mx_div_token;
-        } else if (!expecting_left_paren && get_flag(config, MX_ENABLE_POW) && character == '^') {
+        } else if (get_flag(config, MX_ENABLE_POW) && character == '^') {
             // There should always be an operand on the left hand side of the operator
             assert_syntax(BINARY_OPERATOR_ORDER);
 
             is_operator = true;
             token = mx_pow_token;
-        } else if (!expecting_left_paren && get_flag(config, MX_ENABLE_MOD) && character == '%') {
+        } else if (get_flag(config, MX_ENABLE_MOD) && character == '%') {
             // There should always be an operand on the left hand side of the operator
             assert_syntax(BINARY_OPERATOR_ORDER);
 
@@ -267,7 +269,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
         }
 
         if (character == '(') {
-            if (expecting_left_paren) {
+            if (last_token == MX_FUNCTION) {
                 assert_alloc(push_n(arg_stack, arg_count));
                 arg_count = 0;
             } else {
@@ -284,7 +286,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             continue;
         }
 
-        if (!expecting_left_paren && character == ')') {
+        if (character == ')') {
             if (is_empty_stack_m(ops_stack)) {
                 // Mismatched parenthesis (ignore if implicit parentheses are enabled)
                 assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
@@ -317,7 +319,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             continue;
         }
 
-        if (!expecting_left_paren && character == ',') {
+        if (character == ',') {
             // Previous argument has to be non-empty
             assert_syntax(BINARY_OPERATOR_ORDER);
 
