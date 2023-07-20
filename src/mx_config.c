@@ -14,10 +14,6 @@ struct item {
 struct mx_config {
     // Settings
     mx_flag flags;
-    double min;
-    double max;
-    unsigned int precision;
-    unsigned int max_nesting_depth;
 
     // Hashtable
     struct item **buckets;
@@ -98,14 +94,6 @@ bool get_flag(mx_config *config, mx_flag flag) {
     return config->flags & flag;
 }
 
-bool check_range(mx_config *config, double value) {
-    return value < config->max && value > config->min;
-}
-
-unsigned int get_precision(mx_config *config) {
-    return config->precision;
-}
-
 mx_token *lookup_id(mx_config *config, char *key, size_t length) {
     if (config->n_buckets == 0) return NULL;
 
@@ -119,14 +107,10 @@ mx_token *lookup_id(mx_config *config, char *key, size_t length) {
     return item != NULL ? &item->value : NULL;
 }
 
-mx_config *mx_init(mx_flag flags, double min, double max, unsigned int precision, unsigned int max_nesting_depth) {
+mx_config *mx_init(mx_flag flags) {
     mx_config *config = malloc(sizeof(mx_config));
 
     config->flags = flags;
-    config->min = min;
-    config->max = max;
-    config->precision = precision;
-    config->max_nesting_depth = max_nesting_depth;
 
     config->buckets = NULL;
     config->n_buckets = 0;

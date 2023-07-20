@@ -34,7 +34,6 @@ typedef enum mx_error {
     MX_ERR_ILLEGAL_NAME, // Name of operator/variable/function contains illegal characters.
     MX_ERR_NO_MEMORY,    // Out of memory.
     MX_ERR_DIV_ZERO,     // Division by zero.
-    MX_ERR_OVERFLOW,     // Expression overflowed allowed range.
     MX_ERR_SYNTAX,       // Expression syntax is invalid.
     MX_ERR_UNDEFINED,    // Function, variable or operator not found.
     MX_ERR_INVALID_ARGS, // Arguments validation failed.
@@ -52,14 +51,10 @@ typedef struct mx_config mx_config;
  * This function allocates memory, so it is mandatory to free using `mx_free` after usage.
  *
  * @param flags Evaluation flags.
- * @param min Smallest allowed value.
- * @param max Largest allowed value.
- * @param precision Maximum number of digits after decimal point.
- * @param max_nesting_depth Maximum function nesting allowed.
  *
  * @return Returns pointer to configuration struct, or NULL if failed to allocate.
  */
-mx_config *mx_init(mx_flag flags, double min, double max, unsigned int precision, unsigned int max_nesting_depth);
+mx_config *mx_init(mx_flag flags);
 
 /**
  * @brief Inserts a variable into the configuration struct to be available for use in the expressions.

@@ -32,7 +32,7 @@ spec("mx_config") {
     static double result;
 
     before() {
-        config = mx_init(MX_DEFAULT, -DBL_MAX, DBL_MAX, UINT_MAX, UINT_MAX);
+        config = mx_init(MX_DEFAULT);
     }
 
     after() {
@@ -43,7 +43,7 @@ spec("mx_config") {
         static mx_config *custom_config;
 
         it("implicit parentheses flag") {
-            custom_config = mx_init(MX_DEFAULT & ~MX_IMPLICIT_PARENS, -DBL_MAX, DBL_MAX, UINT_MAX, UINT_MAX);
+            custom_config = mx_init(MX_DEFAULT & ~MX_IMPLICIT_PARENS);
 
             check_flag("5 + 5) * 2", MX_SUCCESS, MX_ERR_SYNTAX);
             check_flag("2 * (5 + 5", MX_SUCCESS, MX_ERR_SYNTAX);
@@ -52,7 +52,7 @@ spec("mx_config") {
         }
 
         it("scientific notation") {
-            custom_config = mx_init(MX_DEFAULT & ~MX_SCI_NOTATION, -DBL_MAX, DBL_MAX, UINT_MAX, UINT_MAX);
+            custom_config = mx_init(MX_DEFAULT & ~MX_SCI_NOTATION);
 
             check_flag("4e3", MX_SUCCESS, MX_ERR_SYNTAX);
             check_flag("1.21e10", MX_SUCCESS, MX_ERR_SYNTAX);
@@ -62,7 +62,7 @@ spec("mx_config") {
         }
 
         it("default operators") {
-            custom_config = mx_init(MX_DEFAULT & ~(MX_ENABLE_ADD | MX_ENABLE_SUB | MX_ENABLE_MUL | MX_ENABLE_DIV | MX_ENABLE_POS | MX_ENABLE_NEG), -DBL_MAX, DBL_MAX, UINT_MAX, UINT_MAX);
+            custom_config = mx_init(MX_DEFAULT & ~(MX_ENABLE_ADD | MX_ENABLE_SUB | MX_ENABLE_MUL | MX_ENABLE_DIV | MX_ENABLE_POS | MX_ENABLE_NEG));
 
             check_flag("1 + 1", MX_SUCCESS, MX_ERR_SYNTAX);
             check_flag("2 - 1", MX_SUCCESS, MX_ERR_SYNTAX);
@@ -75,7 +75,7 @@ spec("mx_config") {
         }
 
         it("extra operators") {
-            custom_config = mx_init(MX_DEFAULT | (MX_ENABLE_POW | MX_ENABLE_MOD), -DBL_MAX, DBL_MAX, UINT_MAX, UINT_MAX);
+            custom_config = mx_init(MX_DEFAULT | (MX_ENABLE_POW | MX_ENABLE_MOD));
 
             check_flag("6 ^ 2", MX_ERR_SYNTAX, MX_SUCCESS);
             check_flag("6 % 2", MX_ERR_SYNTAX, MX_SUCCESS);

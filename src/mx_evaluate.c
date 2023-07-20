@@ -82,13 +82,12 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
 
             double value = 0;
             enum state conversion_state = INTEGER_PART;
-            unsigned long decimal_count = 0;
             unsigned long decimal_place = 10;
             unsigned long exponent = 0;
             bool exponent_sign = true;
 
             if (isdigit(*character)) {
-                assert_overflow(value = (double)(*character - '0'));
+                value = (double)(*character - '0');
             } else {
                 conversion_state = FRACTION_PART;
             }
@@ -101,15 +100,12 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
 
                     switch (conversion_state) {
                     case INTEGER_PART:
-                        assert_overflow(value = (value * 10) + (double)digit);
+                        value = (value * 10) + (double)digit;
                         break;
 
                     case FRACTION_PART:
-                        if (decimal_count < get_precision(config)) {
-                            assert_overflow(value += (double)digit / (double)decimal_place);
-                            decimal_place *= 10;
-                            decimal_count++;
-                        }
+                        value += (double)digit / (double)decimal_place;
+                        decimal_place *= 10;
                         break;
 
                     case EXP_START:
@@ -151,7 +147,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             assert_syntax(last_character - character != 1 || *character != '.');
 
             if (exponent != 0) {
-                assert_overflow(value *= ten_in(exponent, exponent_sign));
+                value *= ten_in(exponent, exponent_sign);
             }
 
             mx_token token = {.type = MX_NUMBER, .data.value = value};
@@ -410,13 +406,11 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
         }
     }
 
-    // Exactly one value has to be left on results stack
+    // Exactly one value has to be left in results stack
     assert_syntax(!is_empty_stack_d(res_stack));
     double final_result = pop_d(res_stack);
     assert_syntax(is_empty_stack_d(res_stack));
 
-    // Check for user-defined valid range
-    if (!check_range(config, final_result)) return_error(MX_ERR_OVERFLOW);
     if (result != NULL) *result = final_result;
 
 cleanup:
