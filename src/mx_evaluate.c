@@ -60,7 +60,7 @@ double ten_in(unsigned long exp, bool sign) {
     return sign ? result : 1.0 / result;
 }
 
-mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
+mx_error mx_evaluate(mx_config *config, const char *expression, double *result) {
     // https://en.wikipedia.org/wiki/Shunting_yard_algorithm#The_algorithm_in_detail
 
     mx_error error_code = MX_SUCCESS;
@@ -74,6 +74,10 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
     stack_n *arg_stack = create_stack_n();
 
     for (char *character = expression; *character; character++) {
+        if (*character == ' ') {
+            continue;
+        }
+
         if (isdigit(*character) || *character == '.') {
             // Two operands in a row are not allowed
             // Operand should only either be first in expression or right after operator
@@ -353,8 +357,8 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             continue;
         }
 
-        // Any character that was not captured by previous checks that is not space is considered invalid
-        assert_syntax(*character == ' ');
+        // Any character that was not captured by previous checks is considered invalid
+        return_error(MX_ERR_SYNTAX);
     }
 
     while (!is_empty_stack_m(ops_stack)) {

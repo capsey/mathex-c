@@ -65,7 +65,7 @@ mx_config *mx_init(mx_flag flags);
  *
  * @return Returns MX_SUCCESS, or error code if failed to insert.
  */
-mx_error mx_insert_variable(mx_config *config, char *name, double value);
+mx_error mx_insert_variable(mx_config *config, const char *name, double value);
 
 /**
  * @brief Inserts a function into the configuration struct to be available for use in the expressions.
@@ -77,7 +77,7 @@ mx_error mx_insert_variable(mx_config *config, char *name, double value);
  *
  * @return Returns MX_SUCCESS, or error code if failed to insert.
  */
-mx_error mx_insert_function(mx_config *config, char *name, double (*apply)(double *), unsigned int n_args);
+mx_error mx_insert_function(mx_config *config, const char *name, double (*apply)(double *), unsigned int n_args);
 
 /**
  * @brief Frees configuration struct and its contents from memory.
@@ -99,6 +99,6 @@ void mx_free(mx_config *config);
  *
  * @return Returns MX_SUCCESS, or error code if expression contains any errors.
  */
-mx_error mx_evaluate(mx_config *config, char *expression, double *result);
+mx_error mx_evaluate(mx_config *config, const char *expression, double *result);
 
 #endif /* MATHEX_H */

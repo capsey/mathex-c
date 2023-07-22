@@ -6,7 +6,7 @@
 #include <string.h>
 
 struct item {
-    char *key;
+    const char *key;
     mx_token value;
     struct item *next;
 };
@@ -21,7 +21,7 @@ struct mx_config {
     size_t n_items;
 };
 
-static size_t hash(char *key, size_t length) {
+static size_t hash(const char *key, size_t length) {
     // https://stackoverflow.com/a/2351171/15250154
 
     size_t hash = 0;
@@ -33,7 +33,7 @@ static size_t hash(char *key, size_t length) {
     return hash;
 }
 
-static mx_error insert(mx_config *config, char *key, mx_token value) {
+static mx_error insert(mx_config *config, const char *key, mx_token value) {
     if (config->n_buckets == 0) {
         // Initialize first time
         config->n_buckets = 4;
@@ -119,11 +119,11 @@ mx_config *mx_init(mx_flag flags) {
     return config;
 }
 
-mx_error mx_insert_variable(mx_config *config, char *name, double value) {
+mx_error mx_insert_variable(mx_config *config, const char *name, double value) {
     mx_token token;
 
-    for (char *check = name; *check != '\0'; check++) {
-        if (!is_valid_id_char(*check, check == name)) {
+    for (const char *character = name; *character; character++) {
+        if (!is_valid_id_char(*character, character == name)) {
             return MX_ERR_ILLEGAL_NAME;
         }
     }
@@ -134,11 +134,11 @@ mx_error mx_insert_variable(mx_config *config, char *name, double value) {
     return insert(config, name, token);
 }
 
-mx_error mx_insert_function(mx_config *config, char *name, double (*apply)(double *), unsigned int n_args) {
+mx_error mx_insert_function(mx_config *config, const char *name, double (*apply)(double *), unsigned int n_args) {
     mx_token token;
 
-    for (char *check = name; *check != '\0'; check++) {
-        if (!is_valid_id_char(*check, check == name)) {
+    for (const char *character = name; *character; character++) {
+        if (!is_valid_id_char(*character, character == name)) {
             return MX_ERR_ILLEGAL_NAME;
         }
     }
