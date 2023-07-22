@@ -81,62 +81,76 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             if (arg_count == 0) arg_count++;
 
             double value = 0;
-            enum state conversion_state = INTEGER_PART;
-            unsigned long decimal_place = 10;
+            double decimal_place = 10;
             unsigned long exponent = 0;
             bool exponent_sign = true;
 
-            if (isdigit(*character)) {
-                value = (double)(*character - '0');
-            } else {
-                conversion_state = FRACTION_PART;
-            }
-
+            enum state conversion_state = INTEGER_PART;
             char *last_character;
 
-            for (last_character = character + 1; *last_character; last_character++) {
-                if (isdigit(*last_character)) {
-                    int digit = *last_character - '0';
-
-                    switch (conversion_state) {
-                    case INTEGER_PART:
-                        value = (value * 10) + (double)digit;
-                        break;
-
-                    case FRACTION_PART:
-                        value += (double)digit / (double)decimal_place;
-                        decimal_place *= 10;
-                        break;
-
-                    case EXP_START:
-                    case EXP_VALUE:
-                        exponent = (exponent * 10) + (unsigned)digit;
-                        conversion_state = EXP_VALUE;
-                        break;
+            for (last_character = character; *last_character; last_character++) {
+                switch (conversion_state)
+                {
+                case INTEGER_PART:
+                    if (isdigit(*last_character)) {
+                        value = (value * 10) + (double)(*last_character - '0');
+                        continue;
                     }
+                    
+                    if (*last_character == '.') {
+                        conversion_state = FRACTION_PART;
+                        continue;
+                    }
+                    
+                    if ((*last_character == 'e' || *last_character == 'E') && get_flag(config, MX_SCI_NOTATION)) {
+                        conversion_state = EXP_START;
+                        continue;
+                    }
+                    break;
 
-                    continue;
+                case FRACTION_PART:
+                    assert_syntax(*last_character != '.');
+
+                    if (isdigit(*last_character)) {
+                        value += (double)(*last_character - '0') / decimal_place;
+                        decimal_place *= 10;
+                        continue;
+                    }
+                    
+                    if ((*last_character == 'e' || *last_character == 'E') && get_flag(config, MX_SCI_NOTATION)) {
+                        conversion_state = EXP_START;
+                        continue;
+                    }
+                    break;
+                
+                case EXP_START:
+                    assert_syntax(*last_character != '.');
+
+                    if (isdigit(*last_character)) {
+                        exponent = (exponent * 10) + (unsigned)(*last_character - '0');
+                        conversion_state = EXP_VALUE;
+                        continue;
+                    }
+                    
+                    if (*last_character == '+' || *last_character == '-') {
+                        exponent_sign = (*last_character == '+');
+                        conversion_state = EXP_VALUE;
+                        continue;
+                    }
+                    break;
+                
+                case EXP_VALUE:
+                    assert_syntax(*last_character != '.');
+
+                    if (isdigit(*last_character)) {
+                        exponent = (exponent * 10) + (unsigned)(*last_character - '0');
+                        conversion_state = EXP_VALUE;
+                        continue;
+                    }
+                    break;
                 }
 
-                if (*last_character == '.') {
-                    // There should only be one decimal point and only in mantissa
-                    assert_syntax(conversion_state == INTEGER_PART);
-
-                    conversion_state = FRACTION_PART;
-                    continue;
-                }
-
-                if ((conversion_state == INTEGER_PART || conversion_state == FRACTION_PART) && (*last_character == 'e' || *last_character == 'E') && get_flag(config, MX_SCI_NOTATION)) {
-                    conversion_state = EXP_START;
-                    continue;
-                }
-
-                if (conversion_state == EXP_START && (*last_character == '+' || *last_character == '-')) {
-                    exponent_sign = (*last_character == '+');
-                    conversion_state = EXP_VALUE;
-                    continue;
-                }
-
+                // If reached here means number literal has ended
                 break;
             }
 
