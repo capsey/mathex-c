@@ -31,11 +31,11 @@ typedef enum mx_flag {
  */
 typedef enum mx_error {
     MX_SUCCESS = 0,      // Parsed successfully.
-    MX_ERR_ILLEGAL_NAME, // Name of operator/variable/function contains illegal characters.
+    MX_ERR_ILLEGAL_NAME, // Name of variable/function contains illegal characters.
     MX_ERR_NO_MEMORY,    // Out of memory.
     MX_ERR_DIV_ZERO,     // Division by zero.
     MX_ERR_SYNTAX,       // Expression syntax is invalid.
-    MX_ERR_UNDEFINED,    // Function, variable or operator not found.
+    MX_ERR_UNDEFINED,    // Function or variable name not found.
     MX_ERR_INVALID_ARGS, // Arguments validation failed.
     MX_ERR_ARGS_NUM,     // Incorrect number of arguments.
 } mx_error;
