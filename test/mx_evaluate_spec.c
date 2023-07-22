@@ -1,11 +1,12 @@
 #include "bdd-for-c.h"
 #include "mathex.h"
 #include <float.h>
+#include <limits.h>
 #include <math.h>
 #include <stdbool.h>
 
 static bool cmp(double a, double b) {
-    return fabs(a - b) <= 1E-5;
+    return a == b || fabs(a - b) <= 1E-5;
 }
 
 static double _min(double args[]) {
@@ -34,7 +35,7 @@ spec("mx_evaluate") {
     static double result;
 
     before() {
-        config = mx_init_default();
+        config = mx_init(MX_DEFAULT);
     }
 
     after() {
@@ -132,10 +133,8 @@ spec("mx_evaluate") {
         }
 
         it("literal overflow") {
-            check_evaluate_err("1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", MX_ERR_OVERFLOW);
-            check_evaluate_err("-1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", MX_ERR_OVERFLOW);
-            check_evaluate_err("1e10000", MX_ERR_OVERFLOW);
-            check_evaluate_err("-1e10000", MX_ERR_OVERFLOW);
+            check_evaluate_ok("1e10000", INFINITY);
+            check_evaluate_ok("-1e10000", -INFINITY);
         }
     }
 

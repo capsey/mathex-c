@@ -6,7 +6,7 @@
 #include <string.h>
 
 struct item {
-    char *key;
+    const char *key;
     mx_token value;
     struct item *next;
 };
@@ -14,10 +14,6 @@ struct item {
 struct mx_config {
     // Settings
     mx_flag flags;
-    double min;
-    double max;
-    unsigned int precision;
-    unsigned int max_nesting_depth;
 
     // Hashtable
     struct item **buckets;
@@ -25,7 +21,7 @@ struct mx_config {
     size_t n_items;
 };
 
-static size_t hash(char *key, size_t length) {
+static size_t hash(const char *key, size_t length) {
     // https://stackoverflow.com/a/2351171/15250154
 
     size_t hash = 0;
@@ -37,7 +33,7 @@ static size_t hash(char *key, size_t length) {
     return hash;
 }
 
-static mx_error insert(mx_config *config, char *key, mx_token value) {
+static mx_error insert(mx_config *config, const char *key, mx_token value) {
     if (config->n_buckets == 0) {
         // Initialize first time
         config->n_buckets = 4;
@@ -98,15 +94,7 @@ bool get_flag(mx_config *config, mx_flag flag) {
     return config->flags & flag;
 }
 
-bool check_range(mx_config *config, double value) {
-    return value < config->max && value > config->min;
-}
-
-unsigned int get_precision(mx_config *config) {
-    return config->precision;
-}
-
-mx_token *lookup_id(mx_config *config, char *key, size_t length) {
+mx_token *lookup_id(mx_config *config, const char *key, size_t length) {
     if (config->n_buckets == 0) return NULL;
 
     size_t index = hash(key, length) % config->n_buckets;
@@ -119,14 +107,10 @@ mx_token *lookup_id(mx_config *config, char *key, size_t length) {
     return item != NULL ? &item->value : NULL;
 }
 
-mx_config *mx_init(mx_flag flags, double min, double max, unsigned int precision, unsigned int max_nesting_depth) {
+mx_config *mx_init(mx_flag flags) {
     mx_config *config = malloc(sizeof(mx_config));
 
     config->flags = flags;
-    config->min = min;
-    config->max = max;
-    config->precision = precision;
-    config->max_nesting_depth = max_nesting_depth;
 
     config->buckets = NULL;
     config->n_buckets = 0;
@@ -135,15 +119,11 @@ mx_config *mx_init(mx_flag flags, double min, double max, unsigned int precision
     return config;
 }
 
-mx_config *mx_init_default(void) {
-    return mx_init(MX_DEFAULT, -DBL_MAX, DBL_MAX, UINT_MAX, UINT_MAX);
-}
-
-mx_error mx_insert_variable(mx_config *config, char *name, double value) {
+mx_error mx_insert_variable(mx_config *config, const char *name, double value) {
     mx_token token;
 
-    for (char *check = name; *check != '\0'; check++) {
-        if (!is_valid_id_char(*check, check == name)) {
+    for (const char *character = name; *character; character++) {
+        if (!is_valid_id_char(*character, character == name)) {
             return MX_ERR_ILLEGAL_NAME;
         }
     }
@@ -154,11 +134,11 @@ mx_error mx_insert_variable(mx_config *config, char *name, double value) {
     return insert(config, name, token);
 }
 
-mx_error mx_insert_function(mx_config *config, char *name, double (*apply)(double *), unsigned int n_args) {
+mx_error mx_insert_function(mx_config *config, const char *name, double (*apply)(double *), unsigned int n_args) {
     mx_token token;
 
-    for (char *check = name; *check != '\0'; check++) {
-        if (!is_valid_id_char(*check, check == name)) {
+    for (const char *character = name; *character; character++) {
+        if (!is_valid_id_char(*character, character == name)) {
             return MX_ERR_ILLEGAL_NAME;
         }
     }

@@ -6,8 +6,8 @@
 
 // Type of expression token.
 typedef enum mx_token_type {
-    // 0 reserved for none value
-    MX_LEFT_PAREN = 1,
+    MX_EMPTY = 0,
+    MX_LEFT_PAREN,
     MX_RIGHT_PAREN,
     MX_COMMA,
     MX_NUMBER,
@@ -17,7 +17,8 @@ typedef enum mx_token_type {
     MX_FUNCTION,
 } mx_token_type;
 
-// Value of expression token. Check `type` before accessing `data`!
+// Value of expression token.
+// NOTE: `data` is discriminated union! Always check `type` before accessing its fields!!!
 typedef struct mx_token {
     mx_token_type type;
     union {
@@ -57,21 +58,15 @@ bool is_valid_op_char(char character);
 // Returns whether given flag is turned on.
 bool get_flag(mx_config *config, mx_flag flag);
 
-// Checks if a number is in a valid number range.
-bool check_range(mx_config *config, double value);
-
-// Returns current precision
-unsigned int get_precision(mx_config *config);
-
 // Lookup given string slice among inserted variables, functions or operators. NULL if not found.
-mx_token *lookup_id(mx_config *config, char *name, size_t length);
+mx_token *lookup_id(mx_config *config, const char *name, size_t length);
 
 // A stack data structure storing unsigned integer numbers.
 typedef struct stack_n stack_n;
 
 stack_n *create_stack_n(void);
 bool is_empty_stack_n(stack_n *stack);
-unsigned int peek_n(stack_n *stack);
+unsigned int peek_n(const stack_n *stack);
 bool push_n(stack_n *stack, unsigned int value);
 unsigned int pop_n(stack_n *stack);
 void free_stack_n(stack_n *stack);
@@ -81,7 +76,7 @@ typedef struct stack_d stack_d;
 
 stack_d *create_stack_d(void);
 bool is_empty_stack_d(stack_d *stack);
-double peek_d(stack_d *stack);
+double peek_d(const stack_d *stack);
 bool push_d(stack_d *stack, double value);
 double pop_d(stack_d *stack);
 void free_stack_d(stack_d *stack);
@@ -91,7 +86,7 @@ typedef struct stack_m stack_m;
 
 stack_m *create_stack_m(void);
 bool is_empty_stack_m(stack_m *stack);
-mx_token peek_m(stack_m *stack);
+mx_token peek_m(const stack_m *stack);
 bool push_m(stack_m *stack, mx_token value);
 mx_token pop_m(stack_m *stack);
 void stack_free_m(stack_m *stack);

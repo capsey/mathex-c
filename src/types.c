@@ -20,7 +20,7 @@ bool is_empty_stack_n(stack_n *stack) {
     return stack->top == NULL;
 }
 
-unsigned int peek_n(stack_n *stack) {
+unsigned int peek_n(const stack_n *stack) {
     return stack->top->value;
 }
 
@@ -76,7 +76,7 @@ bool is_empty_stack_d(stack_d *stack) {
     return stack->top == NULL;
 }
 
-double peek_d(stack_d *stack) {
+double peek_d(const stack_d *stack) {
     return stack->top->value;
 }
 
@@ -132,7 +132,7 @@ bool is_empty_stack_m(stack_m *stack) {
     return stack->top == NULL;
 }
 
-mx_token peek_m(stack_m *stack) {
+mx_token peek_m(const stack_m *stack) {
     return stack->top->value;
 }
 

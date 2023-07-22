@@ -4,7 +4,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-// Default parameters. Does not include exponentiation and modulus operators.
+/**
+ * @brief Default parameters. Does not include exponentiation and modulus operators.
+ */
 #define MX_DEFAULT (MX_IMPLICIT_PARENS | MX_SCI_NOTATION | MX_ENABLE_ADD | MX_ENABLE_SUB | MX_ENABLE_MUL | MX_ENABLE_DIV | MX_ENABLE_POS | MX_ENABLE_NEG)
 
 /**
@@ -29,12 +31,11 @@ typedef enum mx_flag {
  */
 typedef enum mx_error {
     MX_SUCCESS = 0,      // Parsed successfully.
-    MX_ERR_ILLEGAL_NAME, // Name of operator/variable/function contains illegal characters.
+    MX_ERR_ILLEGAL_NAME, // Name of variable/function contains illegal characters.
     MX_ERR_NO_MEMORY,    // Out of memory.
     MX_ERR_DIV_ZERO,     // Division by zero.
-    MX_ERR_OVERFLOW,     // Expression overflowed allowed range.
     MX_ERR_SYNTAX,       // Expression syntax is invalid.
-    MX_ERR_UNDEFINED,    // Function, variable or operator not found.
+    MX_ERR_UNDEFINED,    // Function or variable name not found.
     MX_ERR_INVALID_ARGS, // Arguments validation failed.
     MX_ERR_ARGS_NUM,     // Incorrect number of arguments.
 } mx_error;
@@ -50,47 +51,33 @@ typedef struct mx_config mx_config;
  * This function allocates memory, so it is mandatory to free using `mx_free` after usage.
  *
  * @param flags Evaluation flags.
- * @param min Smallest allowed value.
- * @param max Largest allowed value.
- * @param precision Maximum number of digits after decimal point.
- * @param max_nesting_depth Maximum function nesting allowed.
  *
- * @return Returns pointer to configuration struct. NULL if failed to allocate.
+ * @return Returns pointer to configuration struct, or NULL if failed to allocate.
  */
-mx_config *mx_init(mx_flag flags, double min, double max, unsigned int precision, unsigned int max_nesting_depth);
+mx_config *mx_init(mx_flag flags);
 
 /**
- * @brief Creates configuration struct with default parameters.
+ * @brief Inserts a variable into the configuration struct to be available for use in the expressions.
  *
- * This function allocates memory, so it is mandatory to free using `mx_free` after usage.
- * Default flags are defined in MX_DEFAULT. Default value range is full range of double value type. Default precision and maximum nesting depth are unlimited.
+ * @param config Configuration struct to insert into.
+ * @param name Null-terminated string representing name of the variable. (should only contain letters, digits or underscore and cannot start with a digit)
+ * @param value Value of the variable.
  *
- * @return Returns pointer to configuration struct. NULL if failed to allocate.
+ * @return Returns MX_SUCCESS, or error code if failed to insert.
  */
-mx_config *mx_init_default(void);
+mx_error mx_insert_variable(mx_config *config, const char *name, double value);
 
 /**
- * @brief Inserts an variable to the configuration struct to be available for parsing.
+ * @brief Inserts a function into the configuration struct to be available for use in the expressions.
  *
- * @param config Configuration struct to insert to.
- * @param name Null-terminated string representing name of the variable (should only contain letters, digits or underscore and cannot start with a digit)
- * @param apply Function that takes an argument and returns the result
- *
- * @return Returns MX_SUCCESS if insertion succeeded and error code if not.
- */
-mx_error mx_insert_variable(mx_config *config, char *name, double value);
-
-/**
- * @brief Inserts an function to the configuration struct to be available for parsing.
- *
- * @param config Configuration struct to insert to.
+ * @param config Configuration struct to insert into.
  * @param name Null-terminated string representing name of the function. (should only contain letters, digits or underscore and cannot start with a digit)
- * @param apply Function that takes arguments array and returns the result.
- * @param n_args Number of arguments the function takes. (can be zero)
+ * @param apply Function that takes the arguments and returns the result.
+ * @param n_args Number of arguments the function takes. (greater or equal to zero)
  *
- * @return Returns MX_SUCCESS if insertion succeeded and error code if not.
+ * @return Returns MX_SUCCESS, or error code if failed to insert.
  */
-mx_error mx_insert_function(mx_config *config, char *name, double (*apply)(double *), unsigned int n_args);
+mx_error mx_insert_function(mx_config *config, const char *name, double (*apply)(double *), unsigned int n_args);
 
 /**
  * @brief Frees configuration struct and its contents from memory.
@@ -107,11 +94,11 @@ void mx_free(mx_config *config);
  * Result of the evaluation is written into a `result` pointer. If evaluation failed, returns error code.
  *
  * @param config Configuration struct containing rules to evaluate by.
- * @param expression Null-terminated character array to evaluate.
+ * @param expression Null-terminated string to evaluate.
  * @param result Pointer to write evaluation result to. Can be NULL.
  *
- * @return Returns MX_SUCCESS if evaluation succeeded and error code if not.
+ * @return Returns MX_SUCCESS, or error code if expression contains any errors.
  */
-mx_error mx_evaluate(mx_config *config, char *expression, double *result);
+mx_error mx_evaluate(mx_config *config, const char *expression, double *result);
 
 #endif /* MATHEX_H */

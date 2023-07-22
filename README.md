@@ -18,14 +18,14 @@ Using Mathex is super easy - just include one header, initialize, evaluate and f
 
 int main()
 {
-    // Use `mx_init_default` to get default configuration
+    // Use `mx_init` and `MX_DEFAULT` to get default configuration
     // For specifying your own settings, check out documentation
-    mx_config *config = mx_init_default();
+    mx_config *config = mx_init(MX_DEFAULT);
 
     char *input = "5 + 5";
     double result;
 
-    // Mathex writes result into the pointer you provide
+    // Mathex writes result into the address you provide
     // Here we pass an address to a `result` variable
     if (mx_evaluate(config, input, &result) == MX_SUCCESS)
     {
@@ -37,7 +37,7 @@ int main()
 }
 ```
 
-Don't forget to add it when you compile your program:
+Don't forget to add Mathex when you compile your program:
 
 ```shell
 gcc program.c -lmathex

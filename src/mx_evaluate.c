@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define OPERAND_ORDER (!last_token || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_BINARY_OPERATOR || last_token == MX_UNARY_OPERATOR)
-#define UNARY_OPERATOR_ORDER (!last_token || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_UNARY_OPERATOR)
+#define OPERAND_ORDER (last_token == MX_EMPTY || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_BINARY_OPERATOR || last_token == MX_UNARY_OPERATOR)
+#define UNARY_OPERATOR_ORDER (last_token == MX_EMPTY || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_UNARY_OPERATOR)
 #define BINARY_OPERATOR_ORDER (last_token == MX_NUMBER || last_token == MX_VARIABLE || last_token == MX_RIGHT_PAREN)
 
 #define return_error(error) \
@@ -60,12 +60,11 @@ double ten_in(unsigned long exp, bool sign) {
     return sign ? result : 1.0 / result;
 }
 
-mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
+mx_error mx_evaluate(mx_config *config, const char *expression, double *result) {
     // https://en.wikipedia.org/wiki/Shunting_yard_algorithm#The_algorithm_in_detail
 
-    size_t length = strlen(expression);
     mx_error error_code = MX_SUCCESS;
-    mx_token_type last_token = 0;
+    mx_token_type last_token = MX_EMPTY;
 
     stack_m *ops_stack = create_stack_m();
     queue_m *out_queue = create_queue_m();
@@ -74,78 +73,88 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
     unsigned int arg_count = 0;
     stack_n *arg_stack = create_stack_n();
 
-    for (size_t i = 0; i < length; i++) {
-        char character = expression[i];
-        bool expecting_left_paren = (last_token == MX_FUNCTION);
+    for (const char *character = expression; *character; character++) {
+        if (*character == ' ') {
+            continue;
+        }
 
-        if (!expecting_left_paren && (isdigit(character) || character == '.')) {
+        if (isdigit(*character) || *character == '.') {
             // Two operands in a row are not allowed
             // Operand should only either be first in expression or right after operator
             assert_syntax(OPERAND_ORDER);
             if (arg_count == 0) arg_count++;
 
-            size_t token_length;
             double value = 0;
-            enum state conversion_state = INTEGER_PART;
-            unsigned long decimal_count = 0;
-            unsigned long decimal_place = 10;
+            double decimal_place = 10;
             unsigned long exponent = 0;
             bool exponent_sign = true;
 
-            if (isdigit(character)) {
-                assert_overflow(value = (double)(character - '0'));
-            } else {
-                conversion_state = FRACTION_PART;
-            }
+            enum state conversion_state = INTEGER_PART;
+            const char *last_character;
 
-            for (token_length = 1; token_length < length; token_length++) {
-                char num_char = expression[i + token_length];
-
-                if (isdigit(num_char)) {
-                    int digit = num_char - '0';
-
-                    switch (conversion_state) {
-                    case INTEGER_PART:
-                        assert_overflow(value = (value * 10) + (double)digit);
-                        break;
-
-                    case FRACTION_PART:
-                        if (decimal_count < get_precision(config)) {
-                            assert_overflow(value += (double)digit / (double)decimal_place);
-                            decimal_place *= 10;
-                            decimal_count++;
-                        }
-                        break;
-
-                    case EXP_START:
-                    case EXP_VALUE:
-                        exponent = (exponent * 10) + (unsigned)digit;
-                        conversion_state = EXP_VALUE;
-                        break;
+            for (last_character = character; *last_character; last_character++) {
+                switch (conversion_state)
+                {
+                case INTEGER_PART:
+                    if (isdigit(*last_character)) {
+                        value = (value * 10) + (double)(*last_character - '0');
+                        continue;
                     }
+                    
+                    if (*last_character == '.') {
+                        conversion_state = FRACTION_PART;
+                        continue;
+                    }
+                    
+                    if ((*last_character == 'e' || *last_character == 'E') && get_flag(config, MX_SCI_NOTATION)) {
+                        conversion_state = EXP_START;
+                        continue;
+                    }
+                    break;
 
-                    continue;
+                case FRACTION_PART:
+                    assert_syntax(*last_character != '.');
+
+                    if (isdigit(*last_character)) {
+                        value += (double)(*last_character - '0') / decimal_place;
+                        decimal_place *= 10;
+                        continue;
+                    }
+                    
+                    if ((*last_character == 'e' || *last_character == 'E') && get_flag(config, MX_SCI_NOTATION)) {
+                        conversion_state = EXP_START;
+                        continue;
+                    }
+                    break;
+                
+                case EXP_START:
+                    assert_syntax(*last_character != '.');
+
+                    if (isdigit(*last_character)) {
+                        exponent = (exponent * 10) + (unsigned)(*last_character - '0');
+                        conversion_state = EXP_VALUE;
+                        continue;
+                    }
+                    
+                    if (*last_character == '+' || *last_character == '-') {
+                        exponent_sign = (*last_character == '+');
+                        conversion_state = EXP_VALUE;
+                        continue;
+                    }
+                    break;
+                
+                case EXP_VALUE:
+                    assert_syntax(*last_character != '.');
+
+                    if (isdigit(*last_character)) {
+                        exponent = (exponent * 10) + (unsigned)(*last_character - '0');
+                        conversion_state = EXP_VALUE;
+                        continue;
+                    }
+                    break;
                 }
 
-                if (num_char == '.') {
-                    // There should only be one decimal point and only in mantissa
-                    assert_syntax(conversion_state == INTEGER_PART);
-
-                    conversion_state = FRACTION_PART;
-                    continue;
-                }
-
-                if ((conversion_state == INTEGER_PART || conversion_state == FRACTION_PART) && (num_char == 'e' || num_char == 'E') && get_flag(config, MX_SCI_NOTATION)) {
-                    conversion_state = EXP_START;
-                    continue;
-                }
-
-                if (conversion_state == EXP_START && (num_char == '+' || num_char == '-')) {
-                    exponent_sign = (num_char == '+');
-                    conversion_state = EXP_VALUE;
-                    continue;
-                }
-
+                // If reached here means number literal has ended
                 break;
             }
 
@@ -153,37 +162,38 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             assert_syntax(conversion_state != EXP_START);
 
             // ".1" => 0.1 and "1." => 1.0 but "." != 0.0
-            assert_syntax(token_length != 1 || character != '.');
+            assert_syntax(last_character - character != 1 || *character != '.');
 
             if (exponent != 0) {
-                assert_overflow(value *= ten_in(exponent, exponent_sign));
+                value *= ten_in(exponent, exponent_sign);
             }
 
             mx_token token = {.type = MX_NUMBER, .data.value = value};
             assert_alloc(enqueue_m(out_queue, token));
 
             last_token = MX_NUMBER;
-            i += token_length - 1;
+            character = last_character - 1;
             continue;
         }
 
-        if (!expecting_left_paren && is_valid_id_char(character, true)) {
+        if (is_valid_id_char(*character, true)) {
             // Two operands in a row are not allowed
             // Operand should only either be first in expression or right after operator
             assert_syntax(OPERAND_ORDER);
             if (arg_count == 0) arg_count++;
 
-            size_t token_length;
+            const char *last_character;
 
-            for (token_length = 1; token_length < length; token_length++) {
-                if (!is_valid_id_char(expression[i + token_length], false)) break;
+            for (last_character = character + 1; *last_character; last_character++) {
+                if (!is_valid_id_char(*last_character, false)) break;
             }
 
-            mx_token *fetched_token = lookup_id(config, &expression[i], token_length);
+            mx_token *fetched_token = lookup_id(config, character, (size_t)(last_character - character));
             if (fetched_token == NULL) return_error(MX_ERR_UNDEFINED);
 
             switch (fetched_token->type) {
             case MX_FUNCTION:
+                assert_syntax(*last_character == '(');
                 assert_alloc(push_m(ops_stack, *fetched_token));
                 break;
 
@@ -192,18 +202,20 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
                 break;
 
             default:
-                return_error(MX_ERR_ILLEGAL_NAME);
+                // This clause should not be possible, since you can
+                // only insert variable or function into the config.
+                break;
             }
 
             last_token = fetched_token->type;
-            i += token_length - 1;
+            character = last_character - 1;
             continue;
         }
 
         mx_token token;
         bool is_operator = false;
 
-        if (!expecting_left_paren && character == '+') {
+        if (*character == '+') {
             if (get_flag(config, MX_ENABLE_ADD) && BINARY_OPERATOR_ORDER) {
                 // Used as binary operator
                 is_operator = true;
@@ -216,7 +228,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             } else {
                 return_error(MX_ERR_SYNTAX);
             }
-        } else if (!expecting_left_paren && character == '-') {
+        } else if (*character == '-') {
             if (get_flag(config, MX_ENABLE_SUB) && BINARY_OPERATOR_ORDER) {
                 // Used as binary operator
                 is_operator = true;
@@ -229,25 +241,25 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             } else {
                 return_error(MX_ERR_SYNTAX);
             }
-        } else if (!expecting_left_paren && get_flag(config, MX_ENABLE_MUL) && character == '*') {
+        } else if (*character == '*' && get_flag(config, MX_ENABLE_MUL)) {
             // There should always be an operand on the left hand side of the operator
             assert_syntax(BINARY_OPERATOR_ORDER);
 
             is_operator = true;
             token = mx_mul_token;
-        } else if (!expecting_left_paren && get_flag(config, MX_ENABLE_DIV) && character == '/') {
+        } else if (*character == '/' && get_flag(config, MX_ENABLE_DIV)) {
             // There should always be an operand on the left hand side of the operator
             assert_syntax(BINARY_OPERATOR_ORDER);
 
             is_operator = true;
             token = mx_div_token;
-        } else if (!expecting_left_paren && get_flag(config, MX_ENABLE_POW) && character == '^') {
+        } else if (*character == '^' && get_flag(config, MX_ENABLE_POW)) {
             // There should always be an operand on the left hand side of the operator
             assert_syntax(BINARY_OPERATOR_ORDER);
 
             is_operator = true;
             token = mx_pow_token;
-        } else if (!expecting_left_paren && get_flag(config, MX_ENABLE_MOD) && character == '%') {
+        } else if (*character == '%' && get_flag(config, MX_ENABLE_MOD)) {
             // There should always be an operand on the left hand side of the operator
             assert_syntax(BINARY_OPERATOR_ORDER);
 
@@ -266,8 +278,8 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             continue;
         }
 
-        if (character == '(') {
-            if (expecting_left_paren) {
+        if (*character == '(') {
+            if (last_token == MX_FUNCTION) {
                 assert_alloc(push_n(arg_stack, arg_count));
                 arg_count = 0;
             } else {
@@ -284,7 +296,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             continue;
         }
 
-        if (!expecting_left_paren && character == ')') {
+        if (*character == ')') {
             if (is_empty_stack_m(ops_stack)) {
                 // Mismatched parenthesis (ignore if implicit parentheses are enabled)
                 assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
@@ -317,7 +329,7 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             continue;
         }
 
-        if (!expecting_left_paren && character == ',') {
+        if (*character == ',') {
             // Previous argument has to be non-empty
             assert_syntax(BINARY_OPERATOR_ORDER);
 
@@ -345,8 +357,8 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
             continue;
         }
 
-        // Any character that was not captured by previous checks that is not space is considered invalid
-        assert_syntax(character == ' ');
+        // Any character that was not captured by previous checks is considered invalid
+        return_error(MX_ERR_SYNTAX);
     }
 
     while (!is_empty_stack_m(ops_stack)) {
@@ -412,13 +424,11 @@ mx_error mx_evaluate(mx_config *config, char *expression, double *result) {
         }
     }
 
-    // Exactly one value has to be left on results stack
+    // Exactly one value has to be left in results stack
     assert_syntax(!is_empty_stack_d(res_stack));
     double final_result = pop_d(res_stack);
     assert_syntax(is_empty_stack_d(res_stack));
 
-    // Check for user-defined valid range
-    if (!check_range(config, final_result)) return_error(MX_ERR_OVERFLOW);
     if (result != NULL) *result = final_result;
 
 cleanup:
