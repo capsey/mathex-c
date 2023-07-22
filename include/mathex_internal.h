@@ -6,8 +6,8 @@
 
 // Type of expression token.
 typedef enum mx_token_type {
-    // 0 reserved for none value
-    MX_LEFT_PAREN = 1,
+    MX_EMPTY = 0,
+    MX_LEFT_PAREN,
     MX_RIGHT_PAREN,
     MX_COMMA,
     MX_NUMBER,
@@ -17,7 +17,8 @@ typedef enum mx_token_type {
     MX_FUNCTION,
 } mx_token_type;
 
-// Value of expression token. Check `type` before accessing `data`!
+// Value of expression token.
+// NOTE: `data` is discriminated union! Always check `type` before accessing its fields!!!
 typedef struct mx_token {
     mx_token_type type;
     union {
@@ -58,7 +59,7 @@ bool is_valid_op_char(char character);
 bool get_flag(mx_config *config, mx_flag flag);
 
 // Lookup given string slice among inserted variables, functions or operators. NULL if not found.
-mx_token *lookup_id(mx_config *config, char *name, size_t length);
+mx_token *lookup_id(mx_config *config, const char *name, size_t length);
 
 // A stack data structure storing unsigned integer numbers.
 typedef struct stack_n stack_n;

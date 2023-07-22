@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define OPERAND_ORDER (!last_token || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_BINARY_OPERATOR || last_token == MX_UNARY_OPERATOR)
-#define UNARY_OPERATOR_ORDER (!last_token || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_UNARY_OPERATOR)
+#define OPERAND_ORDER (last_token == MX_EMPTY || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_BINARY_OPERATOR || last_token == MX_UNARY_OPERATOR)
+#define UNARY_OPERATOR_ORDER (last_token == MX_EMPTY || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_UNARY_OPERATOR)
 #define BINARY_OPERATOR_ORDER (last_token == MX_NUMBER || last_token == MX_VARIABLE || last_token == MX_RIGHT_PAREN)
 
 #define return_error(error) \
@@ -64,7 +64,7 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
     // https://en.wikipedia.org/wiki/Shunting_yard_algorithm#The_algorithm_in_detail
 
     mx_error error_code = MX_SUCCESS;
-    mx_token_type last_token = 0;
+    mx_token_type last_token = MX_EMPTY;
 
     stack_m *ops_stack = create_stack_m();
     queue_m *out_queue = create_queue_m();
@@ -73,7 +73,7 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
     unsigned int arg_count = 0;
     stack_n *arg_stack = create_stack_n();
 
-    for (char *character = expression; *character; character++) {
+    for (const char *character = expression; *character; character++) {
         if (*character == ' ') {
             continue;
         }
@@ -90,7 +90,7 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
             bool exponent_sign = true;
 
             enum state conversion_state = INTEGER_PART;
-            char *last_character;
+            const char *last_character;
 
             for (last_character = character; *last_character; last_character++) {
                 switch (conversion_state)
@@ -182,7 +182,7 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
             assert_syntax(OPERAND_ORDER);
             if (arg_count == 0) arg_count++;
 
-            char *last_character;
+            const char *last_character;
 
             for (last_character = character + 1; *last_character; last_character++) {
                 if (!is_valid_id_char(*last_character, false)) break;

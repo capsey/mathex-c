@@ -94,7 +94,7 @@ bool get_flag(mx_config *config, mx_flag flag) {
     return config->flags & flag;
 }
 
-mx_token *lookup_id(mx_config *config, char *key, size_t length) {
+mx_token *lookup_id(mx_config *config, const char *key, size_t length) {
     if (config->n_buckets == 0) return NULL;
 
     size_t index = hash(key, length) % config->n_buckets;
