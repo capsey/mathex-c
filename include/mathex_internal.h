@@ -24,16 +24,15 @@ typedef struct mx_token {
     union {
         double value; // value of variable or number
         struct {
-            double (*apply)(double, double); // operator
-            unsigned int prec;               // precedence
+            double (*apply)(double, double); // binary operator
+            int prec;                        // precedence
             bool left_assoc;                 // left associativity
         } biop;
         struct {
-            double (*apply)(double); // operator
+            double (*apply)(double); // unary operator
         } unop;
         struct {
-            double (*apply)(double[]); // function
-            unsigned int n_args;       // number of arguments
+            mx_error (*apply)(double[], int, double *); // function
         } func;
     } data;
 } mx_token;
@@ -61,15 +60,24 @@ bool get_flag(mx_config *config, mx_flag flag);
 // Lookup given string slice among inserted variables, functions or operators. NULL if not found.
 mx_token *lookup_id(mx_config *config, const char *name, size_t length);
 
-// A stack data structure storing unsigned integer numbers.
+// A stack data structure storing integer numbers.
 typedef struct stack_n stack_n;
 
 stack_n *create_stack_n(void);
 bool is_empty_stack_n(stack_n *stack);
-unsigned int peek_n(const stack_n *stack);
-bool push_n(stack_n *stack, unsigned int value);
-unsigned int pop_n(stack_n *stack);
+int peek_n(const stack_n *stack);
+bool push_n(stack_n *stack, int value);
+int pop_n(stack_n *stack);
 void free_stack_n(stack_n *stack);
+
+// A queue data structure storing integer numbers.
+typedef struct queue_n queue_n;
+
+queue_n *create_queue_n(void);
+bool is_empty_queue_n(queue_n *queue);
+bool enqueue_n(queue_n *queue, int value);
+int dequeue_n(queue_n *queue);
+void queue_free_n(queue_n *queue);
 
 // A stack data structure storing double precision floating point numbers.
 typedef struct stack_d stack_d;

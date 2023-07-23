@@ -70,8 +70,9 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
     queue_m *out_queue = create_queue_m();
     stack_d *res_stack = create_stack_d();
 
-    unsigned int arg_count = 0;
+    int arg_count = 0;
     stack_n *arg_stack = create_stack_n();
+    queue_n *arg_queue = create_queue_n();
 
     for (const char *character = expression; *character; character++) {
         if (*character == ' ') {
@@ -297,19 +298,24 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
         }
 
         if (*character == ')') {
-            if (is_empty_stack_m(ops_stack)) {
-                // Mismatched parenthesis (ignore if implicit parentheses are enabled)
-                assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
-                continue;
-            }
+            // Empty expressions are not allowed
+            assert_syntax(last_token != MX_EMPTY && last_token != MX_COMMA);
 
-            while (peek_m(ops_stack).type != MX_LEFT_PAREN) {
-                assert_alloc(enqueue_m(out_queue, pop_m(ops_stack)));
-
+            if (last_token != MX_LEFT_PAREN) {
                 if (is_empty_stack_m(ops_stack)) {
                     // Mismatched parenthesis (ignore if implicit parentheses are enabled)
                     assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
-                    break;
+                    continue;
+                }
+
+                while (peek_m(ops_stack).type != MX_LEFT_PAREN) {
+                    assert_alloc(enqueue_m(out_queue, pop_m(ops_stack)));
+
+                    if (is_empty_stack_m(ops_stack)) {
+                        // Mismatched parenthesis (ignore if implicit parentheses are enabled)
+                        assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
+                        break;
+                    }
                 }
             }
 
@@ -317,11 +323,12 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
                 pop_m(ops_stack); // Discard left parenthesis
 
                 if (!is_empty_stack_m(ops_stack) && peek_m(ops_stack).type == MX_FUNCTION) {
-                    unsigned int n_args = peek_m(ops_stack).data.func.n_args;
-                    if (arg_count != n_args) return_error(MX_ERR_ARGS_NUM);
-                    arg_count = pop_n(arg_stack);
-
                     assert_alloc(enqueue_m(out_queue, pop_m(ops_stack)));
+                    assert_alloc(enqueue_n(arg_queue, arg_count));
+                    arg_count = pop_n(arg_stack);
+                } else if (last_token == MX_LEFT_PAREN) {
+                    // Empty parentheses are not allowed, unless for zero-argument functions
+                    return_error(MX_ERR_SYNTAX);
                 }
             }
 
@@ -361,18 +368,23 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
         return_error(MX_ERR_SYNTAX);
     }
 
+    // Expression cannot be empty or end on a left parenthesis, unary operator, binary operator or a comma
+    assert_syntax(last_token != MX_EMPTY && last_token != MX_LEFT_PAREN && last_token != MX_UNARY_OPERATOR && last_token != MX_BINARY_OPERATOR && last_token != MX_COMMA);
+
     while (!is_empty_stack_m(ops_stack)) {
         mx_token token = pop_m(ops_stack);
 
         if (token.type == MX_LEFT_PAREN) {
-            // Mismatched parenthesis (ignore if implicit parentheses are enabled, unless zero-argument function)
-            assert_syntax(get_flag(config, MX_IMPLICIT_PARENS) && !(!is_empty_stack_m(ops_stack) && peek_m(ops_stack).type == MX_FUNCTION && peek_m(ops_stack).data.func.n_args == 0));
+            // Mismatched parenthesis (ignore if implicit parentheses are enabled)
+            assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
             continue;
         }
 
-        if (token.type == MX_FUNCTION && token.data.func.n_args == 0) {
-            // No implicit parentheses for zero argument functions
-            return_error(MX_ERR_SYNTAX);
+        if (token.type == MX_FUNCTION) {
+            // Implicit parentheses for zero argument functions are not allowed
+            assert_syntax(arg_count != 0);
+            assert_alloc(enqueue_n(arg_queue, arg_count));
+            arg_count = pop_n(arg_stack);
         }
 
         assert_alloc(enqueue_m(out_queue, token));
@@ -387,35 +399,37 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
             assert_alloc(push_d(res_stack, token.data.value));
             break;
 
-        case MX_BINARY_OPERATOR:
-            assert_syntax(!is_empty_stack_d(res_stack));
+        case MX_BINARY_OPERATOR:;
             double b = pop_d(res_stack);
-
-            assert_syntax(!is_empty_stack_d(res_stack));
             double a = pop_d(res_stack);
 
             assert_alloc(push_d(res_stack, token.data.biop.apply(a, b)));
             break;
 
-        case MX_UNARY_OPERATOR:
-            assert_syntax(!is_empty_stack_d(res_stack));
+        case MX_UNARY_OPERATOR:;
             double x = pop_d(res_stack);
 
             assert_alloc(push_d(res_stack, token.data.unop.apply(x)));
             break;
 
-        case MX_FUNCTION:
-            if (token.data.func.n_args == 0) {
-                assert_alloc(push_d(res_stack, token.data.func.apply(NULL)));
-            } else {
-                double args[token.data.func.n_args];
+        case MX_FUNCTION:;
+            int args_num = dequeue_n(arg_queue);
+            double func_result;
 
-                for (size_t i = 0; i < token.data.func.n_args; i++) {
-                    assert_syntax(!is_empty_stack_d(res_stack));
-                    args[token.data.func.n_args - i - 1] = pop_d(res_stack);
+            if (args_num == 0) {
+                error_code = token.data.func.apply(NULL, 0, &func_result);
+                if (error_code != MX_SUCCESS) goto cleanup;
+                assert_alloc(push_d(res_stack, func_result));
+            } else {
+                double args[args_num];
+
+                for (int i = 0; i < args_num; i++) {
+                    args[args_num - i - 1] = pop_d(res_stack);
                 }
 
-                assert_alloc(push_d(res_stack, token.data.func.apply(args)));
+                error_code = token.data.func.apply(args, args_num, &func_result);
+                if (error_code != MX_SUCCESS) goto cleanup;
+                assert_alloc(push_d(res_stack, func_result));
             }
             break;
 
@@ -425,7 +439,6 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
     }
 
     // Exactly one value has to be left in results stack
-    assert_syntax(!is_empty_stack_d(res_stack));
     double final_result = pop_d(res_stack);
     assert_syntax(is_empty_stack_d(res_stack));
 

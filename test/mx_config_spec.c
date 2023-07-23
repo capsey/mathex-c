@@ -9,16 +9,22 @@ static bool cmp(double a, double b) {
     return fabs(a - b) <= DBL_EPSILON;
 }
 
-static double _abs(double args[]) {
-    return fabs(args[0]);
+static mx_error _abs(double args[], int argc, double *result) {
+    if (argc != 1) return MX_ERR_ARGS_NUM;
+    *result = fabs(args[0]);
+    return MX_SUCCESS;
 }
 
-static double _min(double args[]) {
-    return args[0] < args[1] ? args[0] : args[1];
+static mx_error _min(double args[], int argc, double *result) {
+    if (argc != 2) return MX_ERR_ARGS_NUM;
+    *result = args[0] < args[1] ? args[0] : args[1];
+    return MX_SUCCESS;
 }
 
-static double _max(double args[]) {
-    return args[0] > args[1] ? args[0] : args[1];
+static mx_error _max(double args[], int argc, double *result) {
+    if (argc != 2) return MX_ERR_ARGS_NUM;
+    *result = args[0] > args[1] ? args[0] : args[1];
+    return MX_SUCCESS;
 }
 
 #define check_flag(input, expected_a, expected_b) \
@@ -93,9 +99,9 @@ spec("mx_config") {
         }
 
         it("function insertion") {
-            check(mx_insert_function(config, "abs", _abs, 1) == MX_SUCCESS);
-            check(mx_insert_function(config, "min", _min, 2) == MX_SUCCESS);
-            check(mx_insert_function(config, "max", _max, 2) == MX_SUCCESS);
+            check(mx_insert_function(config, "abs", _abs) == MX_SUCCESS);
+            check(mx_insert_function(config, "min", _min) == MX_SUCCESS);
+            check(mx_insert_function(config, "max", _max) == MX_SUCCESS);
             check(mx_evaluate(config, "abs(min(1, max(2, 0)))", &result) == MX_SUCCESS && cmp(result, 1));
         }
     }

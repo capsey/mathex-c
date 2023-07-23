@@ -9,20 +9,28 @@ static bool cmp(double a, double b) {
     return a == b || fabs(a - b) <= 1E-5;
 }
 
-static double _min(double args[]) {
-    return args[0] < args[1] ? args[0] : args[1];
+static mx_error _min(double args[], int argc, double *result) {
+    if (argc != 2) return MX_ERR_ARGS_NUM;
+    *result = args[0] < args[1] ? args[0] : args[1];
+    return MX_SUCCESS;
 }
 
-static double _max(double args[]) {
-    return args[0] > args[1] ? args[0] : args[1];
+static mx_error _max(double args[], int argc, double *result) {
+    if (argc != 2) return MX_ERR_ARGS_NUM;
+    *result = args[0] > args[1] ? args[0] : args[1];
+    return MX_SUCCESS;
 }
 
-static double _abs(double args[]) {
-    return fabs(args[0]);
+static mx_error _abs(double args[], int argc, double *result) {
+    if (argc != 1) return MX_ERR_ARGS_NUM;
+    *result = fabs(args[0]);
+    return MX_SUCCESS;
 }
 
-static double _foo(double args[]) {
-    return 0;
+static mx_error _foo(double args[], int argc, double *result) {
+    if (argc != 0) return MX_ERR_ARGS_NUM;
+    *result = 0;
+    return MX_SUCCESS;
 }
 
 static const double x = 9.5;
@@ -140,10 +148,10 @@ spec("mx_evaluate") {
 
     context("custom functions and variables") {
         before() {
-            mx_insert_function(config, "min", _min, 2);
-            mx_insert_function(config, "max", _max, 2);
-            mx_insert_function(config, "abs", _abs, 1);
-            mx_insert_function(config, "foo", _foo, 0);
+            mx_insert_function(config, "min", _min);
+            mx_insert_function(config, "max", _max);
+            mx_insert_function(config, "abs", _abs);
+            mx_insert_function(config, "foo", _foo);
 
             mx_insert_variable(config, "x", x);
             mx_insert_variable(config, "bar", 6.1);
@@ -152,7 +160,7 @@ spec("mx_evaluate") {
         it("simple function calls") {
             check_evaluate_ok("min(1, 0)", 0);
             check_evaluate_ok("max(9, 2 * x)", 2 * x);
-            check_evaluate_ok("foo()", _foo(NULL));
+            check_evaluate_ok("foo()", 0);
         }
 
         it("nested function calls") {
@@ -176,8 +184,14 @@ spec("mx_evaluate") {
             check_evaluate_err("foo(25)", MX_ERR_ARGS_NUM);
         }
 
+        it("wrong number of arguments with implicit parentheses") {
+            check_evaluate_err("max(0", MX_ERR_ARGS_NUM);
+            check_evaluate_err("max(0, 10, 20", MX_ERR_ARGS_NUM);
+        }
+
         it("empty arguments") {
             check_evaluate_err("max(, 0)", MX_ERR_SYNTAX);
+            check_evaluate_err("max(0, )", MX_ERR_SYNTAX);
             check_evaluate_err("max(1000, )", MX_ERR_SYNTAX);
             check_evaluate_err("min(max(0, ), )", MX_ERR_SYNTAX);
         }
