@@ -1,41 +1,50 @@
-CC = gcc
-CFLAGS = -g -std=c17 -Wall -Wextra -Wconversion -Wpedantic
-AR = ar rcs
-INCLUDES = -Iinclude
+# Compiler flags
+CC := gcc
+AR := ar rcs
 
-SRCDIR = src
-BINDIR = bin
-OBJDIR = $(BINDIR)/obj
-LIBDIR = $(BINDIR)/lib
+CFLAGS := -g -std=c99 -Wall -Wextra -Wconversion -Wpedantic
+TESTFLAGS := -g -std=c99
+INCLUDES := -Iinclude
 
-SOURCES = $(wildcard $(SRCDIR)/*.c)
-OBJECTS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SOURCES))
-LIBRARY = $(LIBDIR)/mathex.a
+# Library variables
+SOURCEDIR := ./src
+BINARYDIR := ./bin
 
-TESTDIR = test
-TESTBINDIR = $(TESTDIR)/bin
-TEST = $(TESTDIR)/main.c
-TESTBIN = $(TESTBINDIR)/main
+SOURCES := $(wildcard $(SOURCEDIR)/*.c)
+OBJECTS := $(patsubst $(SOURCEDIR)/%.c, $(BINARYDIR)/%.o, $(SOURCES))
+LIBRARY := $(BINARYDIR)/libmathex.a
 
-all: $(LIBRARY)
+# Testing variables
+TESTDIR := ./test
+TESTBINDIR := $(TESTDIR)/bin
 
-$(LIBRARY): $(OBJECTS)
-	$(AR) $(LIBRARY) $(OBJECTS)
+TESTSRC := $(wildcard $(TESTDIR)/*_spec.c)
+TESTBIN := $(patsubst $(TESTDIR)/%.c, $(TESTBINDIR)/%, $(TESTSRC))
+TESTDEP := $(TESTDIR)/bdd-for-c.h
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.c
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
-
-$(TESTBIN): $(TESTDIR)/*.c $(OBJECTS)
-	$(CC) $(CFLAGS) $(INCLUDES) $< $(OBJECTS) -o $@
+# Phonies
+build: $(LIBRARY)
 
 mkdir:
-	mkdir $(BINDIR)
-	mkdir $(OBJDIR)
-	mkdir $(LIBDIR)
-	mkdir $(TESTBINDIR)
+	mkdir -p $(BINARYDIR)
+	mkdir -p $(TESTBINDIR)
 
-test: $(LIBRARY) $(TESTBIN)
-	$(TESTBIN)
+test: $(TESTDEP) $(LIBRARY) $(TESTBIN)
+	$(foreach EXE, $(TESTBIN), $(EXE);)
 
 clean:
 	rm -f $(OBJECTS) $(LIBRARY) $(TESTBIN)
+
+# Library
+$(LIBRARY): $(OBJECTS)
+	$(AR) $(LIBRARY) $(OBJECTS)
+
+$(BINARYDIR)/%.o: $(SOURCEDIR)/%.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c $^ -o $@ -lm
+
+# Testing
+$(TESTBINDIR)/%_spec: $(TESTDIR)/%_spec.c $(LIBRARY)
+	$(CC) $(TESTFLAGS) $(INCLUDES) $< -o $@ -L$(BINARYDIR) -lmathex -lm
+
+$(TESTDEP):
+	curl -o $@ https://raw.githubusercontent.com/grassator/bdd-for-c/master/bdd-for-c.h

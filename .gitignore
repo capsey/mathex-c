@@ -1,9 +1,11 @@
-# IDE specific
+# Generated
 .vscode/
+.cache/
+compile_commands.json
 
-# Output
-obj/
+# Compilation binaries
 bin/
+test/bin
 
 # Dependencies
-test/minunit.h
+test/bdd-for-c.h

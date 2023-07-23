@@ -1,57 +1,103 @@
-#ifndef __MATHEX__
-#define __MATHEX__
+#ifndef MATHEX_H
+#define MATHEX_H
 
 #include <stdbool.h>
 #include <stddef.h>
 
 /**
- * @brief Represents all valid token types
+ * @brief Default parameters. Does not include exponentiation and modulus operators.
  */
-typedef enum token {
-    L_PARENTHESIS,
-    R_PARENTHESIS,
-    OPERATOR_TOKEN,
-    FUNCTION_TOKEN,
-    VARIABLE_TOKEN,
-    NUMBER_TOKEN,
-} token_t;
+#define MX_DEFAULT (MX_IMPLICIT_PARENS | MX_SCI_NOTATION | MX_ENABLE_ADD | MX_ENABLE_SUB | MX_ENABLE_MUL | MX_ENABLE_DIV | MX_ENABLE_POS | MX_ENABLE_NEG)
 
 /**
- * @brief Represents substring of character array
+ * @brief Evaluation parameters.
  */
-typedef struct span {
-    const char *start;
-    size_t length;
-} span_t;
+typedef enum mx_flag {
+    MX_NONE = 0,            // Disable all parameters.
+    MX_IMPLICIT_PARENS = 1, // Enables implicit parentheses.
+    MX_SCI_NOTATION = 2,    // Enables numbers in scientific notation.
+    MX_ENABLE_ADD = 4,      // Enables addition operator.
+    MX_ENABLE_SUB = 8,      // Enables substraction operator.
+    MX_ENABLE_MUL = 16,     // Enables multiplication operator.
+    MX_ENABLE_DIV = 32,     // Enables division operator.
+    MX_ENABLE_POW = 64,     // Enables exponentiation operator.
+    MX_ENABLE_MOD = 128,    // Enables modulus operator.
+    MX_ENABLE_POS = 256,    // Enables unary identity operator.
+    MX_ENABLE_NEG = 512,    // Enables unary negation operator.
+} mx_flag;
 
 /**
- * @brief Splits input string into array of string spans which represent individual tokens
- *
- * @param input Input string to tokenize
- * @param n_input Length of input string
- * @param tokens Span buffer that will be populated by the function with token spans
- * @param n_tokens Length of tokens buffer
- * @param token_count Pointer to variable to hold number of recornized tokens
- *
- * @return Boolean value whether tokenization succeeded
+ * @brief Error codes.
  */
-bool mathex_tokenize(const char *input, size_t n_input, span_t tokens[], size_t n_tokens, size_t *token_count);
+typedef enum mx_error {
+    MX_SUCCESS = 0,      // Parsed successfully.
+    MX_ERR_ILLEGAL_NAME, // Name of variable/function contains illegal characters.
+    MX_ERR_NO_MEMORY,    // Out of memory.
+    MX_ERR_DIV_ZERO,     // Division by zero.
+    MX_ERR_SYNTAX,       // Expression syntax is invalid.
+    MX_ERR_UNDEFINED,    // Function or variable name not found.
+    MX_ERR_INVALID_ARGS, // Arguments validation failed.
+    MX_ERR_ARGS_NUM,     // Incorrect number of arguments.
+} mx_error;
 
 /**
- * @brief Classifies given array of spans from into token types
- *
- * @param spans Input span array to process
- * @param n_spans Length of input span array
- * @param operators Array of valid operator strings
- * @param n_operators Length of operators array
- * @param variables Array of valid variable strings
- * @param n_variables Length of variables array
- * @param functions Array of valid function strings
- * @param n_functions Length of functions array
- * @param results Token type buffer that will be populated by the function with type of each token (must be at least the size of spans array)
- *
- * @return Boolean value whether classification succeeded
+ * @brief Configuration for parsing.
  */
-bool mathex_classify(const span_t spans[], size_t n_spans, const char *operators[], size_t n_operators, const char *variables[], size_t n_variables, const char *functions[], size_t n_functions, token_t results[]);
+typedef struct mx_config mx_config;
 
-#endif /* __MATHEX__ */
+/**
+ * @brief Creates empty configuration struct with given parsing parameters.
+ *
+ * This function allocates memory, so it is mandatory to free using `mx_free` after usage.
+ *
+ * @param flags Evaluation flags.
+ *
+ * @return Returns pointer to configuration struct, or NULL if failed to allocate.
+ */
+mx_config *mx_init(mx_flag flags);
+
+/**
+ * @brief Inserts a variable into the configuration struct to be available for use in the expressions.
+ *
+ * @param config Configuration struct to insert into.
+ * @param name Null-terminated string representing name of the variable. (should only contain letters, digits or underscore and cannot start with a digit)
+ * @param value Value of the variable.
+ *
+ * @return Returns MX_SUCCESS, or error code if failed to insert.
+ */
+mx_error mx_insert_variable(mx_config *config, const char *name, double value);
+
+/**
+ * @brief Inserts a function into the configuration struct to be available for use in the expressions.
+ *
+ * @param config Configuration struct to insert into.
+ * @param name Null-terminated string representing name of the function. (should only contain letters, digits or underscore and cannot start with a digit)
+ * @param apply Function that takes the arguments, writes the result to the given address and returns MX_SUCCESS or error code.
+ *
+ * @return Returns MX_SUCCESS, or error code if failed to insert.
+ */
+mx_error mx_insert_function(mx_config *config, const char *name, mx_error (*apply)(double[], int, double *));
+
+/**
+ * @brief Frees configuration struct and its contents from memory.
+ *
+ * Does not perform any checks, so passing invalid or NULL pointer is undefined and will likely result in segmentation fault.
+ *
+ * @param config Pointer to a config allocated using `mx_init`.
+ */
+void mx_free(mx_config *config);
+
+/**
+ * @brief Takes mathematical expression and evaluates its numerical value.
+ *
+ * Result of the evaluation is written into a `result` pointer. If evaluation failed, returns error code.
+ *
+ * @param config Configuration struct containing rules to evaluate by.
+ * @param expression Null-terminated string to evaluate.
+ * @param result Pointer to write evaluation result to. Can be NULL.
+ *
+ * @return Returns MX_SUCCESS, or error code if expression contains any errors.
+ */
+mx_error mx_evaluate(mx_config *config, const char *expression, double *result);
+
+#endif /* MATHEX_H */
