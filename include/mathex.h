@@ -72,12 +72,11 @@ mx_error mx_insert_variable(mx_config *config, const char *name, double value);
  *
  * @param config Configuration struct to insert into.
  * @param name Null-terminated string representing name of the function. (should only contain letters, digits or underscore and cannot start with a digit)
- * @param apply Function that takes the arguments and returns the result.
- * @param n_args Number of arguments the function takes. (greater or equal to zero)
+ * @param apply Function that takes the arguments, writes the result to the given address and returns MX_SUCCESS or error code.
  *
  * @return Returns MX_SUCCESS, or error code if failed to insert.
  */
-mx_error mx_insert_function(mx_config *config, const char *name, double (*apply)(double *), unsigned int n_args);
+mx_error mx_insert_function(mx_config *config, const char *name, mx_error (*apply)(double[], int, double *));
 
 /**
  * @brief Frees configuration struct and its contents from memory.

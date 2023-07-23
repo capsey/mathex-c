@@ -134,7 +134,7 @@ mx_error mx_insert_variable(mx_config *config, const char *name, double value) {
     return insert(config, name, token);
 }
 
-mx_error mx_insert_function(mx_config *config, const char *name, double (*apply)(double *), unsigned int n_args) {
+mx_error mx_insert_function(mx_config *config, const char *name, mx_error (*apply)(double[], int, double *)) {
     mx_token token;
 
     for (const char *character = name; *character; character++) {
@@ -145,7 +145,6 @@ mx_error mx_insert_function(mx_config *config, const char *name, double (*apply)
 
     token.type = MX_FUNCTION;
     token.data.func.apply = apply;
-    token.data.func.n_args = n_args;
 
     return insert(config, name, token);
 }
