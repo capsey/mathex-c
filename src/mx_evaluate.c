@@ -298,19 +298,24 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
         }
 
         if (*character == ')') {
-            if (is_empty_stack_m(ops_stack)) {
-                // Mismatched parenthesis (ignore if implicit parentheses are enabled)
-                assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
-                continue;
-            }
+            // Empty expressions are not allowed
+            assert_syntax(last_token != MX_EMPTY && last_token != MX_COMMA);
 
-            while (peek_m(ops_stack).type != MX_LEFT_PAREN) {
-                assert_alloc(enqueue_m(out_queue, pop_m(ops_stack)));
-
+            if (last_token != MX_LEFT_PAREN) {
                 if (is_empty_stack_m(ops_stack)) {
                     // Mismatched parenthesis (ignore if implicit parentheses are enabled)
                     assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
-                    break;
+                    continue;
+                }
+
+                while (peek_m(ops_stack).type != MX_LEFT_PAREN) {
+                    assert_alloc(enqueue_m(out_queue, pop_m(ops_stack)));
+
+                    if (is_empty_stack_m(ops_stack)) {
+                        // Mismatched parenthesis (ignore if implicit parentheses are enabled)
+                        assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
+                        break;
+                    }
                 }
             }
 
@@ -321,6 +326,9 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
                     assert_alloc(enqueue_m(out_queue, pop_m(ops_stack)));
                     assert_alloc(enqueue_n(arg_queue, arg_count));
                     arg_count = pop_n(arg_stack);
+                } else if (last_token == MX_LEFT_PAREN) {
+                    // Empty parentheses are not allowed, unless for zero-argument functions
+                    return_error(MX_ERR_SYNTAX);
                 }
             }
 
@@ -360,6 +368,9 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
         return_error(MX_ERR_SYNTAX);
     }
 
+    // Expression cannot be empty or end on a left parenthesis, unary operator, binary operator or a comma
+    assert_syntax(last_token != MX_EMPTY && last_token != MX_LEFT_PAREN && last_token != MX_UNARY_OPERATOR && last_token != MX_BINARY_OPERATOR && last_token != MX_COMMA);
+
     while (!is_empty_stack_m(ops_stack)) {
         mx_token token = pop_m(ops_stack);
 
@@ -388,18 +399,14 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
             assert_alloc(push_d(res_stack, token.data.value));
             break;
 
-        case MX_BINARY_OPERATOR:
-            assert_syntax(!is_empty_stack_d(res_stack));
+        case MX_BINARY_OPERATOR:;
             double b = pop_d(res_stack);
-
-            assert_syntax(!is_empty_stack_d(res_stack));
             double a = pop_d(res_stack);
 
             assert_alloc(push_d(res_stack, token.data.biop.apply(a, b)));
             break;
 
-        case MX_UNARY_OPERATOR:
-            assert_syntax(!is_empty_stack_d(res_stack));
+        case MX_UNARY_OPERATOR:;
             double x = pop_d(res_stack);
 
             assert_alloc(push_d(res_stack, token.data.unop.apply(x)));
@@ -417,7 +424,6 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
                 double args[args_num];
 
                 for (int i = 0; i < args_num; i++) {
-                    assert_syntax(!is_empty_stack_d(res_stack));
                     args[args_num - i - 1] = pop_d(res_stack);
                 }
 
@@ -433,7 +439,6 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
     }
 
     // Exactly one value has to be left in results stack
-    assert_syntax(!is_empty_stack_d(res_stack));
     double final_result = pop_d(res_stack);
     assert_syntax(is_empty_stack_d(res_stack));
 

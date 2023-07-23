@@ -184,8 +184,14 @@ spec("mx_evaluate") {
             check_evaluate_err("foo(25)", MX_ERR_ARGS_NUM);
         }
 
+        it("wrong number of arguments with implicit parentheses") {
+            check_evaluate_err("max(0", MX_ERR_ARGS_NUM);
+            check_evaluate_err("max(0, 10, 20", MX_ERR_ARGS_NUM);
+        }
+
         it("empty arguments") {
             check_evaluate_err("max(, 0)", MX_ERR_SYNTAX);
+            check_evaluate_err("max(0, )", MX_ERR_SYNTAX);
             check_evaluate_err("max(1000, )", MX_ERR_SYNTAX);
             check_evaluate_err("min(max(0, ), )", MX_ERR_SYNTAX);
         }
