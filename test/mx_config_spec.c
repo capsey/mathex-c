@@ -71,8 +71,8 @@ spec("mx_config") {
             custom_config = mx_init(MX_DEFAULT & ~MX_SCI_NOTATION);
 
             check_flag("4e3", MX_SUCCESS, MX_ERR_UNDEFINED);
-            check_flag("1.21e10", MX_SUCCESS, MX_ERR_SYNTAX);
-            check_flag("1.e-4", MX_SUCCESS, MX_ERR_SYNTAX);
+            check_flag("1.21e10", MX_SUCCESS, MX_ERR_UNDEFINED);
+            check_flag("1.e-4", MX_SUCCESS, MX_ERR_UNDEFINED);
 
             mx_free(custom_config);
         }

@@ -30,7 +30,7 @@ mkdir:
 	mkdir -p $(TESTBINDIR)
 
 test: $(TESTDEP) $(LIBRARY) $(TESTBIN)
-	$(foreach EXE, $(TESTBIN), $(EXE);)
+	true $(foreach EXE, $(TESTBIN), && $(EXE))
 
 clean:
 	rm -f $(OBJECTS) $(LIBRARY) $(TESTBIN)
