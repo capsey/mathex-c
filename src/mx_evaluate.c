@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #define OPERAND_ORDER (last_token == MX_EMPTY || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_BINARY_OPERATOR || last_token == MX_UNARY_OPERATOR)
 #define UNARY_OPERATOR_ORDER (last_token == MX_EMPTY || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_UNARY_OPERATOR)
@@ -41,25 +42,6 @@ enum state {
     EXP_VALUE,     // Exponent of scientific notation.
 };
 
-// Returns 10 in power of `exp` or `-exp` depending on `sign` parameter.
-double ten_in(unsigned long exp, bool sign) {
-    // https://cp-algorithms.com/algebra/binary-exp.html
-
-    double result = 1.0;
-    double base = 10.0;
-
-    while (exp > 0) {
-        if (exp & 1) {
-            result *= base;
-        }
-
-        base *= base;
-        exp >>= 1;
-    }
-
-    return sign ? result : 1.0 / result;
-}
-
 mx_error mx_evaluate(mx_config *config, const char *expression, double *result) {
     // https://en.wikipedia.org/wiki/Shunting_yard_algorithm#The_algorithm_in_detail
 
@@ -87,7 +69,7 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
 
             double value = 0;
             double decimal_place = 10;
-            unsigned long exponent = 0;
+            double exponent = 0;
             bool exponent_sign = true;
 
             enum state conversion_state = INTEGER_PART;
@@ -132,7 +114,7 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
                     assert_syntax(*last_character != '.');
 
                     if (isdigit(*last_character)) {
-                        exponent = (exponent * 10) + (unsigned)(*last_character - '0');
+                        exponent = (exponent * 10) + (double)(*last_character - '0');
                         conversion_state = EXP_VALUE;
                         continue;
                     }
@@ -148,7 +130,7 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
                     assert_syntax(*last_character != '.');
 
                     if (isdigit(*last_character)) {
-                        exponent = (exponent * 10) + (unsigned)(*last_character - '0');
+                        exponent = (exponent * 10) + (double)(*last_character - '0');
                         conversion_state = EXP_VALUE;
                         continue;
                     }
@@ -168,7 +150,7 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
             assert_syntax(last_character - character != 1 || *character != '.');
 
             if (exponent != 0) {
-                value *= ten_in(exponent, exponent_sign);
+                value *= pow(exponent_sign ? 10.0 : 0.1, exponent);
             }
 
             mx_token token = {.type = MX_NUMBER, .data.value = value};
