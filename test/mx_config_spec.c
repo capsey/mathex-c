@@ -39,6 +39,7 @@ spec("mx_config") {
 
     before() {
         config = mx_init(MX_DEFAULT);
+        mx_insert_variable(config, "x", 5);
     }
 
     after() {
@@ -57,10 +58,19 @@ spec("mx_config") {
             mx_free(custom_config);
         }
 
+        it("implicit multiplication flag") {
+            custom_config = mx_init(MX_DEFAULT & ~MX_IMPLICIT_MUL);
+
+            check_flag("2x", MX_SUCCESS, MX_ERR_SYNTAX);
+            check_flag("3.5x", MX_SUCCESS, MX_ERR_SYNTAX);
+
+            mx_free(custom_config);
+        }
+
         it("scientific notation") {
             custom_config = mx_init(MX_DEFAULT & ~MX_SCI_NOTATION);
 
-            check_flag("4e3", MX_SUCCESS, MX_ERR_SYNTAX);
+            check_flag("4e3", MX_SUCCESS, MX_ERR_UNDEFINED);
             check_flag("1.21e10", MX_SUCCESS, MX_ERR_SYNTAX);
             check_flag("1.e-4", MX_SUCCESS, MX_ERR_SYNTAX);
 

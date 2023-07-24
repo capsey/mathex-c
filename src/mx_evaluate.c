@@ -160,7 +160,9 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
             }
 
             // Cannot have scientific notation separator without specifying exponent
-            assert_syntax(conversion_state != EXP_START);
+            if (conversion_state == EXP_START) {
+                last_character--;
+            }
 
             // ".1" => 0.1 and "1." => 1.0 but "." != 0.0
             assert_syntax(last_character - character != 1 || *character != '.');
@@ -178,9 +180,19 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
         }
 
         if (is_valid_id_char(*character, true)) {
-            // Two operands in a row are not allowed
-            // Operand should only either be first in expression or right after operator
-            assert_syntax(OPERAND_ORDER);
+            if (last_token == MX_NUMBER && get_flag(config, MX_IMPLICIT_MUL)) {
+                // Implicit multiplication
+                while (!is_empty_stack_m(ops_stack) && peek_m(ops_stack).type == MX_BINARY_OPERATOR && (peek_m(ops_stack).data.biop.prec > mx_mul_token.data.biop.prec || (peek_m(ops_stack).data.biop.prec == mx_mul_token.data.biop.prec && mx_mul_token.data.biop.left_assoc))) {
+                    assert_alloc(enqueue_m(out_queue, pop_m(ops_stack)));
+                }
+
+                assert_alloc(push_m(ops_stack, mx_mul_token));
+            } else {
+                // Two operands in a row are not allowed
+                // Operand should only either be first in expression or right after operator
+                assert_syntax(OPERAND_ORDER);
+            }
+
             if (arg_count == 0) arg_count++;
 
             const char *last_character;

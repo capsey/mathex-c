@@ -7,23 +7,24 @@
 /**
  * @brief Default parameters. Does not include exponentiation and modulus operators.
  */
-#define MX_DEFAULT (MX_IMPLICIT_PARENS | MX_SCI_NOTATION | MX_ENABLE_ADD | MX_ENABLE_SUB | MX_ENABLE_MUL | MX_ENABLE_DIV | MX_ENABLE_POS | MX_ENABLE_NEG)
+#define MX_DEFAULT (MX_IMPLICIT_PARENS | MX_IMPLICIT_MUL | MX_SCI_NOTATION | MX_ENABLE_ADD | MX_ENABLE_SUB | MX_ENABLE_MUL | MX_ENABLE_DIV | MX_ENABLE_POS | MX_ENABLE_NEG)
 
 /**
  * @brief Evaluation parameters.
  */
 typedef enum mx_flag {
     MX_NONE = 0,            // Disable all parameters.
-    MX_IMPLICIT_PARENS = 1, // Enables implicit parentheses.
-    MX_SCI_NOTATION = 2,    // Enables numbers in scientific notation.
-    MX_ENABLE_ADD = 4,      // Enables addition operator.
-    MX_ENABLE_SUB = 8,      // Enables substraction operator.
-    MX_ENABLE_MUL = 16,     // Enables multiplication operator.
-    MX_ENABLE_DIV = 32,     // Enables division operator.
-    MX_ENABLE_POW = 64,     // Enables exponentiation operator.
-    MX_ENABLE_MOD = 128,    // Enables modulus operator.
-    MX_ENABLE_POS = 256,    // Enables unary identity operator.
-    MX_ENABLE_NEG = 512,    // Enables unary negation operator.
+    MX_IMPLICIT_PARENS = 1, // Enable implicit parentheses.
+    MX_IMPLICIT_MUL = 2,    // Enable implicit multiplication.
+    MX_SCI_NOTATION = 4,    // Enable numbers in scientific notation.
+    MX_ENABLE_ADD = 8,      // Enable addition operator.
+    MX_ENABLE_SUB = 16,     // Enable substraction operator.
+    MX_ENABLE_MUL = 32,     // Enable multiplication operator.
+    MX_ENABLE_DIV = 64,     // Enable division operator.
+    MX_ENABLE_POW = 128,    // Enable exponentiation operator.
+    MX_ENABLE_MOD = 256,    // Enable modulus operator.
+    MX_ENABLE_POS = 512,    // Enable unary identity operator.
+    MX_ENABLE_NEG = 1024,   // Enable unary negation operator.
 } mx_flag;
 
 /**
