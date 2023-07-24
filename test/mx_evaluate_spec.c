@@ -33,7 +33,8 @@ static mx_error _foo(double args[], int argc, double *result) {
     return MX_SUCCESS;
 }
 
-static const double x = 9.5;
+static const double x = 9.50;
+static const double e = 2.71;
 
 #define check_evaluate_ok(input, expected) check(mx_evaluate(config, input, &result) == MX_SUCCESS && cmp(result, expected))
 #define check_evaluate_err(input, error) check(mx_evaluate(config, input, NULL) == (error))
@@ -117,10 +118,10 @@ spec("mx_evaluate") {
             check_evaluate_err("5..", MX_ERR_SYNTAX);
             check_evaluate_err(".", MX_ERR_SYNTAX);
 
-            check_evaluate_err("1ee2", MX_ERR_SYNTAX);
             check_evaluate_err("1e2.3", MX_ERR_SYNTAX);
             check_evaluate_err("1.1e2.3", MX_ERR_SYNTAX);
-            check_evaluate_err("1.1e + 2", MX_ERR_SYNTAX);
+            check_evaluate_err("1.1e + 2", MX_ERR_UNDEFINED);
+            check_evaluate_err("1ee2", MX_ERR_UNDEFINED);
         }
 
         it("double values") {
@@ -154,7 +155,15 @@ spec("mx_evaluate") {
             mx_insert_function(config, "foo", _foo);
 
             mx_insert_variable(config, "x", x);
+            mx_insert_variable(config, "e", e);
             mx_insert_variable(config, "bar", 6.1);
+        }
+
+        it("implicit multiplication") {
+            check_evaluate_ok("2x", 2 * x);
+            check_evaluate_ok("2.5x", 2.5 * x);
+            check_evaluate_ok("2.5e3x", 2.5e3 * x);
+            check_evaluate_ok("2.53e", 2.53 * e);
         }
 
         it("simple function calls") {
