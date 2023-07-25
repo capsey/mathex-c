@@ -18,21 +18,27 @@ Using Mathex is super easy - just include one header, initialize, evaluate and f
 
 int main()
 {
-    // Use `mx_init` and `MX_DEFAULT` to get default configuration
-    // For specifying your own settings, check out documentation
+    // Use `mx_init` and `MX_DEFAULT` to get default configuration.
+    // For what settings are available, check out documentation.
     mx_config *config = mx_init(MX_DEFAULT);
 
-    char *input = "5 + 5";
+    // Config that you get from `mx_init` contains your settings
+    // along with custom variables and functions you inserted.
+    mx_insert_variable(config, "x", 1.5);
+
+    // These variables and functions are then available for users
+    // to use in expressions.
+    char *input = "2x + 5";
     double result;
 
-    // Mathex writes result into the address you provide
-    // Here we pass an address to a `result` variable
+    // Mathex writes result of evaluation into the address you provide.
+    // Here we pass an address to a `result` variable we declared above.
     if (mx_evaluate(config, input, &result) == MX_SUCCESS)
     {
-        printf("%s is %lf\n", input, result); // Outputs `5 + 5 is 10`
+        printf("%s is %lf\n", input, result); // Outputs `2x + 5 is 8`
     }
 
-    // Free the memory once you are done evaluating
+    // Don't forget to free the memory once you are done.
     mx_free(config);
 }
 ```
@@ -42,3 +48,15 @@ Don't forget to add Mathex when you compile your program:
 ```shell
 gcc program.c -lmathex
 ```
+
+## Building from source
+
+To build the library, you need to clone the repository using Git and build the binary using GCC and GNU Make:
+
+```shell
+git clone https://github.com/capsey/mathex-c.git
+cd ./mathex-c
+make build # or `make CC=clang build` to use clang instead of gcc
+```
+
+After that, compiled library will be in `bin` directory as `libmathex.a`. The header file `mathex.h` is located in `include` directory.
