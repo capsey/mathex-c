@@ -12,7 +12,8 @@
 /**
  * @brief Evaluation parameters.
  */
-typedef enum mx_flag {
+typedef enum mx_flag
+{
     MX_NONE = 0,            // Disable all parameters.
     MX_IMPLICIT_PARENS = 1, // Enable implicit parentheses.
     MX_IMPLICIT_MUL = 2,    // Enable implicit multiplication.
@@ -30,7 +31,8 @@ typedef enum mx_flag {
 /**
  * @brief Error codes.
  */
-typedef enum mx_error {
+typedef enum mx_error
+{
     MX_SUCCESS = 0,      // Parsed successfully.
     MX_ERR_ILLEGAL_NAME, // Name of variable/function contains illegal characters.
     MX_ERR_NO_MEMORY,    // Out of memory.

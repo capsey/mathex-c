@@ -5,7 +5,8 @@
 #include <stdbool.h>
 
 // Type of expression token.
-typedef enum mx_token_type {
+typedef enum mx_token_type
+{
     MX_EMPTY = 0,
     MX_LEFT_PAREN,
     MX_RIGHT_PAREN,
@@ -19,19 +20,24 @@ typedef enum mx_token_type {
 
 // Value of expression token.
 // NOTE: `data` is discriminated union! Always check `type` before accessing its fields!!!
-typedef struct mx_token {
+typedef struct mx_token
+{
     mx_token_type type;
-    union {
+    union
+    {
         double value; // value of variable or number
-        struct {
+        struct
+        {
             double (*apply)(double, double); // binary operator
             int prec;                        // precedence
             bool left_assoc;                 // left associativity
         } biop;
-        struct {
+        struct
+        {
             double (*apply)(double); // unary operator
         } unop;
-        struct {
+        struct
+        {
             mx_error (*apply)(double[], int, double *); // function
         } func;
     } data;

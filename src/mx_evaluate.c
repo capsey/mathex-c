@@ -18,31 +18,37 @@
     }
 
 #define assert_alloc(expr)              \
-    if (!(expr)) {                      \
+    if (!(expr))                        \
+    {                                   \
         return_error(MX_ERR_NO_MEMORY); \
     }
 
 #define assert_syntax(condition)     \
-    if (!(condition)) {              \
+    if (!(condition))                \
+    {                                \
         return_error(MX_ERR_SYNTAX); \
     }
 
-#define assert_overflow(value)                \
-    do {                                      \
-        double x = (value);                   \
-        if (!(x < DBL_MAX && x > -DBL_MAX)) { \
-            return_error(MX_ERR_OVERFLOW);    \
-        }                                     \
+#define assert_overflow(value)              \
+    do                                      \
+    {                                       \
+        double x = (value);                 \
+        if (!(x < DBL_MAX && x > -DBL_MAX)) \
+        {                                   \
+            return_error(MX_ERR_OVERFLOW);  \
+        }                                   \
     } while (0)
 
-enum state {
+enum state
+{
     INTEGER_PART,  // Integer portion of decimal fraction. (before decimal point)
     FRACTION_PART, // Fractional portion of decimal fraction. (after decimal point)
     EXP_START,     // Separator of mantissa and exponent in scientific notation. (including sign)
     EXP_VALUE,     // Exponent of scientific notation.
 };
 
-mx_error mx_evaluate(mx_config *config, const char *expression, double *result) {
+mx_error mx_evaluate(mx_config *config, const char *expression, double *result)
+{
     // https://en.wikipedia.org/wiki/Shunting_yard_algorithm#The_algorithm_in_detail
 
     mx_error error_code = MX_SUCCESS;
@@ -56,16 +62,20 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
     stack_n *arg_stack = create_stack_n();
     queue_n *arg_queue = create_queue_n();
 
-    for (const char *character = expression; *character; character++) {
-        if (*character == ' ') {
+    for (const char *character = expression; *character; character++)
+    {
+        if (*character == ' ')
+        {
             continue;
         }
 
-        if (isdigit(*character) || *character == '.') {
+        if (isdigit(*character) || *character == '.')
+        {
             // Two operands in a row are not allowed
             // Operand should only either be first in expression or right after operator
             assert_syntax(OPERAND_ORDER);
-            if (arg_count == 0) arg_count++;
+            if (arg_count == 0)
+                arg_count++;
 
             double value = 0;
             double decimal_place = 10;
@@ -75,21 +85,25 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
             enum state conversion_state = INTEGER_PART;
             const char *last_character;
 
-            for (last_character = character; *last_character; last_character++) {
+            for (last_character = character; *last_character; last_character++)
+            {
                 switch (conversion_state)
                 {
                 case INTEGER_PART:
-                    if (isdigit(*last_character)) {
+                    if (isdigit(*last_character))
+                    {
                         value = (value * 10) + (double)(*last_character - '0');
                         continue;
                     }
-                    
-                    if (*last_character == '.') {
+
+                    if (*last_character == '.')
+                    {
                         conversion_state = FRACTION_PART;
                         continue;
                     }
-                    
-                    if ((*last_character == 'e' || *last_character == 'E') && get_flag(config, MX_SCI_NOTATION)) {
+
+                    if ((*last_character == 'e' || *last_character == 'E') && get_flag(config, MX_SCI_NOTATION))
+                    {
                         conversion_state = EXP_START;
                         continue;
                     }
@@ -98,38 +112,43 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
                 case FRACTION_PART:
                     assert_syntax(*last_character != '.');
 
-                    if (isdigit(*last_character)) {
+                    if (isdigit(*last_character))
+                    {
                         value += (double)(*last_character - '0') / decimal_place;
                         decimal_place *= 10;
                         continue;
                     }
-                    
-                    if ((*last_character == 'e' || *last_character == 'E') && get_flag(config, MX_SCI_NOTATION)) {
+
+                    if ((*last_character == 'e' || *last_character == 'E') && get_flag(config, MX_SCI_NOTATION))
+                    {
                         conversion_state = EXP_START;
                         continue;
                     }
                     break;
-                
+
                 case EXP_START:
                     assert_syntax(*last_character != '.');
 
-                    if (isdigit(*last_character)) {
+                    if (isdigit(*last_character))
+                    {
                         exponent = (exponent * 10) + (double)(*last_character - '0');
                         conversion_state = EXP_VALUE;
                         continue;
                     }
-                    
-                    if (*last_character == '+' || *last_character == '-') {
+
+                    if (*last_character == '+' || *last_character == '-')
+                    {
                         exponent_sign = (*last_character == '+');
                         conversion_state = EXP_VALUE;
                         continue;
                     }
                     break;
-                
+
                 case EXP_VALUE:
                     assert_syntax(*last_character != '.');
 
-                    if (isdigit(*last_character)) {
+                    if (isdigit(*last_character))
+                    {
                         exponent = (exponent * 10) + (double)(*last_character - '0');
                         conversion_state = EXP_VALUE;
                         continue;
@@ -142,14 +161,16 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
             }
 
             // Cannot have scientific notation separator without specifying exponent
-            if (conversion_state == EXP_START) {
+            if (conversion_state == EXP_START)
+            {
                 last_character--;
             }
 
             // ".1" => 0.1 and "1." => 1.0 but "." != 0.0
             assert_syntax(last_character - character != 1 || *character != '.');
 
-            if (exponent != 0) {
+            if (exponent != 0)
+            {
                 value *= pow(exponent_sign ? 10.0 : 0.1, exponent);
             }
 
@@ -161,32 +182,42 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
             continue;
         }
 
-        if (is_valid_id_char(*character, true)) {
-            if (last_token == MX_NUMBER && get_flag(config, MX_IMPLICIT_MUL)) {
+        if (is_valid_id_char(*character, true))
+        {
+            if (last_token == MX_NUMBER && get_flag(config, MX_IMPLICIT_MUL))
+            {
                 // Implicit multiplication
-                while (!is_empty_stack_m(ops_stack) && peek_m(ops_stack).type == MX_BINARY_OPERATOR && (peek_m(ops_stack).data.biop.prec > mx_mul_token.data.biop.prec || (peek_m(ops_stack).data.biop.prec == mx_mul_token.data.biop.prec && mx_mul_token.data.biop.left_assoc))) {
+                while (!is_empty_stack_m(ops_stack) && peek_m(ops_stack).type == MX_BINARY_OPERATOR && (peek_m(ops_stack).data.biop.prec > mx_mul_token.data.biop.prec || (peek_m(ops_stack).data.biop.prec == mx_mul_token.data.biop.prec && mx_mul_token.data.biop.left_assoc)))
+                {
                     assert_alloc(enqueue_m(out_queue, pop_m(ops_stack)));
                 }
 
                 assert_alloc(push_m(ops_stack, mx_mul_token));
-            } else {
+            }
+            else
+            {
                 // Two operands in a row are not allowed
                 // Operand should only either be first in expression or right after operator
                 assert_syntax(OPERAND_ORDER);
             }
 
-            if (arg_count == 0) arg_count++;
+            if (arg_count == 0)
+                arg_count++;
 
             const char *last_character;
 
-            for (last_character = character + 1; *last_character; last_character++) {
-                if (!is_valid_id_char(*last_character, false)) break;
+            for (last_character = character + 1; *last_character; last_character++)
+            {
+                if (!is_valid_id_char(*last_character, false))
+                    break;
             }
 
             mx_token *fetched_token = lookup_id(config, character, (size_t)(last_character - character));
-            if (fetched_token == NULL) return_error(MX_ERR_UNDEFINED);
+            if (fetched_token == NULL)
+                return_error(MX_ERR_UNDEFINED);
 
-            switch (fetched_token->type) {
+            switch (fetched_token->type)
+            {
             case MX_FUNCTION:
                 assert_syntax(*last_character == '(');
                 assert_alloc(push_m(ops_stack, *fetched_token));
@@ -210,51 +241,72 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
         mx_token token;
         bool is_operator = false;
 
-        if (*character == '+') {
-            if (get_flag(config, MX_ENABLE_ADD) && BINARY_OPERATOR_ORDER) {
+        if (*character == '+')
+        {
+            if (get_flag(config, MX_ENABLE_ADD) && BINARY_OPERATOR_ORDER)
+            {
                 // Used as binary operator
                 is_operator = true;
                 token = mx_add_token;
-            } else if (get_flag(config, MX_ENABLE_POS) && UNARY_OPERATOR_ORDER) {
+            }
+            else if (get_flag(config, MX_ENABLE_POS) && UNARY_OPERATOR_ORDER)
+            {
                 // Used as unary operator
                 assert_alloc(push_m(ops_stack, mx_pos_token));
                 last_token = MX_UNARY_OPERATOR;
                 continue;
-            } else {
+            }
+            else
+            {
                 return_error(MX_ERR_SYNTAX);
             }
-        } else if (*character == '-') {
-            if (get_flag(config, MX_ENABLE_SUB) && BINARY_OPERATOR_ORDER) {
+        }
+        else if (*character == '-')
+        {
+            if (get_flag(config, MX_ENABLE_SUB) && BINARY_OPERATOR_ORDER)
+            {
                 // Used as binary operator
                 is_operator = true;
                 token = mx_sub_token;
-            } else if (get_flag(config, MX_ENABLE_NEG) && UNARY_OPERATOR_ORDER) {
+            }
+            else if (get_flag(config, MX_ENABLE_NEG) && UNARY_OPERATOR_ORDER)
+            {
                 // Used as unary operator
                 assert_alloc(push_m(ops_stack, mx_neg_token));
                 last_token = MX_UNARY_OPERATOR;
                 continue;
-            } else {
+            }
+            else
+            {
                 return_error(MX_ERR_SYNTAX);
             }
-        } else if (*character == '*' && get_flag(config, MX_ENABLE_MUL)) {
+        }
+        else if (*character == '*' && get_flag(config, MX_ENABLE_MUL))
+        {
             // There should always be an operand on the left hand side of the operator
             assert_syntax(BINARY_OPERATOR_ORDER);
 
             is_operator = true;
             token = mx_mul_token;
-        } else if (*character == '/' && get_flag(config, MX_ENABLE_DIV)) {
+        }
+        else if (*character == '/' && get_flag(config, MX_ENABLE_DIV))
+        {
             // There should always be an operand on the left hand side of the operator
             assert_syntax(BINARY_OPERATOR_ORDER);
 
             is_operator = true;
             token = mx_div_token;
-        } else if (*character == '^' && get_flag(config, MX_ENABLE_POW)) {
+        }
+        else if (*character == '^' && get_flag(config, MX_ENABLE_POW))
+        {
             // There should always be an operand on the left hand side of the operator
             assert_syntax(BINARY_OPERATOR_ORDER);
 
             is_operator = true;
             token = mx_pow_token;
-        } else if (*character == '%' && get_flag(config, MX_ENABLE_MOD)) {
+        }
+        else if (*character == '%' && get_flag(config, MX_ENABLE_MOD))
+        {
             // There should always be an operand on the left hand side of the operator
             assert_syntax(BINARY_OPERATOR_ORDER);
 
@@ -262,8 +314,10 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
             token = mx_mod_token;
         }
 
-        if (is_operator) {
-            while (!is_empty_stack_m(ops_stack) && peek_m(ops_stack).type == MX_BINARY_OPERATOR && (peek_m(ops_stack).data.biop.prec > token.data.biop.prec || (peek_m(ops_stack).data.biop.prec == token.data.biop.prec && token.data.biop.left_assoc))) {
+        if (is_operator)
+        {
+            while (!is_empty_stack_m(ops_stack) && peek_m(ops_stack).type == MX_BINARY_OPERATOR && (peek_m(ops_stack).data.biop.prec > token.data.biop.prec || (peek_m(ops_stack).data.biop.prec == token.data.biop.prec && token.data.biop.left_assoc)))
+            {
                 assert_alloc(enqueue_m(out_queue, pop_m(ops_stack)));
             }
 
@@ -273,15 +327,20 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
             continue;
         }
 
-        if (*character == '(') {
-            if (last_token == MX_FUNCTION) {
+        if (*character == '(')
+        {
+            if (last_token == MX_FUNCTION)
+            {
                 assert_alloc(push_n(arg_stack, arg_count));
                 arg_count = 0;
-            } else {
+            }
+            else
+            {
                 // Two operands in a row are not allowed
                 // Operand should only either be first in expression or right after operator
                 assert_syntax(OPERAND_ORDER);
-                if (arg_count == 0) arg_count++;
+                if (arg_count == 0)
+                    arg_count++;
             }
 
             mx_token token = {.type = MX_LEFT_PAREN};
@@ -291,21 +350,26 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
             continue;
         }
 
-        if (*character == ')') {
+        if (*character == ')')
+        {
             // Empty expressions are not allowed
             assert_syntax(last_token != MX_EMPTY && last_token != MX_COMMA);
 
-            if (last_token != MX_LEFT_PAREN) {
-                if (is_empty_stack_m(ops_stack)) {
+            if (last_token != MX_LEFT_PAREN)
+            {
+                if (is_empty_stack_m(ops_stack))
+                {
                     // Mismatched parenthesis (ignore if implicit parentheses are enabled)
                     assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
                     continue;
                 }
 
-                while (peek_m(ops_stack).type != MX_LEFT_PAREN) {
+                while (peek_m(ops_stack).type != MX_LEFT_PAREN)
+                {
                     assert_alloc(enqueue_m(out_queue, pop_m(ops_stack)));
 
-                    if (is_empty_stack_m(ops_stack)) {
+                    if (is_empty_stack_m(ops_stack))
+                    {
                         // Mismatched parenthesis (ignore if implicit parentheses are enabled)
                         assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
                         break;
@@ -313,14 +377,18 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
                 }
             }
 
-            if (!is_empty_stack_m(ops_stack)) {
+            if (!is_empty_stack_m(ops_stack))
+            {
                 pop_m(ops_stack); // Discard left parenthesis
 
-                if (!is_empty_stack_m(ops_stack) && peek_m(ops_stack).type == MX_FUNCTION) {
+                if (!is_empty_stack_m(ops_stack) && peek_m(ops_stack).type == MX_FUNCTION)
+                {
                     assert_alloc(enqueue_m(out_queue, pop_m(ops_stack)));
                     assert_alloc(enqueue_n(arg_queue, arg_count));
                     arg_count = pop_n(arg_stack);
-                } else if (last_token == MX_LEFT_PAREN) {
+                }
+                else if (last_token == MX_LEFT_PAREN)
+                {
                     // Empty parentheses are not allowed, unless for zero-argument functions
                     return_error(MX_ERR_SYNTAX);
                 }
@@ -330,23 +398,27 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
             continue;
         }
 
-        if (*character == ',') {
+        if (*character == ',')
+        {
             // Previous argument has to be non-empty
             assert_syntax(BINARY_OPERATOR_ORDER);
 
             // Comma is only valid inside function parentheses
             assert_syntax(!is_empty_stack_n(arg_stack));
 
-            if (is_empty_stack_m(ops_stack)) {
+            if (is_empty_stack_m(ops_stack))
+            {
                 // Mismatched parenthesis (ignore if implicit parentheses are enabled)
                 assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
                 continue;
             }
 
-            while (peek_m(ops_stack).type != MX_LEFT_PAREN) {
+            while (peek_m(ops_stack).type != MX_LEFT_PAREN)
+            {
                 assert_alloc(enqueue_m(out_queue, pop_m(ops_stack)));
 
-                if (is_empty_stack_m(ops_stack)) {
+                if (is_empty_stack_m(ops_stack))
+                {
                     // Mismatched parenthesis (ignore if implicit parentheses are enabled)
                     assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
                     break;
@@ -365,16 +437,19 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
     // Expression cannot be empty or end on a left parenthesis, unary operator, binary operator or a comma
     assert_syntax(last_token != MX_EMPTY && last_token != MX_LEFT_PAREN && last_token != MX_UNARY_OPERATOR && last_token != MX_BINARY_OPERATOR && last_token != MX_COMMA);
 
-    while (!is_empty_stack_m(ops_stack)) {
+    while (!is_empty_stack_m(ops_stack))
+    {
         mx_token token = pop_m(ops_stack);
 
-        if (token.type == MX_LEFT_PAREN) {
+        if (token.type == MX_LEFT_PAREN)
+        {
             // Mismatched parenthesis (ignore if implicit parentheses are enabled)
             assert_syntax(get_flag(config, MX_IMPLICIT_PARENS));
             continue;
         }
 
-        if (token.type == MX_FUNCTION) {
+        if (token.type == MX_FUNCTION)
+        {
             // Implicit parentheses for zero argument functions are not allowed
             assert_syntax(arg_count != 0);
             assert_alloc(enqueue_n(arg_queue, arg_count));
@@ -384,10 +459,12 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
         assert_alloc(enqueue_m(out_queue, token));
     }
 
-    while (!is_empty_queue_m(out_queue)) {
+    while (!is_empty_queue_m(out_queue))
+    {
         mx_token token = dequeue_m(out_queue);
 
-        switch (token.type) {
+        switch (token.type)
+        {
         case MX_NUMBER:
         case MX_VARIABLE:
             assert_alloc(push_d(res_stack, token.data.value));
@@ -410,19 +487,25 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
             int args_num = dequeue_n(arg_queue);
             double func_result;
 
-            if (args_num == 0) {
+            if (args_num == 0)
+            {
                 error_code = token.data.func.apply(NULL, 0, &func_result);
-                if (error_code != MX_SUCCESS) goto cleanup;
+                if (error_code != MX_SUCCESS)
+                    goto cleanup;
                 assert_alloc(push_d(res_stack, func_result));
-            } else {
+            }
+            else
+            {
                 double args[args_num];
 
-                for (int i = 0; i < args_num; i++) {
+                for (int i = 0; i < args_num; i++)
+                {
                     args[args_num - i - 1] = pop_d(res_stack);
                 }
 
                 error_code = token.data.func.apply(args, args_num, &func_result);
-                if (error_code != MX_SUCCESS) goto cleanup;
+                if (error_code != MX_SUCCESS)
+                    goto cleanup;
                 assert_alloc(push_d(res_stack, func_result));
             }
             break;
@@ -436,7 +519,8 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result) 
     double final_result = pop_d(res_stack);
     assert_syntax(is_empty_stack_d(res_stack));
 
-    if (result != NULL) *result = final_result;
+    if (result != NULL)
+        *result = final_result;
 
 cleanup:
     stack_free_m(ops_stack);

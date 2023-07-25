@@ -2,12 +2,15 @@
 #include <ctype.h>
 #include <math.h>
 
-bool is_valid_id_char(char character, bool begin) {
+bool is_valid_id_char(char character, bool begin)
+{
     return isalpha(character) || character == '_' || (!begin && isdigit(character));
 }
 
-bool is_valid_op_char(char character) {
-    switch (character) {
+bool is_valid_op_char(char character)
+{
+    switch (character)
+    {
     case '#':
     case '!':
     case '$':
