@@ -29,89 +29,83 @@ typedef struct mx_token
         struct
         {
             double (*apply)(double, double); // binary operator
-            int prec;                        // precedence
-            bool left_assoc;                 // left associativity
-        } biop;
+            int precedence;                  // precedence
+            bool left_associativity;         // left associativity
+        } binary_operator;
         struct
         {
             double (*apply)(double); // unary operator
-        } unop;
+        } unary_operator;
         struct
         {
             mx_error (*apply)(double[], int, double *); // function
-        } func;
+        } function;
     } data;
 } mx_token;
 
-extern const mx_token mx_add_token; // Addition operator.
-extern const mx_token mx_sub_token; // Substraction operator.
-extern const mx_token mx_mul_token; // Multiplication operator.
-extern const mx_token mx_div_token; // Division operator.
+extern const mx_token mx_token_add; // Addition operator.
+extern const mx_token mx_token_sub; // Substraction operator.
+extern const mx_token mx_token_mul; // Multiplication operator.
+extern const mx_token mx_token_div; // Division operator.
 
-extern const mx_token mx_pow_token; // Exponentiation operator.
-extern const mx_token mx_mod_token; // Modulus operator.
+extern const mx_token mx_token_pow; // Exponentiation operator.
+extern const mx_token mx_token_mod; // Modulus operator.
 
-extern const mx_token mx_pos_token; // Unary identity operator.
-extern const mx_token mx_neg_token; // Unary negation operator.
-
-// Checks if given character is valid character for function or variable.
-bool is_valid_id_char(char character, bool begin);
-
-// Checks if given character is valid character for operator.
-bool is_valid_op_char(char character);
+extern const mx_token mx_token_pos; // Unary identity operator.
+extern const mx_token mx_token_neg; // Unary negation operator.
 
 // Returns whether given flag is turned on.
-bool get_flag(mx_config *config, mx_flag flag);
+bool read_flag(mx_config *config, mx_flag flag);
 
 // Lookup given string slice among inserted variables, functions or operators. NULL if not found.
 mx_token *lookup_id(mx_config *config, const char *name, size_t length);
 
 // A stack data structure storing integer numbers.
-typedef struct stack_n stack_n;
+typedef struct int_stack int_stack;
 
-stack_n *create_stack_n(void);
-bool is_empty_stack_n(stack_n *stack);
-int peek_n(const stack_n *stack);
-bool push_n(stack_n *stack, int value);
-int pop_n(stack_n *stack);
-void free_stack_n(stack_n *stack);
+int_stack *int_stack_create(void);
+bool int_stack_is_empty(int_stack *stack);
+int int_stack_peek(const int_stack *stack);
+bool int_stack_push(int_stack *stack, int value);
+int int_stack_pop(int_stack *stack);
+void int_stack_free(int_stack *stack);
 
 // A queue data structure storing integer numbers.
-typedef struct queue_n queue_n;
+typedef struct int_queue int_queue;
 
-queue_n *create_queue_n(void);
-bool is_empty_queue_n(queue_n *queue);
-bool enqueue_n(queue_n *queue, int value);
-int dequeue_n(queue_n *queue);
-void queue_free_n(queue_n *queue);
+int_queue *int_queue_create(void);
+bool int_queue_is_empty(int_queue *queue);
+bool int_queue_enqueue(int_queue *queue, int value);
+int int_queue_dequeue(int_queue *queue);
+void int_queue_free(int_queue *queue);
 
 // A stack data structure storing double precision floating point numbers.
-typedef struct stack_d stack_d;
+typedef struct double_stack double_stack;
 
-stack_d *create_stack_d(void);
-bool is_empty_stack_d(stack_d *stack);
-double peek_d(const stack_d *stack);
-bool push_d(stack_d *stack, double value);
-double pop_d(stack_d *stack);
-void free_stack_d(stack_d *stack);
+double_stack *double_stack_create(void);
+bool double_stack_is_empty(double_stack *stack);
+double double_stack_peek(const double_stack *stack);
+bool double_stack_push(double_stack *stack, double value);
+double double_stack_pop(double_stack *stack);
+void double_stack_free(double_stack *stack);
 
 // A stack data structure storing values of type `mx_token`.
-typedef struct stack_m stack_m;
+typedef struct token_stack token_stack;
 
-stack_m *create_stack_m(void);
-bool is_empty_stack_m(stack_m *stack);
-mx_token peek_m(const stack_m *stack);
-bool push_m(stack_m *stack, mx_token value);
-mx_token pop_m(stack_m *stack);
-void stack_free_m(stack_m *stack);
+token_stack *token_stack_create(void);
+bool token_stack_is_empty(token_stack *stack);
+mx_token token_stack_peek(const token_stack *stack);
+bool token_stack_push(token_stack *stack, mx_token value);
+mx_token token_stack_pop(token_stack *stack);
+void token_stack_free(token_stack *stack);
 
 // A queue data structure storing values of type `mx_token`.
-typedef struct queue_m queue_m;
+typedef struct token_queue token_queue;
 
-queue_m *create_queue_m(void);
-bool is_empty_queue_m(queue_m *queue);
-bool enqueue_m(queue_m *queue, mx_token value);
-mx_token dequeue_m(queue_m *queue);
-void queue_free_m(queue_m *queue);
+token_queue *token_queue_create(void);
+bool token_queue_is_empty(token_queue *queue);
+bool token_queue_enqueue(token_queue *queue, mx_token value);
+mx_token token_queue_dequeue(token_queue *queue);
+void token_queue_free(token_queue *queue);
 
 #endif /* MATHEX_INTERNAL_H */

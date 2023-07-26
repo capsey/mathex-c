@@ -18,13 +18,13 @@ Using Mathex is super easy - just include one header, initialize, evaluate and f
 
 int main()
 {
-    // Use `mx_init` and `MX_DEFAULT` to get default configuration.
+    // Use `mx_create` and `MX_DEFAULT` to get default configuration.
     // For what settings are available, check out documentation.
-    mx_config *config = mx_init(MX_DEFAULT);
+    mx_config *config = mx_create(MX_DEFAULT);
 
-    // Config that you get from `mx_init` contains your settings
+    // Config that you get from `mx_create` contains your settings
     // along with custom variables and functions you inserted.
-    mx_insert_variable(config, "x", 1.5);
+    mx_add_variable(config, "x", 1.5);
 
     // These variables and functions are then available for users
     // to use in expressions.

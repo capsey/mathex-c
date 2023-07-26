@@ -5,39 +5,51 @@
 #include <math.h>
 #include <stdbool.h>
 
-static bool cmp(double a, double b)
+static bool equals(double a, double b)
 {
     return a == b || fabs(a - b) <= 1E-5;
 }
 
-static mx_error _min(double args[], int argc, double *result)
-{
-    if (argc != 2)
-        return MX_ERR_ARGS_NUM;
-    *result = args[0] < args[1] ? args[0] : args[1];
-    return MX_SUCCESS;
-}
-
-static mx_error _max(double args[], int argc, double *result)
-{
-    if (argc != 2)
-        return MX_ERR_ARGS_NUM;
-    *result = args[0] > args[1] ? args[0] : args[1];
-    return MX_SUCCESS;
-}
-
-static mx_error _abs(double args[], int argc, double *result)
+static mx_error abs_wrapper(double args[], int argc, double *result)
 {
     if (argc != 1)
+    {
         return MX_ERR_ARGS_NUM;
+    }
+
     *result = fabs(args[0]);
     return MX_SUCCESS;
 }
 
-static mx_error _foo(double args[], int argc, double *result)
+static mx_error min_wrapper(double args[], int argc, double *result)
+{
+    if (argc != 2)
+    {
+        return MX_ERR_ARGS_NUM;
+    }
+
+    *result = args[0] < args[1] ? args[0] : args[1];
+    return MX_SUCCESS;
+}
+
+static mx_error max_wrapper(double args[], int argc, double *result)
+{
+    if (argc != 2)
+    {
+        return MX_ERR_ARGS_NUM;
+    }
+
+    *result = args[0] > args[1] ? args[0] : args[1];
+    return MX_SUCCESS;
+}
+
+static mx_error foo_wrapper(double args[], int argc, double *result)
 {
     if (argc != 0)
+    {
         return MX_ERR_ARGS_NUM;
+    }
+
     *result = 0;
     return MX_SUCCESS;
 }
@@ -45,7 +57,7 @@ static mx_error _foo(double args[], int argc, double *result)
 static const double x = 9.50;
 static const double e = 2.71;
 
-#define check_evaluate_ok(input, expected) check(mx_evaluate(config, input, &result) == MX_SUCCESS && cmp(result, expected))
+#define check_evaluate_ok(input, expected) check(mx_evaluate(config, input, &result) == MX_SUCCESS && equals(result, expected))
 #define check_evaluate_err(input, error) check(mx_evaluate(config, input, NULL) == (error))
 
 spec("mx_evaluate")
@@ -55,7 +67,7 @@ spec("mx_evaluate")
 
     before()
     {
-        config = mx_init(MX_DEFAULT);
+        config = mx_create(MX_DEFAULT);
     }
 
     after()
@@ -178,14 +190,14 @@ spec("mx_evaluate")
     {
         before()
         {
-            mx_insert_function(config, "min", _min);
-            mx_insert_function(config, "max", _max);
-            mx_insert_function(config, "abs", _abs);
-            mx_insert_function(config, "foo", _foo);
+            mx_add_function(config, "min", min_wrapper);
+            mx_add_function(config, "max", max_wrapper);
+            mx_add_function(config, "abs", abs_wrapper);
+            mx_add_function(config, "foo", foo_wrapper);
 
-            mx_insert_variable(config, "x", x);
-            mx_insert_variable(config, "e", e);
-            mx_insert_variable(config, "bar", 6.1);
+            mx_add_variable(config, "x", x);
+            mx_add_variable(config, "e", e);
+            mx_add_variable(config, "bar", 6.1);
         }
 
         it("implicit multiplication")

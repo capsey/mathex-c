@@ -1,16 +1,17 @@
 #include "mathex.h"
 #include "mathex_internal.h"
+#include <ctype.h>
 #include <float.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
-struct item
+typedef struct config_item
 {
     const char *key;
     mx_token value;
-    struct item *next;
-};
+    struct config_item *next;
+} config_item;
 
 struct mx_config
 {
@@ -18,7 +19,7 @@ struct mx_config
     mx_flag flags;
 
     // Hashtable
-    struct item **buckets;
+    config_item **buckets;
     size_t n_buckets;
     size_t n_items;
 };
@@ -37,37 +38,43 @@ static size_t hash(const char *key, size_t length)
     return hash;
 }
 
-static mx_error insert(mx_config *config, const char *key, mx_token value)
+static mx_error insert_item(mx_config *config, const char *key, mx_token value)
 {
     if (config->n_buckets == 0)
     {
         // Initialize first time
         config->n_buckets = 4;
-        config->buckets = calloc(config->n_buckets, sizeof(struct item *));
+        config->buckets = calloc(config->n_buckets, sizeof(config_item *));
+
         if (config->buckets == NULL)
+        {
             return MX_ERR_NO_MEMORY;
+        }
     }
     else if (config->n_items >= 2 * config->n_buckets / 3)
     {
         // Expand hashtable
         size_t length = config->n_buckets;
-        struct item **temp = config->buckets;
+        config_item **temp = config->buckets;
 
         config->n_items = 0;
         config->n_buckets *= 2;
-        config->buckets = calloc(config->n_buckets, sizeof(struct item *));
+        config->buckets = calloc(config->n_buckets, sizeof(config_item *));
+
         if (config->buckets == NULL)
+        {
             return MX_ERR_NO_MEMORY;
+        }
 
         for (size_t i = 0; i < length; i++)
         {
             if (temp[i] != NULL)
             {
-                struct item *curr = temp[i];
+                config_item *curr = temp[i];
 
                 while (curr != NULL)
                 {
-                    insert(config, curr->key, curr->value);
+                    insert_item(config, curr->key, curr->value);
                     curr = curr->next;
                 }
             }
@@ -78,7 +85,7 @@ static mx_error insert(mx_config *config, const char *key, mx_token value)
 
     size_t length = strlen(key);
     size_t index = hash(key, length) % config->n_buckets;
-    struct item **item = &config->buckets[index];
+    config_item **item = &config->buckets[index];
 
     while (*item != NULL && strcmp((*item)->key, key) != 0)
     {
@@ -88,9 +95,12 @@ static mx_error insert(mx_config *config, const char *key, mx_token value)
     if (*item == NULL)
     {
         // Create new item
-        struct item *new = malloc(sizeof(struct item));
+        config_item *new = malloc(sizeof(config_item));
+
         if (new == NULL)
+        {
             return MX_ERR_NO_MEMORY;
+        }
 
         new->key = key;
         new->next = NULL;
@@ -108,7 +118,7 @@ static mx_error insert(mx_config *config, const char *key, mx_token value)
     return MX_SUCCESS;
 }
 
-bool get_flag(mx_config *config, mx_flag flag)
+bool read_flag(mx_config *config, mx_flag flag)
 {
     return config->flags & flag;
 }
@@ -116,10 +126,12 @@ bool get_flag(mx_config *config, mx_flag flag)
 mx_token *lookup_id(mx_config *config, const char *key, size_t length)
 {
     if (config->n_buckets == 0)
+    {
         return NULL;
+    }
 
     size_t index = hash(key, length) % config->n_buckets;
-    struct item *item = config->buckets[index];
+    config_item *item = config->buckets[index];
 
     while (item != NULL && strncmp(item->key, key, length) != 0)
     {
@@ -129,7 +141,7 @@ mx_token *lookup_id(mx_config *config, const char *key, size_t length)
     return item != NULL ? &item->value : NULL;
 }
 
-mx_config *mx_init(mx_flag flags)
+mx_config *mx_create(mx_flag flags)
 {
     mx_config *config = malloc(sizeof(mx_config));
 
@@ -142,13 +154,18 @@ mx_config *mx_init(mx_flag flags)
     return config;
 }
 
-mx_error mx_insert_variable(mx_config *config, const char *name, double value)
+mx_error mx_add_variable(mx_config *config, const char *name, double value)
 {
     mx_token token;
 
-    for (const char *character = name; *character; character++)
+    if (!isalpha(*name) && *name != '_')
     {
-        if (!is_valid_id_char(*character, character == name))
+        return MX_ERR_ILLEGAL_NAME;
+    }
+
+    for (const char *character = name + 1; *character; character++)
+    {
+        if (!isalnum(*character) && *character != '_')
         {
             return MX_ERR_ILLEGAL_NAME;
         }
@@ -157,33 +174,38 @@ mx_error mx_insert_variable(mx_config *config, const char *name, double value)
     token.type = MX_VARIABLE;
     token.data.value = value;
 
-    return insert(config, name, token);
+    return insert_item(config, name, token);
 }
 
-mx_error mx_insert_function(mx_config *config, const char *name, mx_error (*apply)(double[], int, double *))
+mx_error mx_add_function(mx_config *config, const char *name, mx_error (*apply)(double[], int, double *))
 {
     mx_token token;
 
-    for (const char *character = name; *character; character++)
+    if (!isalpha(*name) && *name != '_')
     {
-        if (!is_valid_id_char(*character, character == name))
+        return MX_ERR_ILLEGAL_NAME;
+    }
+
+    for (const char *character = name + 1; *character; character++)
+    {
+        if (!isalnum(*character) && *character != '_')
         {
             return MX_ERR_ILLEGAL_NAME;
         }
     }
 
     token.type = MX_FUNCTION;
-    token.data.func.apply = apply;
+    token.data.function.apply = apply;
 
-    return insert(config, name, token);
+    return insert_item(config, name, token);
 }
 
 void mx_free(mx_config *config)
 {
     for (size_t i = 0; i < config->n_buckets; i++)
     {
-        struct item *item = config->buckets[i];
-        struct item *tmp;
+        config_item *item = config->buckets[i];
+        config_item *tmp;
 
         while (item != NULL)
         {

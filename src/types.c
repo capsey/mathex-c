@@ -3,37 +3,40 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-typedef struct node_n
+typedef struct int_node
 {
     int value;
-    struct node_n *next;
-} node_n;
+    struct int_node *next;
+} int_node;
 
-struct stack_n
+struct int_stack
 {
-    node_n *top;
+    int_node *top;
 };
 
-stack_n *create_stack_n(void)
+int_stack *int_stack_create(void)
 {
-    return calloc(1, sizeof(stack_n));
+    return calloc(1, sizeof(int_stack));
 }
 
-bool is_empty_stack_n(stack_n *stack)
+bool int_stack_is_empty(int_stack *stack)
 {
     return stack->top == NULL;
 }
 
-int peek_n(const stack_n *stack)
+int int_stack_peek(const int_stack *stack)
 {
     return stack->top->value;
 }
 
-bool push_n(stack_n *stack, int value)
+bool int_stack_push(int_stack *stack, int value)
 {
-    node_n *new_node = malloc(sizeof(node_n));
+    int_node *new_node = malloc(sizeof(int_node));
+
     if (new_node == NULL)
+    {
         return false;
+    }
 
     new_node->value = value;
     new_node->next = stack->top;
@@ -42,26 +45,21 @@ bool push_n(stack_n *stack, int value)
     return true;
 }
 
-int pop_n(stack_n *stack)
+int int_stack_pop(int_stack *stack)
 {
-    if (stack->top == NULL)
-    {
-        /* ... */
-    }
-
     int value = stack->top->value;
-    node_n *temp = stack->top;
+    int_node *temp = stack->top;
     stack->top = stack->top->next;
 
     free(temp);
     return value;
 }
 
-void free_stack_n(stack_n *stack)
+void int_stack_free(int_stack *stack)
 {
     while (stack->top != NULL)
     {
-        node_n *temp = stack->top;
+        int_node *temp = stack->top;
         stack->top = stack->top->next;
 
         free(temp);
@@ -70,27 +68,30 @@ void free_stack_n(stack_n *stack)
     free(stack);
 }
 
-struct queue_n
+struct int_queue
 {
-    node_n *front;
-    node_n *rear;
+    int_node *front;
+    int_node *rear;
 };
 
-queue_n *create_queue_n(void)
+int_queue *int_queue_create(void)
 {
-    return calloc(1, sizeof(queue_n));
+    return calloc(1, sizeof(int_queue));
 }
 
-bool is_empty_queue_n(queue_n *queue)
+bool int_queue_is_empty(int_queue *queue)
 {
     return queue->front == NULL;
 }
 
-bool enqueue_n(queue_n *queue, int value)
+bool int_queue_enqueue(int_queue *queue, int value)
 {
-    node_n *new_node = malloc(sizeof(node_n));
+    int_node *new_node = malloc(sizeof(int_node));
+
     if (new_node == NULL)
+    {
         return false;
+    }
 
     new_node->value = value;
     new_node->next = NULL;
@@ -109,29 +110,26 @@ bool enqueue_n(queue_n *queue, int value)
     return true;
 }
 
-int dequeue_n(queue_n *queue)
+int int_queue_dequeue(int_queue *queue)
 {
-    if (queue->front == NULL)
-    {
-        /* ... */
-    }
-
     int value = queue->front->value;
-    node_n *temp = queue->front;
+    int_node *temp = queue->front;
     queue->front = queue->front->next;
 
     if (queue->front == NULL)
+    {
         queue->rear = NULL;
+    }
 
     free(temp);
     return value;
 }
 
-void queue_free_n(queue_n *queue)
+void int_queue_free(int_queue *queue)
 {
     while (queue->front != NULL)
     {
-        node_n *temp = queue->front;
+        int_node *temp = queue->front;
         queue->front = queue->front->next;
 
         free(temp);
@@ -140,37 +138,40 @@ void queue_free_n(queue_n *queue)
     free(queue);
 }
 
-typedef struct node_d
+typedef struct double_node
 {
     double value;
-    struct node_d *next;
-} node_d;
+    struct double_node *next;
+} double_node;
 
-struct stack_d
+struct double_stack
 {
-    node_d *top;
+    double_node *top;
 };
 
-stack_d *create_stack_d(void)
+double_stack *double_stack_create(void)
 {
-    return calloc(1, sizeof(stack_d));
+    return calloc(1, sizeof(double_stack));
 }
 
-bool is_empty_stack_d(stack_d *stack)
+bool double_stack_is_empty(double_stack *stack)
 {
     return stack->top == NULL;
 }
 
-double peek_d(const stack_d *stack)
+double double_stack_peek(const double_stack *stack)
 {
     return stack->top->value;
 }
 
-bool push_d(stack_d *stack, double value)
+bool double_stack_push(double_stack *stack, double value)
 {
-    node_d *new_node = malloc(sizeof(node_d));
+    double_node *new_node = malloc(sizeof(double_node));
+
     if (new_node == NULL)
+    {
         return false;
+    }
 
     new_node->value = value;
     new_node->next = stack->top;
@@ -179,26 +180,21 @@ bool push_d(stack_d *stack, double value)
     return true;
 }
 
-double pop_d(stack_d *stack)
+double double_stack_pop(double_stack *stack)
 {
-    if (stack->top == NULL)
-    {
-        /* ... */
-    }
-
     double value = stack->top->value;
-    node_d *temp = stack->top;
+    double_node *temp = stack->top;
     stack->top = stack->top->next;
 
     free(temp);
     return value;
 }
 
-void free_stack_d(stack_d *stack)
+void double_stack_free(double_stack *stack)
 {
     while (stack->top != NULL)
     {
-        node_d *temp = stack->top;
+        double_node *temp = stack->top;
         stack->top = stack->top->next;
 
         free(temp);
@@ -207,37 +203,40 @@ void free_stack_d(stack_d *stack)
     free(stack);
 }
 
-typedef struct node_m
+typedef struct token_node
 {
     mx_token value;
-    struct node_m *next;
-} node_m;
+    struct token_node *next;
+} token_node;
 
-struct stack_m
+struct token_stack
 {
-    node_m *top;
+    token_node *top;
 };
 
-stack_m *create_stack_m(void)
+token_stack *token_stack_create(void)
 {
-    return calloc(1, sizeof(stack_m));
+    return calloc(1, sizeof(token_stack));
 }
 
-bool is_empty_stack_m(stack_m *stack)
+bool token_stack_is_empty(token_stack *stack)
 {
     return stack->top == NULL;
 }
 
-mx_token peek_m(const stack_m *stack)
+mx_token token_stack_peek(const token_stack *stack)
 {
     return stack->top->value;
 }
 
-bool push_m(stack_m *stack, mx_token value)
+bool token_stack_push(token_stack *stack, mx_token value)
 {
-    node_m *new_node = malloc(sizeof(node_m));
+    token_node *new_node = malloc(sizeof(token_node));
+
     if (new_node == NULL)
+    {
         return false;
+    }
 
     new_node->value = value;
     new_node->next = stack->top;
@@ -246,26 +245,21 @@ bool push_m(stack_m *stack, mx_token value)
     return true;
 }
 
-mx_token pop_m(stack_m *stack)
+mx_token token_stack_pop(token_stack *stack)
 {
-    if (stack->top == NULL)
-    {
-        /* ... */
-    }
-
     mx_token value = stack->top->value;
-    node_m *temp = stack->top;
+    token_node *temp = stack->top;
     stack->top = stack->top->next;
 
     free(temp);
     return value;
 }
 
-void stack_free_m(stack_m *stack)
+void token_stack_free(token_stack *stack)
 {
     while (stack->top != NULL)
     {
-        node_m *temp = stack->top;
+        token_node *temp = stack->top;
         stack->top = stack->top->next;
 
         free(temp);
@@ -274,27 +268,30 @@ void stack_free_m(stack_m *stack)
     free(stack);
 }
 
-struct queue_m
+struct token_queue
 {
-    node_m *front;
-    node_m *rear;
+    token_node *front;
+    token_node *rear;
 };
 
-queue_m *create_queue_m(void)
+token_queue *token_queue_create(void)
 {
-    return calloc(1, sizeof(queue_m));
+    return calloc(1, sizeof(token_queue));
 }
 
-bool is_empty_queue_m(queue_m *queue)
+bool token_queue_is_empty(token_queue *queue)
 {
     return queue->front == NULL;
 }
 
-bool enqueue_m(queue_m *queue, mx_token value)
+bool token_queue_enqueue(token_queue *queue, mx_token value)
 {
-    node_m *new_node = malloc(sizeof(node_m));
+    token_node *new_node = malloc(sizeof(token_node));
+
     if (new_node == NULL)
+    {
         return false;
+    }
 
     new_node->value = value;
     new_node->next = NULL;
@@ -313,29 +310,26 @@ bool enqueue_m(queue_m *queue, mx_token value)
     return true;
 }
 
-mx_token dequeue_m(queue_m *queue)
+mx_token token_queue_dequeue(token_queue *queue)
 {
-    if (queue->front == NULL)
-    {
-        /* ... */
-    }
-
     mx_token value = queue->front->value;
-    node_m *temp = queue->front;
+    token_node *temp = queue->front;
     queue->front = queue->front->next;
 
     if (queue->front == NULL)
+    {
         queue->rear = NULL;
+    }
 
     free(temp);
     return value;
 }
 
-void queue_free_m(queue_m *queue)
+void token_queue_free(token_queue *queue)
 {
     while (queue->front != NULL)
     {
-        node_m *temp = queue->front;
+        token_node *temp = queue->front;
         queue->front = queue->front->next;
 
         free(temp);

@@ -57,7 +57,7 @@ typedef struct mx_config mx_config;
  *
  * @return Returns pointer to configuration struct, or NULL if failed to allocate.
  */
-mx_config *mx_init(mx_flag flags);
+mx_config *mx_create(mx_flag flags);
 
 /**
  * @brief Inserts a variable into the configuration struct to be available for use in the expressions.
@@ -68,7 +68,7 @@ mx_config *mx_init(mx_flag flags);
  *
  * @return Returns MX_SUCCESS, or error code if failed to insert.
  */
-mx_error mx_insert_variable(mx_config *config, const char *name, double value);
+mx_error mx_add_variable(mx_config *config, const char *name, double value);
 
 /**
  * @brief Inserts a function into the configuration struct to be available for use in the expressions.
@@ -79,16 +79,7 @@ mx_error mx_insert_variable(mx_config *config, const char *name, double value);
  *
  * @return Returns MX_SUCCESS, or error code if failed to insert.
  */
-mx_error mx_insert_function(mx_config *config, const char *name, mx_error (*apply)(double[], int, double *));
-
-/**
- * @brief Frees configuration struct and its contents from memory.
- *
- * Does not perform any checks, so passing invalid or NULL pointer is undefined and will likely result in segmentation fault.
- *
- * @param config Pointer to a config allocated using `mx_init`.
- */
-void mx_free(mx_config *config);
+mx_error mx_add_function(mx_config *config, const char *name, mx_error (*apply)(double[], int, double *));
 
 /**
  * @brief Takes mathematical expression and evaluates its numerical value.
@@ -102,5 +93,14 @@ void mx_free(mx_config *config);
  * @return Returns MX_SUCCESS, or error code if expression contains any errors.
  */
 mx_error mx_evaluate(mx_config *config, const char *expression, double *result);
+
+/**
+ * @brief Frees configuration struct and its contents from memory.
+ *
+ * Does not perform any checks, so passing invalid or NULL pointer is undefined and will likely result in segmentation fault.
+ *
+ * @param config Pointer to a config allocated using `mx_create`.
+ */
+void mx_free(mx_config *config);
 
 #endif /* MATHEX_H */
