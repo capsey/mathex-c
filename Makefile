@@ -18,19 +18,13 @@ LIBRARY := $(BINARYDIR)/libmathex.a
 TESTDIR := ./test
 TESTBINDIR := $(TESTDIR)/bin
 
-TESTSRC := $(wildcard $(TESTDIR)/*_spec.c)
+TESTSRC := $(wildcard $(TESTDIR)/*.c)
 TESTBIN := $(patsubst $(TESTDIR)/%.c, $(TESTBINDIR)/%, $(TESTSRC))
-TESTDEP := $(TESTDIR)/bdd-for-c.h
 
 # Phonies
 build: $(LIBRARY)
 
-mkdir:
-	mkdir -p $(BINARYDIR)
-	mkdir -p $(TESTBINDIR)
-
-test: $(TESTDEP) $(LIBRARY) $(TESTBIN)
-	true $(foreach EXE, $(TESTBIN), && $(EXE))
+test: $(LIBRARY) $(TESTBIN)
 
 clean:
 	rm -f $(OBJECTS) $(LIBRARY) $(TESTBIN)
@@ -39,12 +33,17 @@ clean:
 $(LIBRARY): $(OBJECTS)
 	$(AR) $(LIBRARY) $(OBJECTS)
 
-$(BINARYDIR)/%.o: $(SOURCEDIR)/%.c
-	$(CC) $(CFLAGS) $(INCLUDES) -c $^ -o $@ -lm
+$(BINARYDIR)/%.o: $(SOURCEDIR)/%.c $(BINARYDIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 # Testing
-$(TESTBINDIR)/%_spec: $(TESTDIR)/%_spec.c $(LIBRARY)
-	$(CC) $(TESTFLAGS) $(INCLUDES) $< -o $@ -L$(BINARYDIR) -lmathex -lm
+$(TESTBINDIR)/%: $(TESTDIR)/%.c $(TESTBINDIR)
+	$(CC) $(TESTFLAGS) $(INCLUDES) $< -o $@ -L$(BINARYDIR) -lmathex -lm -lcriterion
+	$@
 
-$(TESTDEP):
-	curl -o $@ https://raw.githubusercontent.com/grassator/bdd-for-c/master/bdd-for-c.h
+# Directories
+$(BINARYDIR):
+	mkdir $@
+
+$(TESTBINDIR):
+	mkdir $@
