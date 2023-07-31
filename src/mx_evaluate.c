@@ -174,8 +174,24 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result)
             if (last_token == MX_NUMBER && read_flag(config, MX_IMPLICIT_MUL))
             {
                 // Implicit multiplication
-                while (!token_stack_is_empty(ops_stack) && token_stack_peek(ops_stack).type == MX_BINARY_OPERATOR && (token_stack_peek(ops_stack).data.binary_operator.precedence > mx_token_mul.data.binary_operator.precedence || (token_stack_peek(ops_stack).data.binary_operator.precedence == mx_token_mul.data.binary_operator.precedence && mx_token_mul.data.binary_operator.left_associativity)))
+                while (!token_stack_is_empty(ops_stack))
                 {
+                    if (token_stack_peek(ops_stack).type == MX_BINARY_OPERATOR)
+                    {
+                        int a_prec = mx_token_mul.data.binary_operator.precedence;
+                        int b_prec = token_stack_peek(ops_stack).data.binary_operator.precedence;
+
+                        if (!(b_prec > a_prec || (b_prec == a_prec && mx_token_mul.data.binary_operator.left_associativity)))
+                        {
+                            break;
+                        }
+                    }
+                    else if (token_stack_peek(ops_stack).type != MX_UNARY_OPERATOR)
+                    {
+                        // Precedence of unary operator is always greater than of any binary operator
+                        break;
+                    }
+
                     RETURN_ERROR_IF(!token_queue_enqueue(out_queue, token_stack_pop(ops_stack)), MX_ERR_NO_MEMORY);
                 }
 
@@ -242,9 +258,8 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result)
             else if (read_flag(config, MX_ENABLE_POS) && UNARY_OPERATOR_ORDER)
             {
                 // Used as unary operator
-                RETURN_ERROR_IF(!token_stack_push(ops_stack, mx_token_pos), MX_ERR_NO_MEMORY);
-                last_token = MX_UNARY_OPERATOR;
-                continue;
+                is_operator = true;
+                token = mx_token_pos;
             }
             else
             {
@@ -262,9 +277,8 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result)
             else if (read_flag(config, MX_ENABLE_NEG) && UNARY_OPERATOR_ORDER)
             {
                 // Used as unary operator
-                RETURN_ERROR_IF(!token_stack_push(ops_stack, mx_token_neg), MX_ERR_NO_MEMORY);
-                last_token = MX_UNARY_OPERATOR;
-                continue;
+                is_operator = true;
+                token = mx_token_neg;
             }
             else
             {
@@ -306,14 +320,33 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result)
 
         if (is_operator)
         {
-            while (!token_stack_is_empty(ops_stack) && token_stack_peek(ops_stack).type == MX_BINARY_OPERATOR && (token_stack_peek(ops_stack).data.binary_operator.precedence > token.data.binary_operator.precedence || (token_stack_peek(ops_stack).data.binary_operator.precedence == token.data.binary_operator.precedence && token.data.binary_operator.left_associativity)))
+            if (token.type == MX_BINARY_OPERATOR)
             {
-                RETURN_ERROR_IF(!token_queue_enqueue(out_queue, token_stack_pop(ops_stack)), MX_ERR_NO_MEMORY);
+                while (!token_stack_is_empty(ops_stack))
+                {
+                    if (token_stack_peek(ops_stack).type == MX_BINARY_OPERATOR)
+                    {
+                        int a_prec = token.data.binary_operator.precedence;
+                        int b_prec = token_stack_peek(ops_stack).data.binary_operator.precedence;
+
+                        if (!(b_prec > a_prec || (b_prec == a_prec && token.data.binary_operator.left_associativity)))
+                        {
+                            break;
+                        }
+                    }
+                    else if (token_stack_peek(ops_stack).type != MX_UNARY_OPERATOR)
+                    {
+                        // Precedence of unary operator is always greater than of any binary operator
+                        break;
+                    }
+
+                    RETURN_ERROR_IF(!token_queue_enqueue(out_queue, token_stack_pop(ops_stack)), MX_ERR_NO_MEMORY);
+                }
             }
 
             RETURN_ERROR_IF(!token_stack_push(ops_stack, token), MX_ERR_NO_MEMORY);
 
-            last_token = MX_BINARY_OPERATOR;
+            last_token = token.type;
             continue;
         }
 
