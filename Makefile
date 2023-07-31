@@ -25,6 +25,7 @@ TESTBIN := $(patsubst $(TESTDIR)/%.c, $(TESTBINDIR)/%, $(TESTSRC))
 build: $(LIBRARY)
 
 test: $(LIBRARY) $(TESTBIN)
+	for test in $(TESTBIN); do $$test; done
 
 clean:
 	rm -f $(OBJECTS) $(LIBRARY) $(TESTBIN)
@@ -39,7 +40,6 @@ $(BINARYDIR)/%.o: $(SOURCEDIR)/%.c $(BINARYDIR)
 # Testing
 $(TESTBINDIR)/%: $(TESTDIR)/%.c $(TESTBINDIR)
 	$(CC) $(TESTFLAGS) $(INCLUDES) $< -o $@ -L$(BINARYDIR) -lmathex -lm -lcriterion
-	$@
 
 # Directories
 $(BINARYDIR):

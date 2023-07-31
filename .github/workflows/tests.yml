@@ -1,10 +1,6 @@
 name: Run tests
 
-on:
-  push:
-    branches: [ main, dev ]
-  pull_request:
-    branches: [ main, dev ]
+on: [ pull_request ] 
 
 jobs:
   build-and-test:
@@ -24,7 +20,8 @@ jobs:
       with:
         update: true
       
-    - name: Build and test
-      run: |
-        make mkdir
-        make test
+    - name: Build the library
+      run: make build
+      
+    - name: Run tests
+      run: make test
