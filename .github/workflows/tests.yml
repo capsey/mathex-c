@@ -1,27 +1,37 @@
 name: Run tests
 
-on: [ pull_request ] 
+on: [pull_request]
 
 jobs:
   build-and-test:
     runs-on: ${{ matrix.os }}
 
+    env:
+      CC: ${{ matrix.cc }}
+
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
+        cc: [gcc, clang]
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
-      
-    - name: Set up MSYS2 and Mingw
-      if: matrix.os == 'windows-latest'
-      uses: msys2/setup-msys2@v2
-      with:
-        update: true
-      
+
+    - name: Install Criterion (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install libcriterion-dev
+
+    - name: Install Criterion (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew update
+        brew install criterion
+
     - name: Build the library
-      run: make build
-      
+      run: make
+
     - name: Run tests
       run: make test

@@ -1,5 +1,4 @@
 # Compiler flags
-CC := gcc
 AR := ar rcs
 
 CFLAGS := -g -std=c99 -Wall -Wextra -Wconversion -Wpedantic
