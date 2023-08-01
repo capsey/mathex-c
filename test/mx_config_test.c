@@ -47,20 +47,23 @@ void suite_teardown(void)
 
 Test(mx_config, mx_add_variable, .init = suite_setup, .fini = suite_teardown)
 {
-    cr_assert(mx_add_variable(config, "e", 2.71) == MX_SUCCESS, "successfully inserted first variable");
-    cr_assert(mx_add_variable(config, "pi", 3.14) == MX_SUCCESS, "successfully inserted second variable");
-    cr_assert(mx_add_variable(config, "رطانة", 3.14) == MX_ERR_ILLEGAL_NAME, "did not accept id with illegal characters");
+    const double e = 2.71;
+    const double pi = 3.14;
+
+    cr_assert(mx_add_variable(config, "e", &e) == MX_SUCCESS, "successfully inserted first variable");
+    cr_assert(mx_add_variable(config, "pi", &pi) == MX_SUCCESS, "successfully inserted second variable");
+    cr_assert(mx_add_variable(config, "رطانة", NULL) == MX_ERR_ILLEGAL_NAME, "did not accept id with illegal characters");
 
     cr_assert(mx_evaluate(config, "e + pi", &result) == MX_SUCCESS, "variables used in expressions without errors");
-    cr_assert(ieee_ulp_eq(dbl, result, 2.71 + 3.14, 4), "calculations with variables are correct");
+    cr_assert(ieee_ulp_eq(dbl, result, 5.85, 4), "calculations with variables are correct");
 }
 
 Test(mx_config, mx_add_function, .init = suite_setup, .fini = suite_teardown)
 {
     cr_assert(mx_add_function(config, "foo", foo_wrapper) == MX_SUCCESS, "successfully inserted first function");
     cr_assert(mx_add_function(config, "abs", abs_wrapper) == MX_SUCCESS, "successfully inserted second function");
-    cr_assert(mx_add_variable(config, "رطانة", 3.14) == MX_ERR_ILLEGAL_NAME, "did not accept id with illegal characters");
+    cr_assert(mx_add_function(config, "رطانة", NULL) == MX_ERR_ILLEGAL_NAME, "did not accept id with illegal characters");
 
     cr_assert(mx_evaluate(config, "abs(foo()) + 1.12", &result) == MX_SUCCESS, "functions used in expressions without errors");
-    cr_assert(ieee_ulp_eq(dbl, result, 1.25 + 1.12, 4), "calculations with functions are correct");
+    cr_assert(ieee_ulp_eq(dbl, result, 2.37, 4), "calculations with functions are correct");
 }

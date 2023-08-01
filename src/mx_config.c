@@ -154,7 +154,7 @@ mx_config *mx_create(mx_flag flags)
     return config;
 }
 
-mx_error mx_add_variable(mx_config *config, const char *name, double value)
+mx_error mx_add_variable(mx_config *config, const char *name, const double *value)
 {
     mx_token token;
 
@@ -172,7 +172,7 @@ mx_error mx_add_variable(mx_config *config, const char *name, double value)
     }
 
     token.type = MX_VARIABLE;
-    token.data.value = value;
+    token.value.variable = value;
 
     return insert_item(config, name, token);
 }
@@ -195,7 +195,7 @@ mx_error mx_add_function(mx_config *config, const char *name, mx_error (*apply)(
     }
 
     token.type = MX_FUNCTION;
-    token.data.function.apply = apply;
+    token.value.function = apply;
 
     return insert_item(config, name, token);
 }

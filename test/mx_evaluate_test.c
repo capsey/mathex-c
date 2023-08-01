@@ -61,13 +61,18 @@ mx_error h_wrapper(double args[], int argc, double *result)
 mx_config *config;
 double result;
 
+const double x = 5;
+const double y = 3;
+const double z = 6;
+const double pi = 3.14;
+
 void suite_setup(void)
 {
     config = mx_create(MX_DEFAULT | MX_ENABLE_POW);
-    mx_add_variable(config, "x", 5);
-    mx_add_variable(config, "y", 3);
-    mx_add_variable(config, "z", 6);
-    mx_add_variable(config, "pi", 3.14);
+    mx_add_variable(config, "x", &x);
+    mx_add_variable(config, "y", &y);
+    mx_add_variable(config, "z", &z);
+    mx_add_variable(config, "pi", &pi);
 
     mx_add_function(config, "foo", foo_wrapper);
     mx_add_function(config, "bar", bar_wrapper);
@@ -200,6 +205,20 @@ Test(mx_evaluate, variables)
     cr_expect(ieee_ulp_eq(dbl, result, 42, 4));
 
     cr_expect(mx_evaluate(config, "x + a", NULL) == MX_ERR_UNDEFINED);
+}
+
+Test(mx_evaluate, changing_variables)
+{
+    double var;
+    mx_add_variable(config, "var", &var);
+
+    var = 3;
+    cr_expect(mx_evaluate(config, "var + 3", &result) == MX_SUCCESS);
+    cr_expect(ieee_ulp_eq(dbl, result, 6, 4));
+
+    var = 5;
+    cr_expect(mx_evaluate(config, "var + 3", &result) == MX_SUCCESS);
+    cr_expect(ieee_ulp_eq(dbl, result, 8, 4));
 }
 
 Test(mx_evaluate, functions)
