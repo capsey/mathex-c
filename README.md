@@ -24,7 +24,8 @@ int main()
 
     // Config that you get from `mx_create` contains your settings
     // along with custom variables and functions you inserted.
-    mx_add_variable(config, "x", 1.5);
+    double x = 1.5;
+    mx_add_variable(config, "x", &x);
 
     // These variables and functions are then available for users
     // to use in expressions.
