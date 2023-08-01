@@ -56,6 +56,11 @@ Test(mx_config, mx_add_variable, .init = suite_setup, .fini = suite_teardown)
 
     cr_assert(mx_evaluate(config, "e + pi", &result) == MX_SUCCESS, "variables used in expressions without errors");
     cr_assert(ieee_ulp_eq(dbl, result, 5.85, 4), "calculations with variables are correct");
+
+    cr_assert(mx_remove(config, "e") == MX_SUCCESS);
+    cr_assert(mx_remove(config, "pi") == MX_SUCCESS);
+    cr_assert(mx_remove(config, "رطانة") == MX_ERR_UNDEFINED);
+    cr_assert(mx_evaluate(config, "e + pi", NULL) == MX_ERR_UNDEFINED);
 }
 
 Test(mx_config, mx_add_function, .init = suite_setup, .fini = suite_teardown)
@@ -66,4 +71,9 @@ Test(mx_config, mx_add_function, .init = suite_setup, .fini = suite_teardown)
 
     cr_assert(mx_evaluate(config, "abs(foo()) + 1.12", &result) == MX_SUCCESS, "functions used in expressions without errors");
     cr_assert(ieee_ulp_eq(dbl, result, 2.37, 4), "calculations with functions are correct");
+
+    cr_assert(mx_remove(config, "foo") == MX_SUCCESS);
+    cr_assert(mx_remove(config, "abs") == MX_SUCCESS);
+    cr_assert(mx_remove(config, "رطانة") == MX_ERR_UNDEFINED);
+    cr_assert(mx_evaluate(config, "abs(foo()) + 1.12", NULL) == MX_ERR_UNDEFINED);
 }

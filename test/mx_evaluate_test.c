@@ -219,6 +219,8 @@ Test(mx_evaluate, changing_variables)
     var = 5;
     cr_expect(mx_evaluate(config, "var + 3", &result) == MX_SUCCESS);
     cr_expect(ieee_ulp_eq(dbl, result, 8, 4));
+
+    mx_remove(config, "var");
 }
 
 Test(mx_evaluate, functions)

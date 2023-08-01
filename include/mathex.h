@@ -82,6 +82,16 @@ mx_error mx_add_variable(mx_config *config, const char *name, const double *valu
 mx_error mx_add_function(mx_config *config, const char *name, mx_error (*apply)(double[], int, double *));
 
 /**
+ * @brief Removes a variable or a function with given name that was added using `mx_add_variable` or `mx_add_function`.
+ *
+ * @param config Configuration struct to remove from.
+ * @param name Null-terminated string representing name of the variable or function to remove.
+ *
+ * @return Returns MX_SUCCESS, or error code if failed to remove.
+ */
+mx_error mx_remove(mx_config *config, const char *name);
+
+/**
  * @brief Takes mathematical expression and evaluates its numerical value.
  *
  * Result of the evaluation is written into a `result` pointer. If evaluation failed, returns error code.

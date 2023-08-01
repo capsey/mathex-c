@@ -125,7 +125,7 @@ bool read_flag(mx_config *config, mx_flag flag)
 
 mx_token *lookup_id(mx_config *config, const char *key, size_t length)
 {
-    if (config->n_buckets == 0)
+    if (config->n_items == 0)
     {
         return NULL;
     }
@@ -198,6 +198,42 @@ mx_error mx_add_function(mx_config *config, const char *name, mx_error (*apply)(
     token.value.function = apply;
 
     return insert_item(config, name, token);
+}
+
+mx_error mx_remove(mx_config *config, const char *name)
+{
+    if (config->n_items == 0)
+    {
+        return MX_ERR_UNDEFINED;
+    }
+
+    size_t length = strlen(name);
+    size_t index = hash(name, length) % config->n_buckets;
+    config_item *prev = NULL;
+    config_item *item = config->buckets[index];
+
+    while (item != NULL && strncmp(item->key, name, length) != 0)
+    {
+        prev = item;
+        item = item->next;
+    }
+
+    if (item == NULL)
+    {
+        return MX_ERR_UNDEFINED;
+    }
+
+    if (prev != NULL)
+    {
+        prev->next = item->next;
+    }
+    else
+    {
+        config->buckets[index] = item->next;
+    }
+
+    free(item);
+    return MX_SUCCESS;
 }
 
 void mx_free(mx_config *config)
