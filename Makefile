@@ -23,21 +23,21 @@ TESTBIN := $(patsubst $(TESTDIR)/%.c, $(TESTBINDIR)/%, $(TESTSRC))
 # Phonies
 build: $(LIBRARY)
 
-test: $(LIBRARY) $(TESTBIN)
+test: $(TESTBINDIR) $(TESTBIN)
 	for test in $(TESTBIN); do $$test; done
 
 clean:
 	rm -f $(OBJECTS) $(LIBRARY) $(TESTBIN)
 
 # Library
-$(LIBRARY): $(OBJECTS)
+$(LIBRARY): $(BINARYDIR) $(OBJECTS)
 	$(AR) $(LIBRARY) $(OBJECTS)
 
-$(BINARYDIR)/%.o: $(SOURCEDIR)/%.c $(BINARYDIR)
+$(BINARYDIR)/%.o: $(SOURCEDIR)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 # Testing
-$(TESTBINDIR)/%: $(TESTDIR)/%.c $(TESTBINDIR)
+$(TESTBINDIR)/%: $(TESTDIR)/%.c $(LIBRARY)
 	$(CC) $(TESTFLAGS) $(INCLUDES) $< -o $@ -L$(BINARYDIR) -lmathex -lm -lcriterion
 
 # Directories
