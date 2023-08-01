@@ -35,6 +35,7 @@ typedef enum mx_error
 {
     MX_SUCCESS = 0,      // Parsed successfully.
     MX_ERR_ILLEGAL_NAME, // Name of variable/function contains illegal characters.
+    MX_ERR_ALREADY_DEF,  // Trying to add a variable/function that already exists.
     MX_ERR_NO_MEMORY,    // Out of memory.
     MX_ERR_DIV_ZERO,     // Division by zero.
     MX_ERR_SYNTAX,       // Expression syntax is invalid.

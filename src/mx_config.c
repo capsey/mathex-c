@@ -111,8 +111,7 @@ static mx_error insert_item(mx_config *config, const char *key, mx_token value)
     }
     else
     {
-        // Key already in the table
-        (*item)->value = value;
+        return MX_ERR_ALREADY_DEF;
     }
 
     return MX_SUCCESS;

@@ -52,6 +52,7 @@ Test(mx_config, mx_add_variable, .init = suite_setup, .fini = suite_teardown)
 
     cr_assert(mx_add_variable(config, "e", &e) == MX_SUCCESS, "successfully inserted first variable");
     cr_assert(mx_add_variable(config, "pi", &pi) == MX_SUCCESS, "successfully inserted second variable");
+    cr_assert(mx_add_variable(config, "pi", NULL) == MX_ERR_ALREADY_DEF, "cannot redefine a variable");
     cr_assert(mx_add_variable(config, "رطانة", NULL) == MX_ERR_ILLEGAL_NAME, "did not accept id with illegal characters");
 
     cr_assert(mx_evaluate(config, "e + pi", &result) == MX_SUCCESS, "variables used in expressions without errors");
@@ -67,6 +68,7 @@ Test(mx_config, mx_add_function, .init = suite_setup, .fini = suite_teardown)
 {
     cr_assert(mx_add_function(config, "foo", foo_wrapper) == MX_SUCCESS, "successfully inserted first function");
     cr_assert(mx_add_function(config, "abs", abs_wrapper) == MX_SUCCESS, "successfully inserted second function");
+    cr_assert(mx_add_variable(config, "abs", NULL) == MX_ERR_ALREADY_DEF, "cannot redefine a function");
     cr_assert(mx_add_function(config, "رطانة", NULL) == MX_ERR_ILLEGAL_NAME, "did not accept id with illegal characters");
 
     cr_assert(mx_evaluate(config, "abs(foo()) + 1.12", &result) == MX_SUCCESS, "functions used in expressions without errors");
