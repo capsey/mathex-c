@@ -559,6 +559,8 @@ cleanup:
     token_stack_free(ops_stack);
     token_queue_free(out_queue);
     double_stack_free(res_stack);
+    int_stack_free(arg_stack);
+    int_queue_free(arg_queue);
 
     return error_code;
 }
