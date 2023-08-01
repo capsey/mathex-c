@@ -35,6 +35,7 @@ typedef enum mx_error
 {
     MX_SUCCESS = 0,      // Parsed successfully.
     MX_ERR_ILLEGAL_NAME, // Name of variable/function contains illegal characters.
+    MX_ERR_ALREADY_DEF,  // Trying to add a variable/function that already exists.
     MX_ERR_NO_MEMORY,    // Out of memory.
     MX_ERR_DIV_ZERO,     // Division by zero.
     MX_ERR_SYNTAX,       // Expression syntax is invalid.
@@ -64,11 +65,11 @@ mx_config *mx_create(mx_flag flags);
  *
  * @param config Configuration struct to insert into.
  * @param name Null-terminated string representing name of the variable. (should only contain letters, digits or underscore and cannot start with a digit)
- * @param value Value of the variable.
+ * @param value Pointer to value of the variable. Lifetime of a pointer is responsibility of a caller.
  *
  * @return Returns MX_SUCCESS, or error code if failed to insert.
  */
-mx_error mx_add_variable(mx_config *config, const char *name, double value);
+mx_error mx_add_variable(mx_config *config, const char *name, const double *value);
 
 /**
  * @brief Inserts a function into the configuration struct to be available for use in the expressions.
@@ -80,6 +81,16 @@ mx_error mx_add_variable(mx_config *config, const char *name, double value);
  * @return Returns MX_SUCCESS, or error code if failed to insert.
  */
 mx_error mx_add_function(mx_config *config, const char *name, mx_error (*apply)(double[], int, double *));
+
+/**
+ * @brief Removes a variable or a function with given name that was added using `mx_add_variable` or `mx_add_function`.
+ *
+ * @param config Configuration struct to remove from.
+ * @param name Null-terminated string representing name of the variable or function to remove.
+ *
+ * @return Returns MX_SUCCESS, or error code if failed to remove.
+ */
+mx_error mx_remove(mx_config *config, const char *name);
 
 /**
  * @brief Takes mathematical expression and evaluates its numerical value.

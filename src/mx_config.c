@@ -111,8 +111,7 @@ static mx_error insert_item(mx_config *config, const char *key, mx_token value)
     }
     else
     {
-        // Key already in the table
-        (*item)->value = value;
+        return MX_ERR_ALREADY_DEF;
     }
 
     return MX_SUCCESS;
@@ -125,7 +124,7 @@ bool read_flag(mx_config *config, mx_flag flag)
 
 mx_token *lookup_id(mx_config *config, const char *key, size_t length)
 {
-    if (config->n_buckets == 0)
+    if (config->n_items == 0)
     {
         return NULL;
     }
@@ -154,7 +153,7 @@ mx_config *mx_create(mx_flag flags)
     return config;
 }
 
-mx_error mx_add_variable(mx_config *config, const char *name, double value)
+mx_error mx_add_variable(mx_config *config, const char *name, const double *value)
 {
     mx_token token;
 
@@ -172,7 +171,7 @@ mx_error mx_add_variable(mx_config *config, const char *name, double value)
     }
 
     token.type = MX_VARIABLE;
-    token.data.value = value;
+    token.value.variable = value;
 
     return insert_item(config, name, token);
 }
@@ -195,9 +194,45 @@ mx_error mx_add_function(mx_config *config, const char *name, mx_error (*apply)(
     }
 
     token.type = MX_FUNCTION;
-    token.data.function.apply = apply;
+    token.value.function = apply;
 
     return insert_item(config, name, token);
+}
+
+mx_error mx_remove(mx_config *config, const char *name)
+{
+    if (config->n_items == 0)
+    {
+        return MX_ERR_UNDEFINED;
+    }
+
+    size_t length = strlen(name);
+    size_t index = hash(name, length) % config->n_buckets;
+    config_item *prev = NULL;
+    config_item *item = config->buckets[index];
+
+    while (item != NULL && strncmp(item->key, name, length) != 0)
+    {
+        prev = item;
+        item = item->next;
+    }
+
+    if (item == NULL)
+    {
+        return MX_ERR_UNDEFINED;
+    }
+
+    if (prev != NULL)
+    {
+        prev->next = item->next;
+    }
+    else
+    {
+        config->buckets[index] = item->next;
+    }
+
+    free(item);
+    return MX_SUCCESS;
 }
 
 void mx_free(mx_config *config)
