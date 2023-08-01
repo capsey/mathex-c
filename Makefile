@@ -1,5 +1,4 @@
 # Compiler flags
-CC := gcc
 AR := ar rcs
 
 CFLAGS := -g -std=c99 -Wall -Wextra -Wconversion -Wpedantic
@@ -18,33 +17,32 @@ LIBRARY := $(BINARYDIR)/libmathex.a
 TESTDIR := ./test
 TESTBINDIR := $(TESTDIR)/bin
 
-TESTSRC := $(wildcard $(TESTDIR)/*_spec.c)
+TESTSRC := $(wildcard $(TESTDIR)/*.c)
 TESTBIN := $(patsubst $(TESTDIR)/%.c, $(TESTBINDIR)/%, $(TESTSRC))
-TESTDEP := $(TESTDIR)/bdd-for-c.h
 
 # Phonies
 build: $(LIBRARY)
 
-mkdir:
-	mkdir -p $(BINARYDIR)
-	mkdir -p $(TESTBINDIR)
-
-test: $(TESTDEP) $(LIBRARY) $(TESTBIN)
-	$(foreach EXE, $(TESTBIN), $(EXE);)
+test: $(TESTBINDIR) $(TESTBIN)
+	for test in $(TESTBIN); do $$test; done
 
 clean:
 	rm -f $(OBJECTS) $(LIBRARY) $(TESTBIN)
 
 # Library
-$(LIBRARY): $(OBJECTS)
+$(LIBRARY): $(BINARYDIR) $(OBJECTS)
 	$(AR) $(LIBRARY) $(OBJECTS)
 
 $(BINARYDIR)/%.o: $(SOURCEDIR)/%.c
-	$(CC) $(CFLAGS) $(INCLUDES) -c $^ -o $@ -lm
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 # Testing
-$(TESTBINDIR)/%_spec: $(TESTDIR)/%_spec.c $(LIBRARY)
-	$(CC) $(TESTFLAGS) $(INCLUDES) $< -o $@ -L$(BINARYDIR) -lmathex -lm
+$(TESTBINDIR)/%: $(TESTDIR)/%.c $(LIBRARY)
+	$(CC) $(TESTFLAGS) $(INCLUDES) $< -o $@ -L$(BINARYDIR) -lmathex -lm -lcriterion
 
-$(TESTDEP):
-	curl -o $@ https://raw.githubusercontent.com/grassator/bdd-for-c/master/bdd-for-c.h
+# Directories
+$(BINARYDIR):
+	mkdir $@
+
+$(TESTBINDIR):
+	mkdir $@
