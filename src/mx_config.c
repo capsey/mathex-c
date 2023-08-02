@@ -1,5 +1,5 @@
 #include "mathex.h"
-#include "mathex_internal.h"
+#include "mx_token.h"
 #include <ctype.h>
 #include <float.h>
 #include <limits.h>

@@ -1,5 +1,5 @@
 #include "mathex.h"
-#include "mathex_internal.h"
+#include "structures.h"
 #include <stddef.h>
 #include <stdlib.h>
 
