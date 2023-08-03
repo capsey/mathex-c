@@ -171,7 +171,7 @@ mx_error mx_add_variable(mx_config *config, const char *name, const double *valu
     }
 
     token.type = MX_VARIABLE;
-    token.value.variable = value;
+    token.d.var = value;
 
     return insert_item(config, name, token);
 }
@@ -194,12 +194,12 @@ mx_error mx_add_constant(mx_config *config, const char *name, double value)
     }
 
     token.type = MX_CONSTANT;
-    token.value.number = value;
+    token.d.number = value;
 
     return insert_item(config, name, token);
 }
 
-mx_error mx_add_function(mx_config *config, const char *name, mx_error (*apply)(double[], int, double *))
+mx_error mx_add_function(mx_config *config, const char *name, mx_error (*apply)(double[], int, double *, void *), void *data)
 {
     mx_token token;
 
@@ -217,7 +217,8 @@ mx_error mx_add_function(mx_config *config, const char *name, mx_error (*apply)(
     }
 
     token.type = MX_FUNCTION;
-    token.value.function = apply;
+    token.d.func.call = apply;
+    token.d.func.data = data;
 
     return insert_item(config, name, token);
 }

@@ -163,7 +163,7 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result)
                 value *= pow(exponent_sign ? 10.0 : 0.1, exponent);
             }
 
-            mx_token token = {.type = MX_CONSTANT, .value.number = value};
+            mx_token token = {.type = MX_CONSTANT, .d.number = value};
             RETURN_ERROR_IF(!token_queue_enqueue(out_queue, token), MX_ERR_NO_MEMORY);
 
             last_token = MX_CONSTANT;
@@ -180,7 +180,7 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result)
                 {
                     if (token_stack_peek(ops_stack).type == MX_BINARY_OPERATOR)
                     {
-                        if (!(token_stack_peek(ops_stack).precedence > builtin_mul.precedence || (token_stack_peek(ops_stack).precedence == builtin_mul.precedence && builtin_mul.left_associative)))
+                        if (!(token_stack_peek(ops_stack).d.biop.prec > builtin_mul.d.biop.prec || (token_stack_peek(ops_stack).d.biop.prec == builtin_mul.d.biop.prec && builtin_mul.d.biop.lassoc)))
                         {
                             break;
                         }
@@ -329,7 +329,7 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result)
                 {
                     if (token_stack_peek(ops_stack).type == MX_BINARY_OPERATOR)
                     {
-                        if (!(token_stack_peek(ops_stack).precedence > token.precedence || (token_stack_peek(ops_stack).precedence == token.precedence && token.left_associative)))
+                        if (!(token_stack_peek(ops_stack).d.biop.prec > token.d.biop.prec || (token_stack_peek(ops_stack).d.biop.prec == token.d.biop.prec && token.d.biop.lassoc)))
                         {
                             break;
                         }
@@ -492,24 +492,24 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result)
         switch (token.type)
         {
         case MX_CONSTANT:
-            RETURN_ERROR_IF(!double_stack_push(res_stack, token.value.number), MX_ERR_NO_MEMORY);
+            RETURN_ERROR_IF(!double_stack_push(res_stack, token.d.number), MX_ERR_NO_MEMORY);
             break;
 
         case MX_VARIABLE:
-            RETURN_ERROR_IF(!double_stack_push(res_stack, *token.value.variable), MX_ERR_NO_MEMORY);
+            RETURN_ERROR_IF(!double_stack_push(res_stack, *token.d.var), MX_ERR_NO_MEMORY);
             break;
 
         case MX_BINARY_OPERATOR:;
             double b = double_stack_pop(res_stack);
             double a = double_stack_pop(res_stack);
 
-            RETURN_ERROR_IF(!double_stack_push(res_stack, token.value.binary_op(a, b)), MX_ERR_NO_MEMORY);
+            RETURN_ERROR_IF(!double_stack_push(res_stack, token.d.biop.call(a, b)), MX_ERR_NO_MEMORY);
             break;
 
         case MX_UNARY_OPERATOR:;
             double x = double_stack_pop(res_stack);
 
-            RETURN_ERROR_IF(!double_stack_push(res_stack, token.value.unary_op(x)), MX_ERR_NO_MEMORY);
+            RETURN_ERROR_IF(!double_stack_push(res_stack, token.d.unop(x)), MX_ERR_NO_MEMORY);
             break;
 
         case MX_FUNCTION:;
@@ -518,7 +518,7 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result)
 
             if (args_num == 0)
             {
-                error_code = token.value.function(NULL, 0, &func_result);
+                error_code = token.d.func.call(NULL, 0, &func_result, token.d.func.data);
 
                 if (error_code != MX_SUCCESS)
                 {
@@ -536,7 +536,7 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result)
                     args[args_num - i - 1] = double_stack_pop(res_stack);
                 }
 
-                error_code = token.value.function(args, args_num, &func_result);
+                error_code = token.d.func.call(args, args_num, &func_result, token.d.func.data);
 
                 if (error_code != MX_SUCCESS)
                 {
