@@ -11,7 +11,7 @@
 
 #define OPERAND_ORDER (last_token == MX_EMPTY || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_BINARY_OPERATOR || last_token == MX_UNARY_OPERATOR)
 #define UNARY_OPERATOR_ORDER (last_token == MX_EMPTY || last_token == MX_LEFT_PAREN || last_token == MX_COMMA || last_token == MX_UNARY_OPERATOR)
-#define BINARY_OPERATOR_ORDER (last_token == MX_NUMBER || last_token == MX_VARIABLE || last_token == MX_RIGHT_PAREN)
+#define BINARY_OPERATOR_ORDER (last_token == MX_CONSTANT || last_token == MX_VARIABLE || last_token == MX_RIGHT_PAREN)
 
 #define RETURN_ERROR(error) \
     {                       \
@@ -163,17 +163,17 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result)
                 value *= pow(exponent_sign ? 10.0 : 0.1, exponent);
             }
 
-            mx_token token = {.type = MX_NUMBER, .d.number = value};
+            mx_token token = {.type = MX_CONSTANT, .d.number = value};
             RETURN_ERROR_IF(!token_queue_enqueue(out_queue, token), MX_ERR_NO_MEMORY);
 
-            last_token = MX_NUMBER;
+            last_token = MX_CONSTANT;
             character = last_character - 1;
             continue;
         }
 
         if (isalpha(*character) || *character == '_')
         {
-            if (last_token == MX_NUMBER && read_flag(config, MX_IMPLICIT_MUL))
+            if (last_token == MX_CONSTANT && read_flag(config, MX_IMPLICIT_MUL))
             {
                 // Implicit multiplication
                 while (!token_stack_is_empty(ops_stack))
@@ -229,6 +229,10 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result)
                 break;
 
             case MX_VARIABLE:
+                RETURN_ERROR_IF(!token_queue_enqueue(out_queue, *fetched_token), MX_ERR_NO_MEMORY);
+                break;
+
+            case MX_CONSTANT:
                 RETURN_ERROR_IF(!token_queue_enqueue(out_queue, *fetched_token), MX_ERR_NO_MEMORY);
                 break;
 
@@ -487,7 +491,7 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result)
 
         switch (token.type)
         {
-        case MX_NUMBER:
+        case MX_CONSTANT:
             RETURN_ERROR_IF(!double_stack_push(res_stack, token.d.number), MX_ERR_NO_MEMORY);
             break;
 

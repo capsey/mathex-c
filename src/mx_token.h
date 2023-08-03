@@ -10,11 +10,11 @@ typedef enum mx_token_type
     MX_LEFT_PAREN,
     MX_RIGHT_PAREN,
     MX_COMMA,
-    MX_NUMBER,
-    MX_BINARY_OPERATOR,
-    MX_UNARY_OPERATOR,
+    MX_CONSTANT,
     MX_VARIABLE,
     MX_FUNCTION,
+    MX_BINARY_OPERATOR,
+    MX_UNARY_OPERATOR,
 } mx_token_type;
 
 // Value of expression token.

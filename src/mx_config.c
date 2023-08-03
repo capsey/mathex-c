@@ -176,6 +176,29 @@ mx_error mx_add_variable(mx_config *config, const char *name, const double *valu
     return insert_item(config, name, token);
 }
 
+mx_error mx_add_constant(mx_config *config, const char *name, double value)
+{
+    mx_token token;
+
+    if (!isalpha(*name) && *name != '_')
+    {
+        return MX_ERR_ILLEGAL_NAME;
+    }
+
+    for (const char *character = name + 1; *character; character++)
+    {
+        if (!isalnum(*character) && *character != '_')
+        {
+            return MX_ERR_ILLEGAL_NAME;
+        }
+    }
+
+    token.type = MX_CONSTANT;
+    token.value.number = value;
+
+    return insert_item(config, name, token);
+}
+
 mx_error mx_add_function(mx_config *config, const char *name, mx_error (*apply)(double[], int, double *, void *), void *data)
 {
     mx_token token;

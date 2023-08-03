@@ -1,7 +1,7 @@
 # Compiler flags
 AR := ar rcs
 
-CFLAGS := -g -std=c99 -Wall -Werror -Wextra -Wconversion -Wpedantic
+CFLAGS := -g -O2 -std=c99 -Wall -Werror -Wextra -Wconversion -Wpedantic
 TESTFLAGS := -g -std=c99
 INCLUDES := -Iinclude
 
@@ -10,8 +10,8 @@ SRCDIR := ./src
 SRCBINDIR := $(SRCDIR)/bin
 BINDIR := ./bin
 
-SRCS := $(wildcard $(SRCDIR)/*.c)
-OBJS := $(patsubst $(SRCDIR)/%.c, $(SRCBINDIR)/%.o, $(SRCS))
+SRC := $(wildcard $(SRCDIR)/*.c)
+OBJ := $(patsubst $(SRCDIR)/%.c, $(SRCBINDIR)/%.o, $(SRC))
 LIBRARY := $(BINDIR)/libmathex.a
 
 # Testing variables
@@ -28,11 +28,11 @@ test: $(TESTBIN)
 	CODE=0; for test in $(TESTBIN); do $$test || CODE=$$?; done; exit $$CODE
 
 clean:
-	$(RM) $(OBJS) $(LIBRARY) $(TESTBIN)
+	$(RM) $(OBJ) $(LIBRARY) $(TESTBIN)
 
 # Library
-$(LIBRARY): $(OBJS) | $(BINDIR)
-	$(AR) $(LIBRARY) $(OBJS)
+$(LIBRARY): $(OBJ) | $(BINDIR)
+	$(AR) $(LIBRARY) $(OBJ)
 
 $(SRCBINDIR)/%.o: $(SRCDIR)/%.c | $(SRCBINDIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
