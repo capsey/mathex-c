@@ -24,14 +24,21 @@ typedef struct mx_token
     mx_token_type type;
     union
     {
-        double number;                                 // value of a number literal
-        const double *variable;                        // pointer to value of a variable
-        mx_error (*function)(double[], int, double *); // function
-        double (*binary_op)(double, double);           // binary operator
-        double (*unary_op)(double);                    // unary operator
-    } value;
-    int precedence;        // precedence (only for binary operators)
-    bool left_associative; // left associativity (only for binary operators)
+        double number;     // value of a number literal
+        const double *var; // pointer to value of a variable
+        struct
+        {
+            mx_error (*call)(double[], int, double *, void *); // function
+            void *data;
+        } func;
+        struct
+        {
+            double (*call)(double, double); // binary operator
+            int prec;                       // precedence
+            bool lassoc;                    // left associative
+        } biop;
+        double (*unop)(double); // unary operator
+    } d;
 } mx_token;
 
 extern const mx_token builtin_add; // Addition operator.
