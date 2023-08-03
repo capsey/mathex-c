@@ -194,7 +194,7 @@ mx_error mx_add_constant(mx_config *config, const char *name, double value)
     }
 
     token.type = MX_CONSTANT;
-    token.value.number = value;
+    token.d.number = value;
 
     return insert_item(config, name, token);
 }
