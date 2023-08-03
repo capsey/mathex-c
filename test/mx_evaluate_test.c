@@ -69,10 +69,10 @@ const double pi = 3.14;
 void suite_setup(void)
 {
     config = mx_create(MX_DEFAULT | MX_ENABLE_POW);
-    mx_add_variable(config, "x", &x);
-    mx_add_variable(config, "y", &y);
-    mx_add_variable(config, "z", &z);
-    mx_add_variable(config, "pi", &pi);
+    mx_add_constant(config, "x", x);
+    mx_add_constant(config, "y", y);
+    mx_add_constant(config, "z", z);
+    mx_add_constant(config, "pi", pi);
 
     mx_add_function(config, "foo", foo_wrapper);
     mx_add_function(config, "bar", bar_wrapper);
