@@ -47,16 +47,38 @@ void suite_teardown(void)
 
 Test(mx_config, mx_add_variable, .init = suite_setup, .fini = suite_teardown)
 {
-    const double e = 2.71;
-    const double pi = 3.14;
+    double x = 5;
+    double y = 3;
 
-    cr_assert(mx_add_variable(config, "e", &e) == MX_SUCCESS, "successfully inserted first variable");
-    cr_assert(mx_add_variable(config, "pi", &pi) == MX_SUCCESS, "successfully inserted second variable");
-    cr_assert(mx_add_variable(config, "pi", NULL) == MX_ERR_ALREADY_DEF, "cannot redefine a variable");
+    cr_assert(mx_add_variable(config, "x", &x) == MX_SUCCESS, "successfully inserted first variable");
+    cr_assert(mx_add_variable(config, "y", &y) == MX_SUCCESS, "successfully inserted second variable");
+    cr_assert(mx_add_variable(config, "y", NULL) == MX_ERR_ALREADY_DEF, "cannot redefine a variable");
     cr_assert(mx_add_variable(config, "رطانة", NULL) == MX_ERR_ILLEGAL_NAME, "did not accept id with illegal characters");
 
-    cr_assert(mx_evaluate(config, "e + pi", &result) == MX_SUCCESS, "variables used in expressions without errors");
-    cr_assert(ieee_ulp_eq(dbl, result, 5.85, 4), "calculations with variables are correct");
+    cr_assert(mx_evaluate(config, "x + y", &result) == MX_SUCCESS, "variables used in expressions without errors");
+    cr_assert(ieee_ulp_eq(dbl, result, 8, 4), "calculations with variables are correct");
+
+    x = 3;
+    y = 10;
+
+    cr_assert(mx_evaluate(config, "x + y", &result) == MX_SUCCESS, "changing value of a variable changes evaluated value");
+    cr_assert(ieee_ulp_eq(dbl, result, 13, 4), "calculations with variables are correct");
+
+    cr_assert(mx_remove(config, "x") == MX_SUCCESS);
+    cr_assert(mx_remove(config, "y") == MX_SUCCESS);
+    cr_assert(mx_remove(config, "رطانة") == MX_ERR_UNDEFINED);
+    cr_assert(mx_evaluate(config, "x + y", NULL) == MX_ERR_UNDEFINED);
+}
+
+Test(mx_config, mx_add_constant, .init = suite_setup, .fini = suite_teardown)
+{
+    cr_assert(mx_add_constant(config, "e", 2.71) == MX_SUCCESS, "successfully inserted first constant");
+    cr_assert(mx_add_constant(config, "pi", 3.14) == MX_SUCCESS, "successfully inserted second constant");
+    cr_assert(mx_add_constant(config, "pi", 0) == MX_ERR_ALREADY_DEF, "cannot redefine a constant");
+    cr_assert(mx_add_constant(config, "رطانة", 0) == MX_ERR_ILLEGAL_NAME, "did not accept id with illegal characters");
+
+    cr_assert(mx_evaluate(config, "e + pi", &result) == MX_SUCCESS, "constants used in expressions without errors");
+    cr_assert(ieee_ulp_eq(dbl, result, 5.85, 4), "calculations with constants are correct");
 
     cr_assert(mx_remove(config, "e") == MX_SUCCESS);
     cr_assert(mx_remove(config, "pi") == MX_SUCCESS);
