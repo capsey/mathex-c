@@ -8,7 +8,7 @@
 
 typedef struct config_item
 {
-    const char *key;
+    char *key;
     mx_token value;
     struct config_item *next;
 } config_item;
@@ -71,11 +71,17 @@ static mx_error insert_item(mx_config *config, const char *key, mx_token value)
             if (temp[i] != NULL)
             {
                 config_item *curr = temp[i];
+                config_item *temp_item;
 
                 while (curr != NULL)
                 {
                     insert_item(config, curr->key, curr->value);
+
+                    temp_item = curr;
                     curr = curr->next;
+
+                    free(temp_item->key);
+                    free(temp_item);
                 }
             }
         }
@@ -102,7 +108,16 @@ static mx_error insert_item(mx_config *config, const char *key, mx_token value)
             return MX_ERR_NO_MEMORY;
         }
 
-        new->key = key;
+        char *key_buff = malloc(length + 1);
+
+        if (new == NULL)
+        {
+            return MX_ERR_NO_MEMORY;
+        }
+
+        strcpy(key_buff, key);
+
+        new->key = key_buff;
         new->next = NULL;
         new->value = value;
 
@@ -255,6 +270,7 @@ mx_error mx_remove(mx_config *config, const char *name)
         config->buckets[index] = item->next;
     }
 
+    free(item->key);
     free(item);
     return MX_SUCCESS;
 }
@@ -270,6 +286,7 @@ void mx_free(mx_config *config)
         {
             tmp = item;
             item = item->next;
+            free(tmp->key);
             free(tmp);
         }
     }
