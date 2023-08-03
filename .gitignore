@@ -5,7 +5,5 @@ compile_commands.json
 
 # Compilation binaries
 bin/
+src/bin
 test/bin
-
-# Dependencies
-test/bdd-for-c.h

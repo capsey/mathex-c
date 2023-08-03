@@ -1,5 +1,5 @@
 #include "mathex.h"
-#include "mathex_internal.h"
+#include "mx_token.h"
 #include <ctype.h>
 #include <float.h>
 #include <limits.h>
@@ -8,7 +8,7 @@
 
 typedef struct config_item
 {
-    const char *key;
+    char *key;
     mx_token value;
     struct config_item *next;
 } config_item;
@@ -71,11 +71,17 @@ static mx_error insert_item(mx_config *config, const char *key, mx_token value)
             if (temp[i] != NULL)
             {
                 config_item *curr = temp[i];
+                config_item *temp_item;
 
                 while (curr != NULL)
                 {
                     insert_item(config, curr->key, curr->value);
+
+                    temp_item = curr;
                     curr = curr->next;
+
+                    free(temp_item->key);
+                    free(temp_item);
                 }
             }
         }
@@ -102,7 +108,16 @@ static mx_error insert_item(mx_config *config, const char *key, mx_token value)
             return MX_ERR_NO_MEMORY;
         }
 
-        new->key = key;
+        char *key_buff = malloc(length + 1);
+
+        if (new == NULL)
+        {
+            return MX_ERR_NO_MEMORY;
+        }
+
+        strcpy(key_buff, key);
+
+        new->key = key_buff;
         new->next = NULL;
         new->value = value;
 
@@ -171,12 +186,35 @@ mx_error mx_add_variable(mx_config *config, const char *name, const double *valu
     }
 
     token.type = MX_VARIABLE;
-    token.value.variable = value;
+    token.d.var = value;
 
     return insert_item(config, name, token);
 }
 
-mx_error mx_add_function(mx_config *config, const char *name, mx_error (*apply)(double[], int, double *))
+mx_error mx_add_constant(mx_config *config, const char *name, double value)
+{
+    mx_token token;
+
+    if (!isalpha(*name) && *name != '_')
+    {
+        return MX_ERR_ILLEGAL_NAME;
+    }
+
+    for (const char *character = name + 1; *character; character++)
+    {
+        if (!isalnum(*character) && *character != '_')
+        {
+            return MX_ERR_ILLEGAL_NAME;
+        }
+    }
+
+    token.type = MX_CONSTANT;
+    token.d.number = value;
+
+    return insert_item(config, name, token);
+}
+
+mx_error mx_add_function(mx_config *config, const char *name, mx_error (*apply)(double[], int, double *, void *), void *data)
 {
     mx_token token;
 
@@ -194,7 +232,8 @@ mx_error mx_add_function(mx_config *config, const char *name, mx_error (*apply)(
     }
 
     token.type = MX_FUNCTION;
-    token.value.function = apply;
+    token.d.func.call = apply;
+    token.d.func.data = data;
 
     return insert_item(config, name, token);
 }
@@ -231,6 +270,7 @@ mx_error mx_remove(mx_config *config, const char *name)
         config->buckets[index] = item->next;
     }
 
+    free(item->key);
     free(item);
     return MX_SUCCESS;
 }
@@ -246,6 +286,7 @@ void mx_free(mx_config *config)
         {
             tmp = item;
             item = item->next;
+            free(tmp->key);
             free(tmp);
         }
     }

@@ -3,7 +3,7 @@
 #include <math.h>
 #include <mathex.h>
 
-mx_error foo_wrapper(double args[], int argc, double *result)
+mx_error foo_wrapper(double args[], int argc, double *result, void *data)
 {
     if (argc != 2)
     {
@@ -14,7 +14,7 @@ mx_error foo_wrapper(double args[], int argc, double *result)
     return MX_SUCCESS;
 }
 
-mx_error bar_wrapper(double args[], int argc, double *result)
+mx_error bar_wrapper(double args[], int argc, double *result, void *data)
 {
     if (argc != 0)
     {
@@ -25,7 +25,7 @@ mx_error bar_wrapper(double args[], int argc, double *result)
     return MX_SUCCESS;
 }
 
-mx_error f_wrapper(double args[], int argc, double *result)
+mx_error f_wrapper(double args[], int argc, double *result, void *data)
 {
     if (argc != 1)
     {
@@ -36,7 +36,7 @@ mx_error f_wrapper(double args[], int argc, double *result)
     return MX_SUCCESS;
 }
 
-mx_error g_wrapper(double args[], int argc, double *result)
+mx_error g_wrapper(double args[], int argc, double *result, void *data)
 {
     if (argc != 1)
     {
@@ -47,7 +47,7 @@ mx_error g_wrapper(double args[], int argc, double *result)
     return MX_SUCCESS;
 }
 
-mx_error h_wrapper(double args[], int argc, double *result)
+mx_error h_wrapper(double args[], int argc, double *result, void *data)
 {
     if (argc != 2)
     {
@@ -69,16 +69,16 @@ const double pi = 3.14;
 void suite_setup(void)
 {
     config = mx_create(MX_DEFAULT | MX_ENABLE_POW);
-    mx_add_variable(config, "x", &x);
-    mx_add_variable(config, "y", &y);
-    mx_add_variable(config, "z", &z);
-    mx_add_variable(config, "pi", &pi);
+    mx_add_constant(config, "x", x);
+    mx_add_constant(config, "y", y);
+    mx_add_constant(config, "z", z);
+    mx_add_constant(config, "pi", pi);
 
-    mx_add_function(config, "foo", foo_wrapper);
-    mx_add_function(config, "bar", bar_wrapper);
-    mx_add_function(config, "f", f_wrapper);
-    mx_add_function(config, "g", g_wrapper);
-    mx_add_function(config, "h", h_wrapper);
+    mx_add_function(config, "foo", foo_wrapper, NULL);
+    mx_add_function(config, "bar", bar_wrapper, NULL);
+    mx_add_function(config, "f", f_wrapper, NULL);
+    mx_add_function(config, "g", g_wrapper, NULL);
+    mx_add_function(config, "h", h_wrapper, NULL);
 }
 
 void suite_teardown(void)

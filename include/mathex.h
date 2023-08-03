@@ -72,15 +72,27 @@ mx_config *mx_create(mx_flag flags);
 mx_error mx_add_variable(mx_config *config, const char *name, const double *value);
 
 /**
+ * @brief Inserts a variable into the configuration struct to be available for use in the expressions.
+ *
+ * @param config Configuration struct to insert into.
+ * @param name Null-terminated string representing name of the variable. (should only contain letters, digits or underscore and cannot start with a digit)
+ * @param value Value of a constant variable.
+ *
+ * @return Returns MX_SUCCESS, or error code if failed to insert.
+ */
+mx_error mx_add_constant(mx_config *config, const char *name, double value);
+
+/**
  * @brief Inserts a function into the configuration struct to be available for use in the expressions.
  *
  * @param config Configuration struct to insert into.
  * @param name Null-terminated string representing name of the function. (should only contain letters, digits or underscore and cannot start with a digit)
  * @param apply Function that takes the arguments, writes the result to the given address and returns MX_SUCCESS or error code.
+ * @param data Pointer to a data that would be passed to a function on each call. Used to make closures, but can be NULL if you don't need that.
  *
  * @return Returns MX_SUCCESS, or error code if failed to insert.
  */
-mx_error mx_add_function(mx_config *config, const char *name, mx_error (*apply)(double[], int, double *));
+mx_error mx_add_function(mx_config *config, const char *name, mx_error (*apply)(double[], int, double *, void *), void *data);
 
 /**
  * @brief Removes a variable or a function with given name that was added using `mx_add_variable` or `mx_add_function`.
