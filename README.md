@@ -36,7 +36,7 @@ int main()
     // Here we pass an address to a `result` variable we declared above.
     if (mx_evaluate(config, input, &result) == MX_SUCCESS)
     {
-        printf("%s is %lf\n", input, result); // Outputs `2x + 5 is 8`
+        printf("%s is %.1lf\n", input, result); // Outputs `2x + 5 is 8.0`
     }
 
     // Don't forget to free the memory once you are done.
@@ -44,20 +44,22 @@ int main()
 }
 ```
 
-Don't forget to add Mathex when you compile your program:
+Don't forget to link Mathex when you compile your program:
 
 ```shell
-gcc program.c -lmathex
+gcc program.c -lmathex -lm
 ```
 
 ## Building from source
 
-To build the library, you need to clone the repository using Git and build the binary using GCC and GNU Make:
+To build the library, you need to clone the repository using Git and build the binary using GNU Make:
 
 ```shell
 git clone https://github.com/capsey/mathex-c.git
 cd ./mathex-c
-make build # or `make CC=clang build` to use clang instead of gcc
+make
 ```
 
-After that, compiled library will be in `bin` directory as `libmathex.a`. The header file `mathex.h` is located in `include` directory.
+It will use default C compiler on your system (`cc`). If you want to use specific compiler, export environment variable `CC` with your desired compiler before runnint `make`.
+
+After compilation, library binary will be in `bin` directory. The header file `mathex.h` is located in `include` directory.

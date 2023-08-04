@@ -7,3 +7,4 @@ compile_commands.json
 bin/
 src/bin
 test/bin
+sample/bin
