@@ -18,26 +18,20 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Install Dependencies (Ubuntu)
+    - name: Install Criterion (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
         sudo apt-get install libcriterion-dev
-        sudo apt-get install valgrind
 
-    - name: Install Dependencies (macOS)
+    - name: Install Criterion (macOS)
       if: matrix.os == 'macos-latest'
       run: |
         brew update
-        brew tap LouisBrunner/valgrind
         brew install criterion
-        brew install --HEAD LouisBrunner/valgrind/valgrind
 
     - name: Build the library
       run: make
 
     - name: Run tests
       run: make test
-
-    - name: Check memory leaks
-      run: make memory

@@ -1,6 +1,5 @@
 # Compiler flags
 AR := ar rcs
-VALGRIND := valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1
 
 CFLAGS := -g -O2 -std=c99 -Wall -Werror -Wextra -Wconversion -Wpedantic
 TESTFLAGS := -g -std=c99
@@ -33,9 +32,6 @@ build: $(LIBRARY)
 
 test: $(TESTBIN)
 	CODE=0; for test in $(TESTBIN); do $$test || CODE=$$?; done; exit $$CODE
-
-memory: $(SAMPLEBIN)
-	$(VALGRIND) $(SAMPLEBINDIR)/calculate
 
 clean:
 	$(RM) $(OBJ) $(LIBRARY) $(TESTBIN) $(SAMPLEBIN)

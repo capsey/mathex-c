@@ -58,7 +58,7 @@ int main()
 
     // Evaluate expressions using the configuration
     double result;
-    mx_error error = mx_evaluate(config, "2sum(2 * pi, -abs(x), y, z / 2)", &result);
+    mx_error error = mx_evaluate(config, "2 * sum(2pi, -abs(x), y + 1, z / 2)", &result);
 
     if (error == MX_SUCCESS)
     {

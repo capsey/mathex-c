@@ -60,6 +60,6 @@ cd ./mathex-c
 make
 ```
 
-It will use default C compiler on your system (`cc`). If you want to use specific compiler, export environment variable `CC` with your desired compiler.
+It will use default C compiler on your system (`cc`). If you want to use specific compiler, export environment variable `CC` with your desired compiler before runnint `make`.
 
 After compilation, library binary will be in `bin` directory. The header file `mathex.h` is located in `include` directory.
