@@ -12,7 +12,7 @@ BINDIR := ./bin
 
 SRC := $(wildcard $(SRCDIR)/*.c)
 OBJ := $(patsubst $(SRCDIR)/%.c, $(SRCBINDIR)/%.o, $(SRC))
-LIBRARY := $(BINDIR)/libmathex.a
+LIBRARY := $(BINDIR)/libmathexc.a
 
 # Testing variables
 TESTDIR := ./test
@@ -45,11 +45,11 @@ $(SRCBINDIR)/%.o: $(SRCDIR)/%.c | $(SRCBINDIR)
 
 # Testing
 $(TESTBINDIR)/%: $(TESTDIR)/%.c $(LIBRARY) | $(TESTBINDIR)
-	$(CC) $(TESTFLAGS) $(INCLUDES) $< -o $@ -L$(BINDIR) -lmathex -lm -lcriterion
+	$(CC) $(TESTFLAGS) $(INCLUDES) $< -o $@ -L$(BINDIR) -lmathexc -lm -lcriterion
 
 # Samples
 $(SAMPLEBINDIR)/%: $(SAMPLEDIR)/%.c $(LIBRARY) | $(SAMPLEBINDIR)
-	$(CC) $(TESTFLAGS) $(INCLUDES) $< -o $@ -L$(BINDIR) -lmathex -lm
+	$(CC) $(TESTFLAGS) $(INCLUDES) $< -o $@ -L$(BINDIR) -lmathexc -lm
 
 # Directories
 $(BINDIR):
