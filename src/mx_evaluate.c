@@ -482,8 +482,8 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result)
         RETURN_ERROR(MX_ERR_SYNTAX);
     }
 
-    // Expression cannot be empty or end on a left parenthesis, unary operator, binary operator or a comma
-    RETURN_ERROR_IF(last_token == MX_EMPTY || last_token == MX_LEFT_PAREN || last_token == MX_UNARY_OPERATOR || last_token == MX_BINARY_OPERATOR || last_token == MX_COMMA, MX_ERR_SYNTAX);
+    // Expression cannot end if operand is expected next
+    RETURN_ERROR_IF(OPERAND_ORDER, MX_ERR_SYNTAX);
 
     while (!token_stack_is_empty(ops_stack))
     {
@@ -551,7 +551,8 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result)
             }
             else
             {
-                double args[args_num];
+                double *args = malloc(sizeof(double) * (size_t)args_num);
+                RETURN_ERROR_IF(args == NULL, MX_ERR_NO_MEMORY);
 
                 for (int i = 0; i < args_num; i++)
                 {
@@ -559,6 +560,7 @@ mx_error mx_evaluate(mx_config *config, const char *expression, double *result)
                 }
 
                 error_code = token.d.func.call(args, args_num, &func_result, token.d.func.data);
+                free(args);
 
                 if (error_code != MX_SUCCESS)
                 {
