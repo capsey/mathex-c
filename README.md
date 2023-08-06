@@ -47,7 +47,7 @@ int main()
 Don't forget to link Mathex when you compile your program:
 
 ```shell
-gcc program.c -lmathex -lm
+gcc program.c -lmathexc -lm
 ```
 
 ## Building from source
