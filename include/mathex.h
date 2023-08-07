@@ -91,7 +91,7 @@ extern "C"
      * @brief Inserts a variable into the configuration struct to be available for use in the expressions.
      *
      * @param config Configuration struct to insert into.
-     * @param name Null-terminated string representing name of the variable. (should only contain letters, digits or underscore and cannot start with a digit)
+     * @param name Name of the variable as NULL-terminated string. (should only contain letters, digits or underscore and cannot start with a digit)
      * @param value Pointer to value of the variable. Lifetime of a pointer is responsibility of a caller.
      *
      * @return Returns MX_SUCCESS, or error code if failed to insert.
@@ -102,7 +102,7 @@ extern "C"
      * @brief Inserts a constant into the configuration struct to be available for use in the expressions.
      *
      * @param config Configuration struct to insert into.
-     * @param name Null-terminated string representing name of the variable. (should only contain letters, digits or underscore and cannot start with a digit)
+     * @param name Name of the variable as NULL-terminated string. (should only contain letters, digits or underscore and cannot start with a digit)
      * @param value Value of a constant variable.
      *
      * @return Returns MX_SUCCESS, or error code if failed to insert.
@@ -113,7 +113,7 @@ extern "C"
      * @brief Inserts a function into the configuration struct to be available for use in the expressions.
      *
      * @param config Configuration struct to insert into.
-     * @param name Null-terminated string representing name of the function. (should only contain letters, digits or underscore and cannot start with a digit)
+     * @param name Name of the function as NULL-terminated string. (should only contain letters, digits or underscore and cannot start with a digit)
      * @param apply Function that takes the arguments, writes the result to the given address and returns MX_SUCCESS or appropriate error code.
      * @param data Pointer to a data that would be passed to a function on each call. Used to make closures, but can be NULL if you don't need that.
      *
@@ -125,7 +125,7 @@ extern "C"
      * @brief Removes a variable or a function with given name that was added using `mx_add_variable`, `mx_add_constant` or `mx_add_function`.
      *
      * @param config Configuration struct to remove from.
-     * @param name Null-terminated string representing name of the variable or function to remove.
+     * @param name Name of the variable or function to remove as NULL-terminated string.
      *
      * @return Returns MX_SUCCESS, or error code if failed to remove.
      */
@@ -137,7 +137,7 @@ extern "C"
      * Result of the evaluation is written into a `result` pointer. If evaluation failed, returns error code.
      *
      * @param config Configuration struct containing rules to evaluate by.
-     * @param expression Null-terminated string to evaluate.
+     * @param expression NULL-terminated string to evaluate.
      * @param result Pointer to write evaluation result to. Can be NULL.
      *
      * @return Returns MX_SUCCESS, or error code if expression contains any errors.

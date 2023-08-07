@@ -39,7 +39,7 @@ namespace mathex
         None = MX_NONE,                           // Disable all parameters.
         ImplicitParentheses = MX_IMPLICIT_PARENS, // Enable implicit parentheses.
         ImplicitMultiplication = MX_IMPLICIT_MUL, // Enable implicit multiplication.
-        ScientificNotation = MX_SCI_NOTATION,     // Enable numbers in scientific notati
+        ScientificNotation = MX_SCI_NOTATION,     // Enable numbers in scientific notation.
         Addition = MX_ENABLE_ADD,                 // Enable addition operator.
         Substraction = MX_ENABLE_SUB,             // Enable substraction operator.
         Multiplication = MX_ENABLE_MUL,           // Enable multiplication operator.
@@ -57,12 +57,12 @@ namespace mathex
 
     inline constexpr Flags operator+(Flags a, Flags b)
     {
-        return static_cast<Flags>(static_cast<std::underlying_type<mx_flag>::type>(a) | static_cast<std::underlying_type<mx_flag>::type>(b));
+        return static_cast<Flags>(static_cast<std::underlying_type<Flags>::type>(a) | static_cast<std::underlying_type<Flags>::type>(b));
     }
 
     inline constexpr Flags operator-(Flags a, Flags b)
     {
-        return static_cast<Flags>(static_cast<std::underlying_type<mx_flag>::type>(a) & ~static_cast<std::underlying_type<mx_flag>::type>(b));
+        return static_cast<Flags>(static_cast<std::underlying_type<Flags>::type>(a) & ~static_cast<std::underlying_type<Flags>::type>(b));
     }
 
     /**
@@ -71,12 +71,12 @@ namespace mathex
     enum class Error : std::underlying_type<mx_error>::type
     {
         Success = MX_SUCCESS,                // Parsed successfully.
-        IllegalName = MX_ERR_ILLEGAL_NAME,   // Name of variable/function contains
-        AlreadyDefined = MX_ERR_ALREADY_DEF, // Trying to add a variable/function t
+        IllegalName = MX_ERR_ILLEGAL_NAME,   // Name of variable/function contains illegal characters.
+        AlreadyDefined = MX_ERR_ALREADY_DEF, // Trying to add a variable/function that already exists.
         OutOfMemory = MX_ERR_NO_MEMORY,      // Out of memory.
         DivisionByZero = MX_ERR_DIV_ZERO,    // Division by zero.
         SyntaxError = MX_ERR_SYNTAX,         // Expression syntax is invalid.
-        Undefined = MX_ERR_UNDEFINED,        // Function or variable name not found
+        Undefined = MX_ERR_UNDEFINED,        // Function or variable name not found.
         InvalidArgs = MX_ERR_INVALID_ARGS,   // Arguments validation failed.
         IncorrectArgsNum = MX_ERR_ARGS_NUM,  // Incorrect number of arguments.
     };
@@ -113,7 +113,7 @@ namespace mathex
         /**
          * @brief Inserts a variable into the configuration object to be available for use in the expressions.
          *
-         * @param name String representing name of the variable. (should only contain letters, digits or underscore and cannot start with a digit)
+         * @param name Name of the variable. (should only contain letters, digits or underscore and cannot start with a digit)
          * @param value Reference to value of the variable. Lifetime of a reference is responsibility of a caller.
          *
          * @return Returns Error::Success, or error code if failed to insert.
@@ -126,7 +126,7 @@ namespace mathex
         /**
          * @brief Inserts a constant into the configuration object to be available for use in the expressions.
          *
-         * @param name String representing name of the variable. (should only contain letters, digits or underscore and cannot start with a digit)
+         * @param name Name of the variable. (should only contain letters, digits or underscore and cannot start with a digit)
          * @param value Value of a constant variable.
          *
          * @return Returns Error::Success, or error code if failed to insert.
@@ -139,7 +139,7 @@ namespace mathex
         /**
          * @brief Inserts a function into the configuration object to be available for use in the expressions.
          *
-         * @param name String representing name of the function. (should only contain letters, digits or underscore and cannot start with a digit)
+         * @param name Name of the function. (should only contain letters, digits or underscore and cannot start with a digit)
          * @param apply Function that takes the arguments, writes the result to the given reference and returns Error::Success or appropriate error code.
          *
          * @return Returns Error::Success, or error code if failed to insert.
@@ -153,7 +153,7 @@ namespace mathex
         /**
          * @brief Removes a variable or a function with given name that was added using `addVariable`, `addConstant` or `addFunction`.
          *
-         * @param name String representing name of the variable or function to remove.
+         * @param name Name of the variable or function to remove.
          *
          * @return Returns Error::Success, or error code if failed to remove.
          */
