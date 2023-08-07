@@ -1,18 +1,19 @@
 # Compiler flags
 AR := ar rcs
 
-CFLAGS := -g -O2 -std=c99 -Wall -Werror -Wextra -Wconversion -Wpedantic
-TESTFLAGS := -g -std=c99
+LIBFLAGS := -g -O2 -std=c99 -Wall -Werror -Wextra -Wconversion -Wpedantic
+CFLAGS := -g -std=c99
+CXXFLAGS := -g -std=c++11
 INCLUDES := -Iinclude
 
 # Library variables
 SRCDIR := ./src
-SRCBINDIR := $(SRCDIR)/bin
 BINDIR := ./bin
+SRCBINDIR := $(SRCDIR)/bin
 
 SRC := $(wildcard $(SRCDIR)/*.c)
 OBJ := $(patsubst $(SRCDIR)/%.c, $(SRCBINDIR)/%.o, $(SRC))
-LIBRARY := $(BINDIR)/libmathexc.a
+LIBRARY := $(BINDIR)/libmathex.a
 
 # Testing variables
 TESTDIR := ./test
@@ -24,8 +25,6 @@ TESTBIN := $(patsubst $(TESTDIR)/%.c, $(TESTBINDIR)/%, $(TESTSRC))
 # Sample variables
 SAMPLEDIR := ./sample
 SAMPLEBINDIR := $(SAMPLEDIR)/bin
-SAMPLESRC := $(wildcard $(SAMPLEDIR)/*.c)
-SAMPLEBIN := $(patsubst $(SAMPLEDIR)/%.c, $(SAMPLEBINDIR)/%, $(SAMPLESRC))
 
 # Phonies
 build: $(LIBRARY)
@@ -34,22 +33,25 @@ test: $(TESTBIN)
 	CODE=0; for test in $(TESTBIN); do $$test || CODE=$$?; done; exit $$CODE
 
 clean:
-	$(RM) $(OBJ) $(LIBRARY) $(TESTBIN) $(SAMPLEBIN)
+	$(RM) $(BINDIR)/* $(SRCBINDIR)/* $(TESTBINDIR)/* $(SAMPLEBINDIR)/*
 
 # Library
 $(LIBRARY): $(OBJ) | $(BINDIR)
 	$(AR) $(LIBRARY) $(OBJ)
 
 $(SRCBINDIR)/%.o: $(SRCDIR)/%.c | $(SRCBINDIR)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(LIBFLAGS) $(INCLUDES) -c $< -o $@
 
 # Testing
 $(TESTBINDIR)/%: $(TESTDIR)/%.c $(LIBRARY) | $(TESTBINDIR)
-	$(CC) $(TESTFLAGS) $(INCLUDES) $< -o $@ -L$(BINDIR) -lmathexc -lm -lcriterion
+	$(CC) $(CFLAGS) $(INCLUDES) $< -o $@ -L$(BINDIR) -lmathex -lm -lcriterion
 
 # Samples
 $(SAMPLEBINDIR)/%: $(SAMPLEDIR)/%.c $(LIBRARY) | $(SAMPLEBINDIR)
-	$(CC) $(TESTFLAGS) $(INCLUDES) $< -o $@ -L$(BINDIR) -lmathexc -lm
+	$(CC) $(CFLAGS) $(INCLUDES) $< -o $@ -L$(BINDIR) -lmathex -lm
+
+$(SAMPLEBINDIR)/%: $(SAMPLEDIR)/%.cpp $(LIBRARY) | $(SAMPLEBINDIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $< -o $@ -L$(BINDIR) -lmathex
 
 # Directories
 $(BINDIR):
