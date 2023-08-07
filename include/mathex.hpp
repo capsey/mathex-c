@@ -27,23 +27,82 @@
 #include <functional>
 #include <string>
 #include <unordered_map>
+#include <type_traits>
 
 namespace mathex
 {
-    using function = std::function<mx_error(double[], int, double &)>;
+    /**
+     * @brief Evaluation parameters.
+     */
+    enum class Flags : std::underlying_type<mx_flag>::type
+    {
+        None = MX_NONE,                           // Disable all parameters.
+        ImplicitParentheses = MX_IMPLICIT_PARENS, // Enable implicit parentheses.
+        ImplicitMultiplication = MX_IMPLICIT_MUL, // Enable implicit multiplication.
+        ScientificNotation = MX_SCI_NOTATION,     // Enable numbers in scientific notati
+        Addition = MX_ENABLE_ADD,                 // Enable addition operator.
+        Substraction = MX_ENABLE_SUB,             // Enable substraction operator.
+        Multiplication = MX_ENABLE_MUL,           // Enable multiplication operator.
+        Division = MX_ENABLE_DIV,                 // Enable division operator.
+        Exponentiation = MX_ENABLE_POW,           // Enable exponentiation operator.
+        Modulus = MX_ENABLE_MOD,                  // Enable modulus operator.
+        Identity = MX_ENABLE_POS,                 // Enable unary identity operator.
+        Negation = MX_ENABLE_NEG,                 // Enable unary negation operator.
+    };
+
+    /**
+     * @brief Default parameters. Does not include exponentiation and modulus operators.
+     */
+    constexpr Flags DefaultFlags = static_cast<Flags>(MX_DEFAULT);
+
+    inline constexpr Flags operator+(Flags a, Flags b)
+    {
+        return static_cast<Flags>(static_cast<std::underlying_type<mx_flag>::type>(a) | static_cast<std::underlying_type<mx_flag>::type>(b));
+    }
+
+    inline constexpr Flags operator-(Flags a, Flags b)
+    {
+        return static_cast<Flags>(static_cast<std::underlying_type<mx_flag>::type>(a) & ~static_cast<std::underlying_type<mx_flag>::type>(b));
+    }
+
+    /**
+     * @brief Error codes.
+     */
+    enum class Error : std::underlying_type<mx_error>::type
+    {
+        Success = MX_SUCCESS,                // Parsed successfully.
+        IllegalName = MX_ERR_ILLEGAL_NAME,   // Name of variable/function contains
+        AlreadyDefined = MX_ERR_ALREADY_DEF, // Trying to add a variable/function t
+        OutOfMemory = MX_ERR_NO_MEMORY,      // Out of memory.
+        DivisionByZero = MX_ERR_DIV_ZERO,    // Division by zero.
+        SyntaxError = MX_ERR_SYNTAX,         // Expression syntax is invalid.
+        Undefined = MX_ERR_UNDEFINED,        // Function or variable name not found
+        InvalidArgs = MX_ERR_INVALID_ARGS,   // Arguments validation failed.
+        IncorrectArgsNum = MX_ERR_ARGS_NUM,  // Incorrect number of arguments.
+    };
+
+    using Function = std::function<Error(double[], int, double &)>;
 
     static mx_error wrapper_function(double args[], int num_args, double *result, void *data)
     {
-        auto func = reinterpret_cast<function *>(data);
-        return (*func)(args, num_args, *result);
+        auto func = reinterpret_cast<Function *>(data);
+        return static_cast<mx_error>((*func)(args, num_args, *result));
     }
 
+    /**
+     * @brief Configuration for parsing.
+     */
     class Config
     {
     public:
-        Config(mx_flag flags = static_cast<mx_flag>(MX_DEFAULT))
+        /**
+         * @brief Creates empty configuration object with given parsing parameters.
+         *
+         * @param flags Evaluation flags.
+         */
+        Config(Flags flags = DefaultFlags)
         {
-            this->config = mx_create(flags);
+            this->config = mx_create(static_cast<mx_flag>(flags));
         }
 
         ~Config()
@@ -51,36 +110,77 @@ namespace mathex
             mx_free(this->config);
         }
 
-        mx_error addVariable(const std::string &name, const double &value)
+        /**
+         * @brief Inserts a variable into the configuration object to be available for use in the expressions.
+         *
+         * @param name String representing name of the variable. (should only contain letters, digits or underscore and cannot start with a digit)
+         * @param value Reference to value of the variable. Lifetime of a reference is responsibility of a caller.
+         *
+         * @return Returns Error::Success, or error code if failed to insert.
+         */
+        Error addVariable(const std::string &name, const double &value)
         {
-            return mx_add_variable(this->config, name.c_str(), &value);
+            return static_cast<Error>(mx_add_variable(this->config, name.c_str(), &value));
         }
 
-        mx_error addConstant(const std::string &name, double value)
+        /**
+         * @brief Inserts a constant into the configuration object to be available for use in the expressions.
+         *
+         * @param name String representing name of the variable. (should only contain letters, digits or underscore and cannot start with a digit)
+         * @param value Value of a constant variable.
+         *
+         * @return Returns Error::Success, or error code if failed to insert.
+         */
+        Error addConstant(const std::string &name, double value)
         {
-            return mx_add_constant(this->config, name.c_str(), value);
+            return static_cast<Error>(mx_add_constant(this->config, name.c_str(), value));
         }
 
-        mx_error addFunction(const std::string &name, function apply)
+        /**
+         * @brief Inserts a function into the configuration object to be available for use in the expressions.
+         *
+         * @param name String representing name of the function. (should only contain letters, digits or underscore and cannot start with a digit)
+         * @param apply Function that takes the arguments, writes the result to the given reference and returns Error::Success or appropriate error code.
+         *
+         * @return Returns Error::Success, or error code if failed to insert.
+         */
+        Error addFunction(const std::string &name, Function apply)
         {
             this->functions[name] = apply;
-            return mx_add_function(this->config, name.c_str(), wrapper_function, &this->functions[name]);
+            return static_cast<Error>(mx_add_function(this->config, name.c_str(), wrapper_function, &this->functions[name]));
         }
 
-        mx_error remove(const std::string &name)
+        /**
+         * @brief Removes a variable or a function with given name that was added using `addVariable`, `addConstant` or `addFunction`.
+         *
+         * @param name String representing name of the variable or function to remove.
+         *
+         * @return Returns Error::Success, or error code if failed to remove.
+         */
+        Error remove(const std::string &name)
         {
             this->functions.erase(name);
-            return mx_remove(this->config, name.c_str());
+            return static_cast<Error>(mx_remove(this->config, name.c_str()));
         }
 
-        mx_error evaluate(const std::string &expression, double &result)
+        /**
+         * @brief Takes mathematical expression and evaluates its numerical value.
+         *
+         * Result of the evaluation is written into a `result` reference. If evaluation failed, returns error code.
+         *
+         * @param expression String to evaluate.
+         * @param result Reference to write evaluation result to.
+         *
+         * @return Returns Error::Success, or error code if expression contains any errors.
+         */
+        Error evaluate(const std::string &expression, double &result)
         {
-            return mx_evaluate(this->config, expression.c_str(), &result);
+            return static_cast<Error>(mx_evaluate(this->config, expression.c_str(), &result));
         }
 
     private:
         mx_config *config;
-        std::unordered_map<std::string, function> functions;
+        std::unordered_map<std::string, Function> functions;
     };
 }
 
