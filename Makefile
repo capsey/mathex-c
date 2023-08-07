@@ -8,8 +8,8 @@ INCLUDES := -Iinclude
 
 # Library variables
 SRCDIR := ./src
-SRCBINDIR := $(SRCDIR)/bin
 BINDIR := ./bin
+SRCBINDIR := $(SRCDIR)/bin
 
 SRC := $(wildcard $(SRCDIR)/*.c)
 OBJ := $(patsubst $(SRCDIR)/%.c, $(SRCBINDIR)/%.o, $(SRC))
@@ -25,8 +25,6 @@ TESTBIN := $(patsubst $(TESTDIR)/%.c, $(TESTBINDIR)/%, $(TESTSRC))
 # Sample variables
 SAMPLEDIR := ./sample
 SAMPLEBINDIR := $(SAMPLEDIR)/bin
-SAMPLESRC := $(wildcard $(SAMPLEDIR)/*.c)
-SAMPLEBIN := $(patsubst $(SAMPLEDIR)/%.c, $(SAMPLEBINDIR)/%, $(SAMPLESRC))
 
 # Phonies
 build: $(LIBRARY)
@@ -35,7 +33,7 @@ test: $(TESTBIN)
 	CODE=0; for test in $(TESTBIN); do $$test || CODE=$$?; done; exit $$CODE
 
 clean:
-	$(RM) $(OBJ) $(LIBRARY) $(TESTBIN) $(SAMPLEBIN)
+	$(RM) $(BINDIR)/* $(SRCBINDIR)/* $(TESTBINDIR)/* $(SAMPLEBINDIR)/*
 
 # Library
 $(LIBRARY): $(OBJ) | $(BINDIR)
