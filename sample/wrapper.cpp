@@ -20,33 +20,33 @@ int main()
     config.addConstant("e", 2.71);
     config.addConstant("pi", 3.14);
 
-    config.addFunction("sum", [](double args[], int num_args, double &result) -> mx_error
+    config.addFunction("sum", [](double args[], int num_args, double &result) -> mathex::Error
     {
         if (num_args <= 1)
         {
-            return MX_ERR_ARGS_NUM;
+            return mathex::Error::IncorrectArgsNum;
         }
 
         result = std::accumulate(args, args + num_args, 0.0);
-        return MX_SUCCESS;
+        return mathex::Error::Success;
     });
 
-    config.addFunction("abs", [](double args[], int num_args, double &result) -> mx_error
+    config.addFunction("abs", [](double args[], int num_args, double &result) -> mathex::Error
     {
         if (num_args != 1)
         {
-            return MX_ERR_ARGS_NUM;
+            return mathex::Error::IncorrectArgsNum;
         }
 
         result = fabs(args[0]);
-        return MX_SUCCESS;
+        return mathex::Error::Success;
     });
 
     // Evaluate expressions using the configuration
     double result;
-    mx_error error = config.evaluate("2 * sum(2pi, -abs(x), y + 1, z / 2)", result);
+    mathex::Error error = config.evaluate("2 * sum(2pi, -abs(x), y + 1, z / 2)", result);
 
-    if (error == MX_SUCCESS)
+    if (error == mathex::Error::Success)
     {
         std::cout << "Result: " << result << std::endl;
     }
@@ -55,5 +55,5 @@ int main()
         std::cerr << "Evaluation Error: " << static_cast<int>(error) << std::endl;
     }
 
-    return error;
+    return static_cast<int>(error);
 }
