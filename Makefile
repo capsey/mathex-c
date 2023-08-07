@@ -1,8 +1,9 @@
 # Compiler flags
 AR := ar rcs
 
-CFLAGS := -g -O2 -std=c99 -Wall -Werror -Wextra -Wconversion -Wpedantic
-TESTFLAGS := -g -std=c99
+LIBFLAGS := -g -O2 -std=c99 -Wall -Werror -Wextra -Wconversion -Wpedantic
+CFLAGS := -g -std=c99
+CXXFLAGS := -g -std=c++11
 INCLUDES := -Iinclude
 
 # Library variables
@@ -12,7 +13,7 @@ BINDIR := ./bin
 
 SRC := $(wildcard $(SRCDIR)/*.c)
 OBJ := $(patsubst $(SRCDIR)/%.c, $(SRCBINDIR)/%.o, $(SRC))
-LIBRARY := $(BINDIR)/libmathexc.a
+LIBRARY := $(BINDIR)/libmathex.a
 
 # Testing variables
 TESTDIR := ./test
@@ -41,15 +42,18 @@ $(LIBRARY): $(OBJ) | $(BINDIR)
 	$(AR) $(LIBRARY) $(OBJ)
 
 $(SRCBINDIR)/%.o: $(SRCDIR)/%.c | $(SRCBINDIR)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(LIBFLAGS) $(INCLUDES) -c $< -o $@
 
 # Testing
 $(TESTBINDIR)/%: $(TESTDIR)/%.c $(LIBRARY) | $(TESTBINDIR)
-	$(CC) $(TESTFLAGS) $(INCLUDES) $< -o $@ -L$(BINDIR) -lmathexc -lm -lcriterion
+	$(CC) $(CFLAGS) $(INCLUDES) $< -o $@ -L$(BINDIR) -lmathex -lm -lcriterion
 
 # Samples
 $(SAMPLEBINDIR)/%: $(SAMPLEDIR)/%.c $(LIBRARY) | $(SAMPLEBINDIR)
-	$(CC) $(TESTFLAGS) $(INCLUDES) $< -o $@ -L$(BINDIR) -lmathexc -lm
+	$(CC) $(CFLAGS) $(INCLUDES) $< -o $@ -L$(BINDIR) -lmathex -lm
+
+$(SAMPLEBINDIR)/%: $(SAMPLEDIR)/%.cpp $(LIBRARY) | $(SAMPLEBINDIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $< -o $@ -L$(BINDIR) -lmathex
 
 # Directories
 $(BINDIR):
