@@ -28,7 +28,7 @@ int main()
         }
 
         result = std::accumulate(args, args + num_args, 0.0);
-        return mathex::Error::Success;
+        return mathex::Success;
     });
 
     config.addFunction("abs", [](double args[], int num_args, double &result) -> mathex::Error
@@ -39,14 +39,14 @@ int main()
         }
 
         result = fabs(args[0]);
-        return mathex::Error::Success;
+        return mathex::Success;
     });
 
     // Evaluate expressions using the configuration
     double result;
     mathex::Error error = config.evaluate("2 * sum(2pi, -abs(x), y + 1, z / 2)", result);
 
-    if (error == mathex::Error::Success)
+    if (error == mathex::Success)
     {
         std::cout << "Result: " << result << std::endl;
     }

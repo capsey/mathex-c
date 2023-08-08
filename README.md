@@ -62,8 +62,8 @@ Mathex also provides C++ friendly interface using separate header. It allows to 
 
 ```cpp
 #include <iostream>
-#include <string>
 #include <mathex.hpp>
+#include <string>
 
 int main()
 {
@@ -83,7 +83,7 @@ int main()
 
     // Mathex writes result of evaluation into the reference you provide.
     // Here we pass a reference to a `result` variable we declared above.
-    if (config.evaluate(input, result) == mathex::Error::Success)
+    if (config.evaluate(input, result) == mathex::Success)
     {
         std::cout << input << " is " << result << std::endl; // Outputs `2x + 5 is 8`
     }

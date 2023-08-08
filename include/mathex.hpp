@@ -81,11 +81,19 @@ namespace mathex
         IncorrectArgsNum = MX_ERR_ARGS_NUM,  // Incorrect number of arguments.
     };
 
+    /**
+     * @brief Parsed successfully.
+     */
+    constexpr Error Success = Error::Success;
+
+    /**
+     * @brief Type of function or functor for adding into the config.
+     */
     using Function = std::function<Error(double[], int, double &)>;
 
     static mx_error wrapper_function(double args[], int num_args, double *result, void *data)
     {
-        auto func = reinterpret_cast<Function *>(data);
+        Function *func = reinterpret_cast<Function *>(data);
         return static_cast<mx_error>((*func)(args, num_args, *result));
     }
 
@@ -116,7 +124,7 @@ namespace mathex
          * @param name Name of the variable. (should only contain letters, digits or underscore and cannot start with a digit)
          * @param value Reference to value of the variable. Lifetime of a reference is responsibility of a caller.
          *
-         * @return Returns Error::Success, or error code if failed to insert.
+         * @return Returns `mathex::Success`, or error code if failed to insert.
          */
         Error addVariable(const std::string &name, const double &value)
         {
@@ -129,7 +137,7 @@ namespace mathex
          * @param name Name of the variable. (should only contain letters, digits or underscore and cannot start with a digit)
          * @param value Value of a constant variable.
          *
-         * @return Returns Error::Success, or error code if failed to insert.
+         * @return Returns `mathex::Success`, or error code if failed to insert.
          */
         Error addConstant(const std::string &name, double value)
         {
@@ -140,9 +148,9 @@ namespace mathex
          * @brief Inserts a function into the configuration object to be available for use in the expressions.
          *
          * @param name Name of the function. (should only contain letters, digits or underscore and cannot start with a digit)
-         * @param apply Function that takes the arguments, writes the result to the given reference and returns Error::Success or appropriate error code.
+         * @param apply Function that takes the arguments, writes the result to the given reference and returns `mathex::Success` or appropriate error code.
          *
-         * @return Returns Error::Success, or error code if failed to insert.
+         * @return Returns `mathex::Success`, or error code if failed to insert.
          */
         Error addFunction(const std::string &name, Function apply)
         {
@@ -155,7 +163,7 @@ namespace mathex
          *
          * @param name Name of the variable or function to remove.
          *
-         * @return Returns Error::Success, or error code if failed to remove.
+         * @return Returns `mathex::Success`, or error code if failed to remove.
          */
         Error remove(const std::string &name)
         {
@@ -171,7 +179,7 @@ namespace mathex
          * @param expression String to evaluate.
          * @param result Reference to write evaluation result to.
          *
-         * @return Returns Error::Success, or error code if expression contains any errors.
+         * @return Returns `mathex::Success`, or error code if expression contains any errors.
          */
         Error evaluate(const std::string &expression, double &result) const
         {
