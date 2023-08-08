@@ -154,12 +154,12 @@ static mx_error insert_item(mx_config *config, const char *key, mx_token value)
     return MX_SUCCESS;
 }
 
-bool read_flag(mx_config *config, mx_flag flag)
+bool read_flag(const mx_config *config, mx_flag flag)
 {
     return config->flags & flag;
 }
 
-mx_token *lookup_id(mx_config *config, const char *key, size_t length)
+mx_token *lookup_id(const mx_config *config, const char *key, size_t length)
 {
     if (config->n_items == 0)
     {

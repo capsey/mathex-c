@@ -55,7 +55,7 @@ typedef enum conversion_state
     EXP_VALUE,     // Exponent of scientific notation.
 } conversion_state;
 
-mx_error mx_evaluate(mx_config *config, const char *expression, double *result)
+mx_error mx_evaluate(const mx_config *config, const char *expression, double *result)
 {
     // https://en.wikipedia.org/wiki/Shunting_yard_algorithm#The_algorithm_in_detail
 

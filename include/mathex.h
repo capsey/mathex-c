@@ -142,7 +142,7 @@ extern "C"
      *
      * @return Returns MX_SUCCESS, or error code if expression contains any errors.
      */
-    mx_error mx_evaluate(mx_config *config, const char *expression, double *result);
+    mx_error mx_evaluate(const mx_config *config, const char *expression, double *result);
 
     /**
      * @brief Frees configuration struct and its contents from memory.

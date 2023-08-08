@@ -26,8 +26,8 @@
 #include "mathex.h"
 #include <functional>
 #include <string>
-#include <unordered_map>
 #include <type_traits>
+#include <unordered_map>
 
 namespace mathex
 {
@@ -173,7 +173,7 @@ namespace mathex
          *
          * @return Returns Error::Success, or error code if expression contains any errors.
          */
-        Error evaluate(const std::string &expression, double &result)
+        Error evaluate(const std::string &expression, double &result) const
         {
             return static_cast<Error>(mx_evaluate(this->config, expression.c_str(), &result));
         }
