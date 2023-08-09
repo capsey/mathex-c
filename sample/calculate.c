@@ -2,17 +2,14 @@
 #include <mathex.h>
 #include <stdio.h>
 
-mx_error sum_function(double args[], int num_args, double *result, void *data)
-{
-    if (num_args <= 1)
-    {
+mx_error sum_function(double args[], int num_args, double *result, void *data) {
+    if (num_args <= 1) {
         return MX_ERR_ARGS_NUM;
     }
 
     double sum = 0;
 
-    for (int i = 0; i < num_args; i++)
-    {
+    for (int i = 0; i < num_args; i++) {
         sum += args[i];
     }
 
@@ -20,10 +17,8 @@ mx_error sum_function(double args[], int num_args, double *result, void *data)
     return MX_SUCCESS;
 }
 
-mx_error abs_function(double args[], int num_args, double *result, void *data)
-{
-    if (num_args != 1)
-    {
+mx_error abs_function(double args[], int num_args, double *result, void *data) {
+    if (num_args != 1) {
         return MX_ERR_ARGS_NUM;
     }
 
@@ -35,12 +30,11 @@ double x = 3;
 double y = 5;
 double z = 8;
 
-int main()
-{
+int main() {
     // Create a configuration with default flags
     mx_config *config = mx_create(MX_DEFAULT);
-    if (!config)
-    {
+
+    if (!config) {
         fprintf(stderr, "Failed to create configuration.\n");
         return 1;
     }
@@ -60,17 +54,13 @@ int main()
     double result;
     mx_error error = mx_evaluate(config, "2 * sum(2pi, -abs(x), y + 1, z / 2)", &result);
 
-    if (error == MX_SUCCESS)
-    {
+    if (error == MX_SUCCESS) {
         printf("Result: %.2lf\n", result);
-    }
-    else
-    {
+    } else {
         fprintf(stderr, "Evaluation Error: %d\n", error);
     }
 
     // Clean up and free the configuration
     mx_free(config);
-
     return error;
 }

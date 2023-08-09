@@ -26,8 +26,7 @@
 #include "mathex.h"
 
 // Type of expression token.
-typedef enum mx_token_type
-{
+typedef enum mx_token_type {
     MX_EMPTY = 0,
     MX_LEFT_PAREN,
     MX_RIGHT_PAREN,
@@ -41,20 +40,16 @@ typedef enum mx_token_type
 
 // Value of expression token.
 // NOTE: `data` is discriminated union! Always check `type` before accessing its fields!!!
-typedef struct mx_token
-{
+typedef struct mx_token {
     mx_token_type type;
-    union
-    {
+    union {
         double number;     // value of a number literal
         const double *var; // pointer to value of a variable
-        struct
-        {
+        struct {
             mx_error (*call)(double[], int, double *, void *); // function
             void *data;
         } func;
-        struct
-        {
+        struct {
             double (*call)(double, double); // binary operator
             int prec;                       // precedence
             bool lassoc;                    // left associative

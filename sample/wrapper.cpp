@@ -7,8 +7,7 @@ double x = 3;
 double y = 5;
 double z = 8;
 
-int main()
-{
+int main() {
     // Create a configuration with default flags
     mathex::Config config;
 
@@ -20,10 +19,8 @@ int main()
     config.addConstant("e", 2.71);
     config.addConstant("pi", 3.14);
 
-    config.addFunction("sum", [](double args[], int num_args, double &result) -> mathex::Error
-    {
-        if (num_args <= 1)
-        {
+    config.addFunction("sum", [](double args[], int num_args, double &result) -> mathex::Error {
+        if (num_args <= 1) {
             return mathex::Error::IncorrectArgsNum;
         }
 
@@ -31,10 +28,8 @@ int main()
         return mathex::Success;
     });
 
-    config.addFunction("abs", [](double args[], int num_args, double &result) -> mathex::Error
-    {
-        if (num_args != 1)
-        {
+    config.addFunction("abs", [](double args[], int num_args, double &result) -> mathex::Error {
+        if (num_args != 1) {
             return mathex::Error::IncorrectArgsNum;
         }
 
@@ -46,12 +41,9 @@ int main()
     double result;
     mathex::Error error = config.evaluate("2 * sum(2pi, -abs(x), y + 1, z / 2)", result);
 
-    if (error == mathex::Success)
-    {
+    if (error == mathex::Success) {
         std::cout << "Result: " << result << std::endl;
-    }
-    else
-    {
+    } else {
         std::cerr << "Evaluation Error: " << static_cast<int>(error) << std::endl;
     }
 
