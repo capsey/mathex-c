@@ -25,9 +25,9 @@
 
 #include "mathex.h"
 #include <functional>
+#include <map>
 #include <string>
 #include <type_traits>
-#include <unordered_map>
 
 namespace mathex
 {
@@ -188,7 +188,7 @@ namespace mathex
 
     private:
         mx_config *config;
-        std::unordered_map<std::string, Function> functions;
+        std::map<std::string, Function> functions;
     };
 }
 
