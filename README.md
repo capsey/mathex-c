@@ -19,11 +19,10 @@ The library is completely C99 standard compliant.
 Using Mathex is super easy - just include one header, initialize, evaluate and free. That's it.
 
 ```c
-#include <stdio.h>
 #include <mathex.h>
+#include <stdio.h>
 
-int main()
-{
+int main() {
     // Use `mx_create` and `MX_DEFAULT` to get default settings.
     // For what settings are available, check out documentation.
     mx_config *config = mx_create(MX_DEFAULT);
@@ -40,9 +39,9 @@ int main()
 
     // Mathex writes result of evaluation into the address you provide.
     // Here we pass an address to a `result` variable we declared above.
-    if (mx_evaluate(config, input, &result) == MX_SUCCESS)
-    {
-        printf("%s is %.0lf\n", input, result); // Outputs `2x + 5 is 8`
+    if (mx_evaluate(config, input, &result) == MX_SUCCESS) {
+        // Outputs `2x + 5 is 8`
+        printf("%s is %.0lf\n", input, result);
     }
 
     // Don't forget to free the memory once you are done.
@@ -65,8 +64,7 @@ Mathex also provides C++ friendly interface using separate header. It allows to 
 #include <mathex.hpp>
 #include <string>
 
-int main()
-{
+int main() {
     // Use `Config` class and `DefaultFlags` to get default settings.
     // For what settings are available, check out documentation.
     mathex::Config config(mathex::DefaultFlags);
@@ -83,9 +81,9 @@ int main()
 
     // Mathex writes result of evaluation into the reference you provide.
     // Here we pass a reference to a `result` variable we declared above.
-    if (config.evaluate(input, result) == mathex::Success)
-    {
-        std::cout << input << " is " << result << std::endl; // Outputs `2x + 5 is 8`
+    if (config.evaluate(input, result) == mathex::Success) {
+        // Outputs `2x + 5 is 8`
+        std::cout << input << " is " << result << std::endl;
     }
 
     // No need to manually free - the memory is automatically

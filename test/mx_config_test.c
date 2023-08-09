@@ -25,10 +25,8 @@
 #include <math.h>
 #include <mathex.h>
 
-mx_error foo_wrapper(double args[], int argc, double *result, void *data)
-{
-    if (argc != 0)
-    {
+mx_error foo_wrapper(double args[], int argc, double *result, void *data) {
+    if (argc != 0) {
         return MX_ERR_ARGS_NUM;
     }
 
@@ -36,10 +34,8 @@ mx_error foo_wrapper(double args[], int argc, double *result, void *data)
     return MX_SUCCESS;
 }
 
-mx_error abs_wrapper(double args[], int argc, double *result, void *data)
-{
-    if (argc != 1)
-    {
+mx_error abs_wrapper(double args[], int argc, double *result, void *data) {
+    if (argc != 1) {
         return MX_ERR_ARGS_NUM;
     }
 
@@ -47,8 +43,7 @@ mx_error abs_wrapper(double args[], int argc, double *result, void *data)
     return MX_SUCCESS;
 }
 
-Test(mx_config, mx_create)
-{
+Test(mx_config, mx_create) {
     mx_config *config = mx_create(MX_DEFAULT);
     cr_assert(config != NULL, "mx_create should return not NULL.");
 }
@@ -56,19 +51,16 @@ Test(mx_config, mx_create)
 mx_config *config;
 double result;
 
-void suite_setup(void)
-{
+void suite_setup(void) {
     config = mx_create(MX_DEFAULT);
 }
 
-void suite_teardown(void)
-{
+void suite_teardown(void) {
     mx_free(config);
     config = NULL;
 }
 
-Test(mx_config, mx_add_variable, .init = suite_setup, .fini = suite_teardown)
-{
+Test(mx_config, mx_add_variable, .init = suite_setup, .fini = suite_teardown) {
     double x = 5;
     double y = 3;
 
@@ -92,8 +84,7 @@ Test(mx_config, mx_add_variable, .init = suite_setup, .fini = suite_teardown)
     cr_assert(mx_evaluate(config, "x + y", NULL) == MX_ERR_UNDEFINED);
 }
 
-Test(mx_config, mx_add_constant, .init = suite_setup, .fini = suite_teardown)
-{
+Test(mx_config, mx_add_constant, .init = suite_setup, .fini = suite_teardown) {
     cr_assert(mx_add_constant(config, "e", 2.71) == MX_SUCCESS, "successfully inserted first constant");
     cr_assert(mx_add_constant(config, "pi", 3.14) == MX_SUCCESS, "successfully inserted second constant");
     cr_assert(mx_add_constant(config, "pi", 0) == MX_ERR_ALREADY_DEF, "cannot redefine a constant");
@@ -108,8 +99,7 @@ Test(mx_config, mx_add_constant, .init = suite_setup, .fini = suite_teardown)
     cr_assert(mx_evaluate(config, "e + pi", NULL) == MX_ERR_UNDEFINED);
 }
 
-Test(mx_config, mx_add_function, .init = suite_setup, .fini = suite_teardown)
-{
+Test(mx_config, mx_add_function, .init = suite_setup, .fini = suite_teardown) {
     cr_assert(mx_add_function(config, "foo", foo_wrapper, NULL) == MX_SUCCESS, "successfully inserted first function");
     cr_assert(mx_add_function(config, "abs", abs_wrapper, NULL) == MX_SUCCESS, "successfully inserted second function");
     cr_assert(mx_add_function(config, "abs", NULL, NULL) == MX_ERR_ALREADY_DEF, "cannot redefine a function");

@@ -1,8 +1,7 @@
-#include <stdio.h>
 #include <mathex.h>
+#include <stdio.h>
 
-int main()
-{
+int main() {
     // Use `mx_create` and `MX_DEFAULT` to get default settings.
     // For what settings are available, check out documentation.
     mx_config *config = mx_create(MX_DEFAULT);
@@ -19,9 +18,9 @@ int main()
 
     // Mathex writes result of evaluation into the address you provide.
     // Here we pass an address to a `result` variable we declared above.
-    if (mx_evaluate(config, input, &result) == MX_SUCCESS)
-    {
-        printf("%s is %.0lf\n", input, result); // Outputs `2x + 5 is 8`
+    if (mx_evaluate(config, input, &result) == MX_SUCCESS) {
+        // Outputs `2x + 5 is 8`
+        printf("%s is %.0lf\n", input, result);
     }
 
     // Don't forget to free the memory once you are done.

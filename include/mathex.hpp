@@ -29,13 +29,11 @@
 #include <string>
 #include <type_traits>
 
-namespace mathex
-{
+namespace mathex {
     /**
      * @brief Evaluation parameters.
      */
-    enum class Flags : std::underlying_type<mx_flag>::type
-    {
+    enum class Flags : std::underlying_type<mx_flag>::type {
         None = MX_NONE,                           // Disable all parameters.
         ImplicitParentheses = MX_IMPLICIT_PARENS, // Enable implicit parentheses.
         ImplicitMultiplication = MX_IMPLICIT_MUL, // Enable implicit multiplication.
@@ -55,21 +53,18 @@ namespace mathex
      */
     constexpr Flags DefaultFlags = static_cast<Flags>(MX_DEFAULT);
 
-    inline constexpr Flags operator+(Flags a, Flags b)
-    {
+    inline constexpr Flags operator+(Flags a, Flags b) {
         return static_cast<Flags>(static_cast<std::underlying_type<Flags>::type>(a) | static_cast<std::underlying_type<Flags>::type>(b));
     }
 
-    inline constexpr Flags operator-(Flags a, Flags b)
-    {
+    inline constexpr Flags operator-(Flags a, Flags b) {
         return static_cast<Flags>(static_cast<std::underlying_type<Flags>::type>(a) & ~static_cast<std::underlying_type<Flags>::type>(b));
     }
 
     /**
      * @brief Error codes.
      */
-    enum class Error : std::underlying_type<mx_error>::type
-    {
+    enum class Error : std::underlying_type<mx_error>::type {
         Success = MX_SUCCESS,                // Parsed successfully.
         IllegalName = MX_ERR_ILLEGAL_NAME,   // Name of variable/function contains illegal characters.
         AlreadyDefined = MX_ERR_ALREADY_DEF, // Trying to add a variable/function that already exists.
@@ -91,8 +86,7 @@ namespace mathex
      */
     using Function = std::function<Error(double[], int, double &)>;
 
-    static mx_error wrapper_function(double args[], int num_args, double *result, void *data)
-    {
+    static mx_error wrapper_function(double args[], int num_args, double *result, void *data) {
         Function *func = reinterpret_cast<Function *>(data);
         return static_cast<mx_error>((*func)(args, num_args, *result));
     }
@@ -100,21 +94,18 @@ namespace mathex
     /**
      * @brief Configuration for parsing.
      */
-    class Config
-    {
+    class Config {
     public:
         /**
          * @brief Creates empty configuration object with given parsing parameters.
          *
          * @param flags Evaluation flags.
          */
-        Config(Flags flags = DefaultFlags)
-        {
+        Config(Flags flags = DefaultFlags) {
             this->config = mx_create(static_cast<mx_flag>(flags));
         }
 
-        ~Config()
-        {
+        ~Config() {
             mx_free(this->config);
         }
 
@@ -126,8 +117,7 @@ namespace mathex
          *
          * @return Returns `mathex::Success`, or error code if failed to insert.
          */
-        Error addVariable(const std::string &name, const double &value)
-        {
+        Error addVariable(const std::string &name, const double &value) {
             return static_cast<Error>(mx_add_variable(this->config, name.c_str(), &value));
         }
 
@@ -139,8 +129,7 @@ namespace mathex
          *
          * @return Returns `mathex::Success`, or error code if failed to insert.
          */
-        Error addConstant(const std::string &name, double value)
-        {
+        Error addConstant(const std::string &name, double value) {
             return static_cast<Error>(mx_add_constant(this->config, name.c_str(), value));
         }
 
@@ -152,8 +141,7 @@ namespace mathex
          *
          * @return Returns `mathex::Success`, or error code if failed to insert.
          */
-        Error addFunction(const std::string &name, Function apply)
-        {
+        Error addFunction(const std::string &name, Function apply) {
             this->functions[name] = apply;
             return static_cast<Error>(mx_add_function(this->config, name.c_str(), wrapper_function, &this->functions[name]));
         }
@@ -165,8 +153,7 @@ namespace mathex
          *
          * @return Returns `mathex::Success`, or error code if failed to remove.
          */
-        Error remove(const std::string &name)
-        {
+        Error remove(const std::string &name) {
             this->functions.erase(name);
             return static_cast<Error>(mx_remove(this->config, name.c_str()));
         }
@@ -181,8 +168,7 @@ namespace mathex
          *
          * @return Returns `mathex::Success`, or error code if expression contains any errors.
          */
-        Error evaluate(const std::string &expression, double &result) const
-        {
+        Error evaluate(const std::string &expression, double &result) const {
             return static_cast<Error>(mx_evaluate(this->config, expression.c_str(), &result));
         }
 

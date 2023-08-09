@@ -25,10 +25,8 @@
 #include <math.h>
 #include <mathex.h>
 
-mx_error foo_wrapper(double args[], int argc, double *result, void *data)
-{
-    if (argc != 2)
-    {
+mx_error foo_wrapper(double args[], int argc, double *result, void *data) {
+    if (argc != 2) {
         return MX_ERR_ARGS_NUM;
     }
 
@@ -36,10 +34,8 @@ mx_error foo_wrapper(double args[], int argc, double *result, void *data)
     return MX_SUCCESS;
 }
 
-mx_error bar_wrapper(double args[], int argc, double *result, void *data)
-{
-    if (argc != 0)
-    {
+mx_error bar_wrapper(double args[], int argc, double *result, void *data) {
+    if (argc != 0) {
         return MX_ERR_ARGS_NUM;
     }
 
@@ -47,10 +43,8 @@ mx_error bar_wrapper(double args[], int argc, double *result, void *data)
     return MX_SUCCESS;
 }
 
-mx_error f_wrapper(double args[], int argc, double *result, void *data)
-{
-    if (argc != 1)
-    {
+mx_error f_wrapper(double args[], int argc, double *result, void *data) {
+    if (argc != 1) {
         return MX_ERR_ARGS_NUM;
     }
 
@@ -58,10 +52,8 @@ mx_error f_wrapper(double args[], int argc, double *result, void *data)
     return MX_SUCCESS;
 }
 
-mx_error g_wrapper(double args[], int argc, double *result, void *data)
-{
-    if (argc != 1)
-    {
+mx_error g_wrapper(double args[], int argc, double *result, void *data) {
+    if (argc != 1) {
         return MX_ERR_ARGS_NUM;
     }
 
@@ -69,10 +61,8 @@ mx_error g_wrapper(double args[], int argc, double *result, void *data)
     return MX_SUCCESS;
 }
 
-mx_error h_wrapper(double args[], int argc, double *result, void *data)
-{
-    if (argc != 2)
-    {
+mx_error h_wrapper(double args[], int argc, double *result, void *data) {
+    if (argc != 2) {
         return MX_ERR_ARGS_NUM;
     }
 
@@ -88,8 +78,7 @@ const double y = 3;
 const double z = 6;
 const double pi = 3.14;
 
-void suite_setup(void)
-{
+void suite_setup(void) {
     config = mx_create(MX_DEFAULT | MX_ENABLE_POW);
     mx_add_constant(config, "x", x);
     mx_add_constant(config, "y", y);
@@ -103,16 +92,14 @@ void suite_setup(void)
     mx_add_function(config, "h", h_wrapper, NULL);
 }
 
-void suite_teardown(void)
-{
+void suite_teardown(void) {
     mx_free(config);
     config = NULL;
 }
 
 TestSuite(mx_evaluate, .init = suite_setup, .fini = suite_teardown);
 
-Test(mx_evaluate, simple_expressions)
-{
+Test(mx_evaluate, simple_expressions) {
     cr_expect(mx_evaluate(config, "5 + 3", &result) == MX_SUCCESS);
     cr_expect(ieee_ulp_eq(dbl, result, 8, 4));
 
@@ -144,8 +131,7 @@ Test(mx_evaluate, simple_expressions)
     cr_expect(ieee_ulp_eq(dbl, result, 1000000000000, 4));
 }
 
-Test(mx_evaluate, erroneous_expressions)
-{
+Test(mx_evaluate, erroneous_expressions) {
     cr_expect(mx_evaluate(config, "5 5", NULL) == MX_ERR_SYNTAX);
     cr_expect(mx_evaluate(config, "() + 3", NULL) == MX_ERR_SYNTAX);
 
@@ -163,8 +149,7 @@ Test(mx_evaluate, erroneous_expressions)
     cr_expect(mx_evaluate(config, "sin(90)", NULL) == MX_ERR_UNDEFINED);
 }
 
-Test(mx_evaluate, number_format)
-{
+Test(mx_evaluate, number_format) {
     cr_expect(mx_evaluate(config, "30", &result) == MX_SUCCESS);
     cr_expect(ieee_ulp_eq(dbl, result, 30, 4));
 
@@ -198,8 +183,7 @@ Test(mx_evaluate, number_format)
     cr_expect(mx_evaluate(config, "1.6e4.3", NULL) == MX_ERR_SYNTAX);
 }
 
-Test(mx_evaluate, variables)
-{
+Test(mx_evaluate, variables) {
     cr_expect(mx_evaluate(config, "x + 5", &result) == MX_SUCCESS);
     cr_expect(ieee_ulp_eq(dbl, result, 10, 4));
 
@@ -229,8 +213,7 @@ Test(mx_evaluate, variables)
     cr_expect(mx_evaluate(config, "x + a", NULL) == MX_ERR_UNDEFINED);
 }
 
-Test(mx_evaluate, changing_variables)
-{
+Test(mx_evaluate, changing_variables) {
     double var;
     mx_add_variable(config, "var", &var);
 
@@ -245,8 +228,7 @@ Test(mx_evaluate, changing_variables)
     mx_remove(config, "var");
 }
 
-Test(mx_evaluate, functions)
-{
+Test(mx_evaluate, functions) {
     cr_expect(mx_evaluate(config, "foo(2, 5)", &result) == MX_SUCCESS);
     cr_expect(ieee_ulp_eq(dbl, result, 2, 4));
 
